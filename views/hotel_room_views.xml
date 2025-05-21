@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_form_hotel_room_inherit_extension" model="ir.ui.view">
+        <field name="name">hotel.room.view.form.inherit.extension</field>
+        <field name="model">hotel.room</field>
+        <field name="inherit_id" ref="hotel_management_odoo.hotel_room_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Ne pas supprimer le champ d'origine pour éviter l'erreur sur le champ image -->
+            <!-- <xpath expr="//field[@name='room_image']" position="replace"/> -->
+             <!-- 1. Supprimer le champ image d'origine -->
+            <!-- <xpath expr="//field[@name='room_image']" position="replace"/> -->
+             <!-- Au lieu de remplacer le champ, vous pourriez le masquer -->
+            <!-- Ou masquer le champ original si vous préférez -->
+            <xpath expr="//field[@name='room_image']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            
+            <xpath expr="//notebook" position="inside">
+                <!-- 🖼️ Galerie d'images -->
+                <page string="Images">
+                    <field name="room_image_ids">
+                        <!-- Changement de tree à list -->
+                        <list editable="bottom">
+                            <field name="image" widget="image"/>
+                            <field name="description"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- 💰 Tarification -->
+                <page string="Tarification">
+                    <group>
+                        <field name="price_per_night" widget="monetary"/>
+                        <field name="is_day_use"/>
+                        <field name="day_use_price" widget="monetary" invisible_if="not is_day_use"/>
+                        <field name="hourly_rate" widget="monetary"/>
+                    </group>
+                    <group>
+                        <field name="day_use_check_in" invisible_if="not is_day_use"/>
+                        <field name="day_use_check_out" invisible_if="not is_day_use"/>
+                    </group>
+                </page>
+
+                <!-- 🛠 Maintenance -->
+                <page string="Maintenance">
+                    <group>
+                        <field name="is_in_maintenance"/>
+                        <field name="maintenance_notes"/>
+                        <field name="last_maintenance_date"/>
+                        <field name="next_maintenance_date"/>
+                    </group>
+                </page>
+
+                <!-- 🕓 Horaires par défaut -->
+                <page string="Horaires">
+                    <group>
+                        <field name="default_check_in_time"/>
+                        <field name="default_check_out_time"/>
+                    </group>
+                </page>
+
+                <!-- 🛏️ Confort -->
+                <page string="Confort">
+                    <group>
+                        <field name="bed_type"/>
+                        <field name="surface_area"/>
+                        <field name="flooring_type"/>
+                        <field name="view_type"/>
+                    </group>
+                    <group>
+                        <field name="is_smoking_allowed"/>
+                        <field name="is_pets_allowed"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

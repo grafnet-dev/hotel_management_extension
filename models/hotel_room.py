@@ -3,15 +3,14 @@ from odoo import models, fields
 
 class HotelRoom(models.Model):
     _inherit = "hotel.room"
-
+    image = fields.Binary(string="Image", attachment=True)
     is_day_use = fields.Boolean(string="Disponible en Day use ")
     day_use_check_in = fields.Float(string="Day Use Check-in Time")
     day_use_check_out = fields.Float(string="Day Use Check-out Time")
 
     # Exemple si tu veux regrouper des images multiples
-    room_image_ids = fields.One2many(
-        "hotel.room.image", "room_id", string="Room Gallery"
-    )
+  
+    room_image_ids = fields.One2many('hotel.room.image', 'room_id', string="Room Images")
     # prix de la chambre
     price_per_night = fields.Float(string="Prix par Nuitée", digits="Product Price")
     day_use_price = fields.Float(string="Day Use Price", digits="Product Price")
