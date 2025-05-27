@@ -73,12 +73,12 @@
                 <!-- 🕓 Horaires par défaut -->
                 <page string="Horaires">
                     <group>
-                        <field name="default_check_in_time" />
-                        <field name="default_check_out_time" />
+                        <field name="default_check_in_time" widget="time" />
+                        <field name="default_check_out_time" widget="time" />
                     </group>
                     <group invisible="not is_day_use">
-                        <field name="day_use_check_in" />
-                        <field name="day_use_check_out" />
+                        <field name="day_use_check_in" widget="time" />
+                        <field name="day_use_check_out" widget="time" />
                     </group>
                 </page>
                 <!-- 🧳 Commodités -->

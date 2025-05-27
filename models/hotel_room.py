@@ -1,17 +1,16 @@
 from odoo import models, fields
+from datetime import timedelta
 
 
 class HotelRoom(models.Model):
     _inherit = "hotel.room"
     
-    #image principale de la chambre
+    #image principale et galerie 
     image = fields.Binary(string="Image", attachment=True)
-    #Gallerie d'images de la chambre
     room_image_ids = fields.One2many('hotel.room.image', 'room_id', string="Room Images")
     
+    # Disponibilité day use
     is_day_use = fields.Boolean(string="Disponible en Day use ")
-    day_use_check_in = fields.Float(string="Day Use Check-in Time")
-    day_use_check_out = fields.Float(string="Day Use Check-out Time")
     
     # Tarification
     price_per_night = fields.Float(string="Prix par Nuitée", digits="Product Price")
@@ -19,14 +18,23 @@ class HotelRoom(models.Model):
     hourly_rate = fields.Float(
         string="Hourly Rate (Day Use or else )", digits="Product Price"
     )
-
-    # Champs pour la gestion des heures de check-in et check-out
-    default_check_in_time = fields.Float(string="Default Check-In Time")
-    default_check_out_time = fields.Float(string="Default Check-Out Time")
-    day_use_check_in = fields.Float(string="Day Use Check-in Time")
-    day_use_check_out = fields.Float(string="Day Use Check-out Time")
     
-    # Champs pour la gestion de la maintenance
+    # Type de réservation
+    reservation_type_ids = fields.Many2many(
+    'hotel.reservation.type',
+    'hotel_room_reservation_type_rel',  # nom de la table relation
+    'room_id',
+    'reservation_type_id',
+    string="Types de réservation disponibles",
+    help="Liste des types de réservation que cette chambre accepte"
+    )
+
+    
+    # Heures par défaut (fallback si non définies dans le type de réservation)
+    default_check_in_time = fields.Float(string="Heure d'arrivée par défaut")
+    default_check_out_time = fields.Float(string="Heure de départ par défaut")
+
+    #Maintenance
     is_in_maintenance = fields.Boolean(string="Under Maintenance")
     maintenance_notes = fields.Text(string="Maintenance Notes")
     last_maintenance_date = fields.Date(string="Last Maintenance Date")
@@ -67,8 +75,99 @@ class HotelRoom(models.Model):
 
     is_smoking_allowed = fields.Boolean(string="Smoking Allowed")
     is_pets_allowed = fields.Boolean(string="Pets Allowed")
-    #: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)
-
+    
+#: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)
 # tarification dynamque selon la periode , saison etc à ajouter
 # concernant le late check out et early check in
 # discounts sur les prix de nuitée et day use
+
+def get_checkin_checkout_time(self, type_code=None):
+    """
+    Retourne les horaires à appliquer selon le type demandé.
+    Si non précisé, retourne les valeurs par défaut de la chambre.
+    """
+    self.ensure_one()
+
+    if type_code:
+        reservation_type = self.env['hotel.reservation.type'].search([('code', '=', type_code)], limit=1)
+        if reservation_type and reservation_type in self.reservation_type_ids:
+            return {
+                'checkin': reservation_type.checkin_time or self.default_check_in_time,
+                'checkout': reservation_type.checkout_time or self.default_check_out_time,
+            }
+
+    return {
+        'checkin': self.default_check_in_time,
+        'checkout': self.default_check_out_time,
+    }
+
+def get_timeline_with_buffer(self, buffer_duration=timedelta(hours=1)):
+        """
+        Retourne la chronologie des réservations confirmées avec une marge avant/après
+        chaque réservation (ex. pour le ménage).
+        """
+        self.ensure_one()
+
+        timeline = []
+        confirmed_bookings = self.env['room.booking.line'].search([
+            ('room_id', '=', self.id),
+            ('state', '=', 'reserved')
+        ])
+
+        for booking in confirmed_bookings:
+            start_b = booking.checkin_date - buffer_duration
+            end_b = booking.checkout_date + buffer_duration
+
+            timeline.append({
+                'booking_id': booking.id,
+                'start': booking.checkin_date,
+                'end': booking.checkout_date,
+                'start_buffered': start_b,
+                'end_buffered': end_b,
+            })
+
+        timeline.sort(key=lambda r: r['start_buffered'])
+        return timeline
+
+
+def get_timeline_with_buffer(self, buffer_duration=timedelta(hours=1)):
+        """
+        Cette méthode retourne une liste chronologique des réservations confirmées
+        pour une chambre spécifique, en y ajoutant une marge (buffer) avant et après
+        chaque réservation (ex: pour le ménage ou la préparation).
+        
+        :param buffer_duration: durée du buffer (par défaut 1 heure)
+        :return: liste triée des réservations avec et sans buffer
+        """
+
+        # S'assure que la méthode est appelée sur une seule chambre (recordset de 1)
+        self.ensure_one()
+
+        timeline = []
+
+        # 1. Récupère toutes les lignes de réservation confirmées pour cette chambre
+        confirmed_bookings = self.env['room.booking.line'].search([
+            ('room_id', '=', self.id),         # La chambre concernée
+            ('state', '=', 'reserved')          # Seulement les réservations confirmées
+        ])
+
+        # 2. Parcourt chaque réservation
+        for booking in confirmed_bookings:
+            # Calcule la date de début avec buffer (1h avant le check-in)
+            start_b = booking.checkin_date - buffer_duration
+            # Calcule la date de fin avec buffer (1h après le check-out)
+            end_b = booking.checkout_date + buffer_duration
+
+            # 3. Ajoute les informations dans la timeline
+            timeline.append({
+                'booking_id': booking.id,
+                'start': booking.checkin_date,
+                'end': booking.checkout_date,
+                'start_buffered': start_b,
+                'end_buffered': end_b,
+            })
+
+        # 4. Trie la liste par date de début avec buffer
+        timeline.sort(key=lambda r: r['start_buffered'])
+
+        return timeline
