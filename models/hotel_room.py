@@ -9,17 +9,7 @@ class HotelRoom(models.Model):
     image = fields.Binary(string="Image", attachment=True)
     room_image_ids = fields.One2many('hotel.room.image', 'room_id', string="Room Images")
     
-    # Disponibilité day use
-    is_day_use = fields.Boolean(string="Disponible en Day use ")
-    
-    # Tarification
-    price_per_night = fields.Float(string="Prix par Nuitée", digits="Product Price")
-    day_use_price = fields.Float(string="Day Use Price", digits="Product Price")
-    hourly_rate = fields.Float(
-        string="Hourly Rate (Day Use or else )", digits="Product Price"
-    )
-    
-    # Type de réservation
+       # Type de réservation
     reservation_type_ids = fields.Many2many(
     'hotel.reservation.type',
     'hotel_room_reservation_type_rel',  # nom de la table relation
@@ -29,11 +19,19 @@ class HotelRoom(models.Model):
     help="Liste des types de réservation que cette chambre accepte"
     )
 
+    reservation_slots_ids = fields.One2many(
+    'hotel.room.reservation.slot',
+    'room_id',
+    string="Créneaux personnalisés"
+   )
+    # Tarification
+    price_per_night = fields.Float(string="Prix par Nuitée", digits="Product Price")
+    day_use_price = fields.Float(string="Day Use Price", digits="Product Price")
+    hourly_rate = fields.Float(
+        string="Hourly Rate (Day Use or else )", digits="Product Price"
+    )
     
-    # Heures par défaut (fallback si non définies dans le type de réservation)
-    default_check_in_time = fields.Float(string="Heure d'arrivée par défaut")
-    default_check_out_time = fields.Float(string="Heure de départ par défaut")
-
+ 
     #Maintenance
     is_in_maintenance = fields.Boolean(string="Under Maintenance")
     maintenance_notes = fields.Text(string="Maintenance Notes")
@@ -75,11 +73,16 @@ class HotelRoom(models.Model):
 
     is_smoking_allowed = fields.Boolean(string="Smoking Allowed")
     is_pets_allowed = fields.Boolean(string="Pets Allowed")
-    
-#: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)
-# tarification dynamque selon la periode , saison etc à ajouter
-# concernant le late check out et early check in
-# discounts sur les prix de nuitée et day use
+
+    reservation_type_id = fields.Many2one(
+    'hotel.reservation.type', 
+    string="Dummy field for view",
+    compute="_compute_dummy", 
+    store=False
+)
+def _compute_dummy(self):
+    for rec in self:
+        rec.reservation_type_id = False
 
 def get_checkin_checkout_time(self, type_code=None):
     """
@@ -129,8 +132,13 @@ def get_timeline_with_buffer(self, buffer_duration=timedelta(hours=1)):
         timeline.sort(key=lambda r: r['start_buffered'])
         return timeline
 
+def get_reservation_slots(self, type_code):
+    self.ensure_one()
+    return self.reservation_slots_ids.filtered(lambda s: s.reservation_type_id.code == type_code)
 
 def get_timeline_with_buffer(self, buffer_duration=timedelta(hours=1)):
+
+
         """
         Cette méthode retourne une liste chronologique des réservations confirmées
         pour une chambre spécifique, en y ajoutant une marge (buffer) avant et après
@@ -171,3 +179,9 @@ def get_timeline_with_buffer(self, buffer_duration=timedelta(hours=1)):
         timeline.sort(key=lambda r: r['start_buffered'])
 
         return timeline
+
+    
+#: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)
+# tarification dynamque selon la periode , saison etc à ajouter
+# concernant le late check out et early check in
+# discounts sur les prix de nuitée et day use

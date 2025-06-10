@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- hotel_room_slots_view.xml -->
+<odoo>
+    <record id="view_form_hotel_room_slot_inherit" model="ir.ui.view">
+        <field name="name">hotel.room.slot.inherit</field>
+        <field name="model">hotel.room</field>
+        <field name="inherit_id" ref="hotel_management_extension.view_form_hotel_room_inherit_extension"/>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='reservation']" position="inside">
+                <field name="reservation_slots_ids">
+                    <list editable="bottom">
+                        <field name="reservation_type_id" />
+                        <field name="checkin_time" widget="float_time" />
+                        <field name="checkout_time" widget="float_time" />
+                    </list>
+                    <form>
+                        <group>
+                            <field name="reservation_type_id" />
+                            <field name="checkin_time"  widget="float_time"/>
+                            <field name="checkout_time" widget="float_time" />
+                        </group>
+                    </form>
+                </field>
+            </xpath>
+        </field>
+    </record>
+</odoo>
