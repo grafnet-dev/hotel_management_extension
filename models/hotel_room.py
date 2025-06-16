@@ -9,7 +9,7 @@ class HotelRoom(models.Model):
     image = fields.Binary(string="Image", attachment=True)
     room_image_ids = fields.One2many('hotel.room.image', 'room_id', string="Room Images")
     
-       # Type de réservation
+    # Type de réservation
     reservation_type_ids = fields.Many2many(
     'hotel.reservation.type',
     'hotel_room_reservation_type_rel',  # nom de la table relation
@@ -25,6 +25,14 @@ class HotelRoom(models.Model):
     string="Créneaux personnalisés"
    )
     # Tarification
+    
+    room_pricing_ids = fields.One2many(
+    'hotel.room.pricing',
+    'room_id',
+    string="Tarifications par type"
+    )
+
+    
     price_per_night = fields.Float(string="Prix par Nuitée", digits="Product Price")
     day_use_price = fields.Float(string="Day Use Price", digits="Product Price")
     hourly_rate = fields.Float(

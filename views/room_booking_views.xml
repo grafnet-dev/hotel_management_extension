@@ -1,0 +1,47 @@
+<odoo>
+    <data>
+        <!-- Extension du formulaire room.booking pour ajouter les champs dans room_line_ids -->
+        <record id="view_room_booking_form_inherit_reservation_type" model="ir.ui.view">
+            <field name="name">room.booking.form.inherit.reservation.type</field>
+            <field name="model">room.booking</field>
+            <field name="inherit_id" ref="hotel_management_odoo.room_booking_view_form" />
+            <field name="mode">extension</field>
+            <field name="arch" type="xml">
+                <!-- Ajouter les nouveaux champs dans la liste des room_line_ids -->
+                <xpath expr="//field[@name='room_line_ids']//field[@name='room_id']" position="after">
+                    
+                    <!-- Champ : Type de réservation (domaine géré par _onchange_room_id) -->
+                    <field name="reservation_type_id"
+                           string="Type de réservation"
+                           options="{'no_open': True, 'no_create': True}"
+                           attrs="{'required': [('room_id', '!=', False)]}" />
+
+                    <!-- Champ : Date de réservation -->
+                    <field name="booking_date"
+                           string="Date de réservation"
+                           attrs="{'required': [('reservation_type_id', '!=', False)]}" />
+                    
+                    <!-- Champ : Date de fin de réservation (visible uniquement pour les réservations "classic") -->
+                    <field name="booking_end_date"
+                           string="Date de fin"
+                           attrs="{
+                               'invisible': [('reservation_type_id.code', '!=', 'classic')],
+                               'required': [('reservation_type_id.code', '=', 'classic')]
+                           }" />
+                    
+                    <!-- Champs calculés automatiquement (en lecture seule pour vérification) -->
+                    <field name="checkin_date"
+                           string="Check-in calculé"
+                           readonly="1"
+                           attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
+                    
+                    <field name="checkout_date"
+                           string="Check-out calculé"
+                           readonly="1"
+                           attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
+
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

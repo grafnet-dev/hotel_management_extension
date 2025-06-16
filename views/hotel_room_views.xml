@@ -32,9 +32,8 @@
                     </group>
 
                     <separator string="Créneaux Horaires" />
-                         <!-- Section pour gérer les créneaux -->
-                   
-                   
+                    <!-- Section pour gérer les créneaux -->
+
 
                     <!-- Message d'aide -->
                     <div class="alert alert-info" role="alert" style="margin-top: 10px;">
@@ -42,6 +41,8 @@
                         créneaux horaires<br /> • <em>Nuitée/Day Use</em> : Définissez les créneaux
                         horaires<br /> • Vous pouvez avoir plusieurs créneaux pour un même type </div>
                 </page>
+
+               
 
                 <!-- 💡 Onglet Images -->
                 <page string="Images">
