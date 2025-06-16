@@ -1,7 +1,11 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
+def float_to_time(float_hour):
+    hours = int(float_hour)
+    minutes = int(round((float_hour - hours) * 60))
+    return time(hour=hours, minute=minutes)
 
 class RoomBookingLine(models.Model):
     _inherit = "room.booking.line"
@@ -36,7 +40,7 @@ class RoomBookingLine(models.Model):
             }
         else:
             return {"domain": {"reservation_type_id": []}}
-
+    
     # Automatisme principal : remplissage des dates selon le type de reservation
     @api.onchange("reservation_type_id", "booking_date", "booking_end_date", "room_id")
     def _onchange_auto_fill_dates(self):
@@ -48,7 +52,8 @@ class RoomBookingLine(models.Model):
 
         if self.reservation_type_id.is_flexible:
             # Ne rien remplir automatiquement
-            return
+            return # Pas de calcul auto pour les flexibles
+
 
         # Cherche un slot défini pour cette chambre et ce type
         slot = self.env["hotel.room.reservation.slot"].search(
@@ -63,15 +68,18 @@ class RoomBookingLine(models.Model):
             return  # Aucun slot trouvé → pas de remplissage automatique
 
         try:
+            
+            checkin_time = float_to_time(slot.checkin_time)
+            checkout_time = float_to_time(slot.checkout_time)
             # Construit le check-in
-            checkin_dt = datetime.combine(self.booking_date, slot.start_time)
+            checkin_dt = datetime.combine(self.booking_date, checkin_time)
 
             if self.reservation_type_id.code == "classic" and self.booking_end_date:
                 # Pour plusieurs nuitées, checkout = date de fin à l'heure de fin
-                checkout_dt = datetime.combine(self.booking_end_date, slot.end_time)
+                checkout_dt = datetime.combine(self.booking_end_date, checkout_time)
             else:
                 # Par défaut, checkout le même jour (day use)
-                checkout_dt = datetime.combine(self.booking_date, slot.end_time)
+                checkout_dt = datetime.combine(self.booking_date, checkout_time)
 
                 # Pour les nuitées avec checkout avant checkin, on décale d'un jour
                 if self.reservation_type_id.code == "classic" and checkout_dt <= checkin_dt:
