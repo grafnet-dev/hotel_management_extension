@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <!-- Ajouter les nouveaux champs dans la liste des room_line_ids -->
                 <xpath expr="//field[@name='room_line_ids']//field[@name='room_id']" position="after">
-                    
+
                     <!-- Champ : Type de réservation (domaine géré par _onchange_room_id) -->
                     <field name="reservation_type_id"
                            string="Type de réservation"
@@ -20,27 +20,28 @@
                     <field name="booking_date"
                            string="Date de réservation"
                            attrs="{'required': [('reservation_type_id', '!=', False)]}" />
-                    
-                    <!-- Champ : Date de fin de réservation (visible uniquement pour les réservations "classic") -->
+
+                    <!-- Champ : Date de fin de réservation (masqué pour day_use) -->
                     <field name="booking_end_date"
                            string="Date de fin"
                            attrs="{
-                               'invisible': [('reservation_type_id.code', '!=', 'classic')],
-                               'required': [('reservation_type_id.code', '=', 'classic')]
+                               'invisible': [('reservation_type_id.code', '=', 'day_use')],
+                               
                            }" />
-                    
-                    <!-- Champs calculés automatiquement (en lecture seule pour vérification) -->
-                    <field name="checkin_date"
+                  
+                    <!-- Champs calculés automatiquement CORRIGÉS (utilise les champs d'affichage formatés) -->
+                    <field name="checkin_time_display"
                            string="Check-in calculé"
                            readonly="1"
                            attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
-                    
-                    <field name="checkout_date"
+
+                    <field name="checkout_time_display"
                            string="Check-out calculé"
                            readonly="1"
                            attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
 
                 </xpath>
+               
             </field>
         </record>
     </data>
