@@ -1,5 +1,9 @@
-from odoo import models, fields
+from odoo import models, fields, api
 from datetime import timedelta
+from odoo.tools.translate import _
+from odoo.exceptions import UserError
+from datetime import datetime, timedelta
+
 
 
 class HotelRoom(models.Model):
@@ -187,6 +191,139 @@ def get_timeline_with_buffer(self, buffer_duration=timedelta(hours=1)):
         timeline.sort(key=lambda r: r['start_buffered'])
 
         return timeline
+def check_availability(self, checkin_date, checkout_date, reservation_type_code=False, room_qty=1):
+        """
+        Vérifie la disponibilité de la chambre pour une période donnée
+        selon le type de réservation spécifié.
+        
+        :param checkin_date: datetime - Date/heure de check-in demandée
+        :param checkout_date: datetime - Date/heure de check-out demandée
+        :param reservation_type_code: str - Code du type de réservation ('classic', 'dayuse', 'flexible')
+        :param room_qty: int - Quantité de chambres nécessaires (par défaut 1)
+        :return: dict - {
+            'available': bool,
+            'message': str,
+            'suggested_alternatives': list[dict],
+            'price': float,
+            'currency': str
+        }
+        """
+        self.ensure_one()
+
+        if not isinstance(checkin_date, datetime) or not isinstance(checkout_date, datetime):
+            raise UserError(_("Les dates doivent être des objets datetime valides"))
+            
+        if checkout_date <= checkin_date:
+            raise UserError(_("La date de check-out doit être postérieure au check-in"))
+
+        # 2. Vérification maintenance
+        if self.is_in_maintenance:
+            return {
+                'available': False,
+                'message': _("Cette chambre est en maintenance jusqu'au %s") % self.next_maintenance_date,
+                'suggested_alternatives': self._find_alternative_rooms(checkin_date, checkout_date, reservation_type_code),
+                'price': 0.0,
+                'currency': self._get_currency()
+            }
+
+        # 3. Vérification type de réservation
+        reservation_type = False
+        if reservation_type_code:
+            reservation_type = self.env['hotel.reservation.type'].search([('code', '=', reservation_type_code)], limit=1)
+            if not reservation_type or reservation_type not in self.reservation_type_ids:
+                return {
+                    'available': False,
+                    'message': _("Ce type de réservation n'est pas disponible pour cette chambre"),
+                    'suggested_alternatives': [],
+                    'price': 0.0,
+                    'currency': self._get_currency()
+                }
+
+        # 4. Récupération des créneaux réservés avec buffer
+        timeline = self.get_timeline_with_buffer()
+        
+        # 5. Vérification des conflits
+        for slot in timeline:
+            if (checkin_date < slot['end_buffered'] and checkout_date > slot['start_buffered']):
+                return {
+                    'available': False,
+                    'message': _("La chambre n'est pas disponible du %s au %s") % (
+                        slot['start'].strftime('%d/%m/%Y %H:%M'),
+                        slot['end'].strftime('%d/%m/%Y %H:%M')
+                    ),
+                    'suggested_alternatives': self._find_alternative_rooms(checkin_date, checkout_date, reservation_type_code),
+                    'price': 0.0,
+                    'currency': self._get_currency()
+                }
+
+        # 6. Calcul du prix
+        price = self._calculate_price(checkin_date, checkout_date, reservation_type_code)
+        
+        return {
+            'available': True,
+            'message': _("Disponible"),
+            'suggested_alternatives': [],
+            'price': price,
+            'currency': self._get_currency()
+        }
+
+def _find_alternative_rooms(self, checkin_date, checkout_date, reservation_type_code=False):
+    
+    """Trouve des chambres alternatives disponibles"""
+    domain = [
+        ('id', '!=', self.id),
+        ('is_in_maintenance', '=', False)
+    ]
+    
+    if reservation_type_code:
+        domain.append(('reservation_type_ids.code', '=', reservation_type_code))
+    
+    alternatives = self.search(domain).filtered(
+        lambda r: r.check_availability(checkin_date, checkout_date, reservation_type_code)['available']
+    )  
+    return [{
+    'id': room.id,
+    'name': room.name,
+    'price': room.get_price(checkin_date, checkout_date, reservation_type_code),
+    'image': room.image_1920,
+    'bed_type': room.bed_type
+}  for room in alternatives[:5]] 
+
+def _calculate_price(self, checkin_date, checkout_date, reservation_type_code=False,room_qty=1):
+    """
+    Calcule le prix total pour la période donnée selon le type de réservation.
+    :param checkin_date: datetime - Date/heure de check-in
+    :param checkout_date: datetime - Date/heure de check-out
+    :param reservation_type_code: str - Code du type de réservation ('classic', 'dayuse', 'flexible')
+    :return: float - Prix total
+    """
+    self.ensure_one()
+    
+    if not reservation_type_code:
+        reservation_type_code = 'classic'  
+
+    # Récupère les horaires de check-in et check-out selon le type
+    times = self.get_checkin_checkout_time(reservation_type_code)
+    
+    # Calcule la durée en jours
+    duration_days = (checkout_date - checkin_date).days
+    
+    if duration_days <= 0:
+        return 0.0  # Pas de prix si pas de durée valide
+
+    if reservation_type_code == 'dayuse':
+        return self.day_use_price * room_qty
+
+    elif reservation_type_code == 'flexible':
+        return self.hourly_rate * (duration_days * 24)  # Tarif horaire pour flexible
+
+    else:  # Type classique
+        return self.price_per_night * duration_days
+# TODO: 
+
+ 
+
+
 
     
 #: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)

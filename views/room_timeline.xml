@@ -1,0 +1,66 @@
+<odoo>
+  <data>
+
+    <!-- 1️⃣ Vue Kanban -->
+   <record id="view_room_booking_line_kanban" model="ir.ui.view">
+  <field name="name">room.booking.line.kanban</field>
+  <field name="model">room.booking.line</field>
+  <field name="arch" type="xml">
+    <kanban class="o_kanban_small_column" default_group_by="room_id" color="state">
+      <field name="display_name"/>
+      <field name="reservation_type_id"/>
+      <field name="checkin_date"/>
+      <field name="checkout_date"/>
+      <field name="state"/>
+      <templates>
+        <t t-name="kanban-box">
+          <div class="oe_kanban_card o_kanban_record" style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; background-color: #fdfdfd;">
+            <!-- HEADER -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong><field name="display_name"/></strong>
+              <span t-if="record.state.raw_value == 'confirmed'" class="badge badge-success">Confirmée</span>
+              <span t-if="record.state.raw_value == 'draft'" class="badge badge-warning">Brouillon</span>
+              <span t-if="record.state.raw_value == 'cancelled'" class="badge badge-danger">Annulée</span>
+            </div>
+
+         
+            <div style="margin-top: 8px; font-size: 13px; line-height: 1.4;">
+              <div><i class="fa fa-bed" style="color:#007bff;"/> <b>Type:</b> <field name="reservation_type_id" widget="many2one"/></div>
+              <div><i class="fa fa-calendar-plus-o" style="color:#28a745;"/> <b>Check-in:</b> <field name="checkin_date"/></div>
+              <div><i class="fa fa-calendar-times-o" style="color:#dc3545;"/> <b>Check-out:</b> <field name="checkout_date"/></div>
+            </div>
+          </div>
+        </t>
+      </templates>
+    </kanban>
+  </field>
+</record>
+
+
+    <!-- 2️⃣ Vue List (remplace l'ancienne vue tree) -->
+    <record id="view_room_booking_line_list" model="ir.ui.view">
+      <field name="name">room.booking.line.list</field>
+      <field name="model">room.booking.line</field>
+      <field name="arch" type="xml">
+        <list string="Lignes de réservation">
+          <field name="room_id"/>
+          <field name="checkin_date"/>
+          <field name="checkout_date"/>
+          <field name="reservation_type_id"/>
+        </list>
+      </field>
+    </record>
+
+    
+    <record id="action_room_booking_line_kanban" model="ir.actions.act_window">
+      <field name="name">Réservations</field>
+      <field name="res_model">room.booking.line</field>
+      <field name="view_mode">kanban,list,form</field>
+      <field name="view_id" ref="view_room_booking_line_kanban"/> <!-- Optionnel, Odoo cherche dans l'ordre -->
+    </record>
+
+   
+    <menuitem id="menu_room_timeline" name="Planning " action="action_room_booking_line_kanban" sequence="30"/>
+
+  </data>
+</odoo>

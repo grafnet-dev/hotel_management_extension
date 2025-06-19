@@ -9,6 +9,8 @@ def float_to_time(float_hour):
 
 class RoomBookingLine(models.Model):
     _inherit = "room.booking.line"
+    booking_id = fields.Many2one('room.booking', string="Réservation")
+    partner_id = fields.Many2one(related='booking_id.partner_id', string="Client", store=True)
 
     reservation_type_id = fields.Many2one(
         "hotel.reservation.type",
@@ -24,6 +26,27 @@ class RoomBookingLine(models.Model):
     booking_end_date = fields.Date(
     string="Date de fin de réservation",
     help="Date de fin utilisée pour calculer la date de départ pour les réservations sur plusieurs nuitées",
+    )
+
+    timeline_duration = fields.Integer(
+        string="Durée (heures)",
+        compute='_compute_timeline_duration',
+        help="Durée totale en heures pour l'affichage dans la timeline",
+        store=True
+    )
+    
+    timeline_progress = fields.Float(
+        string="Progression",
+        compute='_compute_timeline_progress',
+        help="Pourcentage de temps écoulé pour les réservations en cours",
+        store=True
+    )
+    
+    timeline_color = fields.Char(
+        compute='_compute_timeline_color',
+        string="Couleur Timeline",
+        help="Couleur en hexadécimal selon le type de réservation",
+        store=True
     )
 
 
@@ -52,7 +75,7 @@ class RoomBookingLine(models.Model):
 
         if self.reservation_type_id.is_flexible:
             # Ne rien remplir automatiquement
-            return # Pas de calcul auto pour les flexibles
+            return 
 
 
         # Cherche un slot défini pour cette chambre et ce type
@@ -65,7 +88,7 @@ class RoomBookingLine(models.Model):
         )
 
         if not slot:
-            return  # Aucun slot trouvé → pas de remplissage automatique
+            return  
 
         try:
             
@@ -115,4 +138,39 @@ class RoomBookingLine(models.Model):
                 raise ValidationError(
                     _("La date de fin de réservation ne peut pas être antérieure à la date de début.")
                 )
+            
+    
+    @api.depends('checkin_date', 'checkout_date')
+    def _compute_timeline_duration(self):
+        """Compute total duration in hours"""
+        for record in self:
+            if record.checkin_date and record.checkout_date:
+                delta = record.checkout_date - record.checkin_date
+                record.timeline_duration = delta.total_seconds() / 3600
+            else:
+                record.timeline_duration = 0
+
+    @api.depends('checkin_date', 'checkout_date')
+    def _compute_timeline_progress(self):
+        """Calcule le pourcentage de temps écoulé"""
+        now = fields.Datetime.now()
+        for record in self:
+            if (record.checkin_date and record.checkout_date and 
+                record.checkin_date <= now <= record.checkout_date):
+                total = (record.checkout_date - record.checkin_date).total_seconds()
+                elapsed = (now - record.checkin_date).total_seconds()
+                record.timeline_progress = (elapsed / total) * 100
+            else:
+                record.timeline_progress = 0
+
+    @api.depends('reservation_type_id.code')
+    def _compute_timeline_color(self):
+        """Définit la couleur selon le type de réservation"""
+        color_mapping = {
+            'classic': '#4e6ef2', 
+            'dayuse': '#67b168',   
+            'flexible': '#f2637b'  
+        }
+        for record in self:
+            record.timeline_color = color_mapping.get(record.reservation_type_id.code, '#cccccc')
 
