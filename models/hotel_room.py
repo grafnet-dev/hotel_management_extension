@@ -24,6 +24,21 @@ class HotelRoom(models.Model):
     'room_id',
     string="Créneaux personnalisés"
    )
+    
+    #Heure limite pour early check-in et late check-out
+    
+    early_checkin_hour_limit = fields.Float(
+    string="Heure limite Early Check-in",
+    default=6.0,
+    help="En dessous de cette heure, l'early check-in est considéré comme une nuit supplémentaire."
+    )
+
+    late_checkout_hour_limit = fields.Float(
+        string="Heure limite Late Check-out",
+        default=18.0,
+        help="Au-dessus de cette heure, le late check-out est considéré comme une nuit supplémentaire."
+    )
+    
     # Tarification
     
     room_pricing_ids = fields.One2many(

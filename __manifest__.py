@@ -19,6 +19,16 @@ Long description of module's purpose
 
     # any module necessary for this one to work correctly
     'depends': ['hotel_management_odoo'],
+     
+    'assets': {
+        'web.assets_backend': [
+            'hotel_management_extension/static/src/js/time_clock_widget.js',
+            'hotel_management_extension/static/src/xml/time_clock_template.xml',
+            'hotel_management_extension/static/src/js/time_float_widget.js',
+            'hotel_management_extension/static/src/xml/time_float_template.xml',
+        ],
+    },
+
 
     # always loaded
     'data': [

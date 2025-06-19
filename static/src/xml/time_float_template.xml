@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="hotel_management_extension.time_float_widget" owl="1">
+        <div class="o_time_float_widget">
+            <select t-att-value="hour" t-on-change="onHourChange">
+                <t t-foreach="Array.from({length: 24}, (_, i) => i)" t-as="h" t-key="h">
+                    <option t-att-value="h" t-att-selected="h === hour">
+                        <t t-esc="h.toString().padStart(2, '0')" />
+                    </option>
+                </t>
+            </select>
+            :
+            <select t-att-value="minute" t-on-change="onMinuteChange">
+                <t t-foreach="[0, 15, 30, 45]" t-as="m" t-key="m">
+                    <option t-att-value="m" t-att-selected="m === minute">
+                        <t t-esc="m.toString().padStart(2, '0')" />
+                    </option>
+                </t>
+            </select>
+        </div>
+    </t>
+</templates>

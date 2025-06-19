@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="hotel_management_extension.time_clock_widget" owl="1">
+        <div class="o_time_clock_widget" style="text-align: center;">
+            <canvas 
+                t-ref="clockCanvas" 
+                width="300" 
+                height="300" 
+                style="border: 2px solid #dee2e6; border-radius: 50%; cursor: pointer; margin: 10px 0;"
+            />
+            <div style="font-size: 18px; font-weight: bold; color: #495057; margin-top: 10px;">
+                <t t-esc="Math.floor(props.value || 14).toString().padStart(2, '0')" />:<t t-esc="Math.round(((props.value || 14) - Math.floor(props.value || 14)) * 60).toString().padStart(2, '0')" />
+            </div>
+            <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                Faites glisser les aiguilles
+            </div>
+        </div>
+    </t>
+</templates>

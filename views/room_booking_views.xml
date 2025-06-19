@@ -7,39 +7,149 @@
             <field name="inherit_id" ref="hotel_management_odoo.room_booking_view_form" />
             <field name="mode">extension</field>
             <field name="arch" type="xml">
-                <!-- Ajouter les nouveaux champs dans la liste des room_line_ids -->
-                <xpath expr="//field[@name='room_line_ids']//field[@name='room_id']" position="after">
+              <!-- Remplacer complètement la liste des room_line_ids -->
+              <xpath expr="//field[@name='room_line_ids']" position="replace">
                     
-                    <!-- Champ : Type de réservation (domaine géré par _onchange_room_id) -->
-                    <field name="reservation_type_id"
-                           string="Type de réservation"
-                           options="{'no_open': True, 'no_create': True}"
-                           attrs="{'required': [('room_id', '!=', False)]}" />
+                    <field name="room_line_ids" colspan="4"
+                           string="Room Lines"
+                           context="{'default_checkin_date':checkin_date, 'default_checkout_date':checkout_date, 'default_uom_qty':duration}">
+                        <!-- Liste non-éditable avec vue tree -->
+                        <list>
+                            <field name="room_id" string="Room"/>
+                            <field name="reservation_type_id" string="Type de réservation"/>
+                            <field name="booking_date" string="Date de réservation"/>
+                            <field name="booking_end_date" string="Date de fin"/>
+                            <field name="checkin_date"/>
+                            <field name="checkout_date"/>
+                            <field name="uom_qty" string="Duration"/>
+                            <field name="uom_id" string="Unit of Measure"/>
+                            <field name="price_unit"/>
+                            <field name="price_subtotal" widget="monetary"/>
+                            <field name="early_checkin_requested" string="Early Check-in"/>
+                            <field name="late_checkout_requested" string="Late Check-out"/>
+                            <field name="was_requalified_flexible" string="Requalifié"/>
+                        </list>
 
-                    <!-- Champ : Date de réservation -->
-                    <field name="booking_date"
-                           string="Date de réservation"
-                           attrs="{'required': [('reservation_type_id', '!=', False)]}" />
-                    
-                    <!-- Champ : Date de fin de réservation (visible uniquement pour les réservations "classic") -->
-                    <field name="booking_end_date"
-                           string="Date de fin"
-                           attrs="{
-                               'invisible': [('reservation_type_id.code', '!=', 'classic')],
-                               'required': [('reservation_type_id.code', '=', 'classic')]
-                           }" />
-                    
-                    <!-- Champs calculés automatiquement (en lecture seule pour vérification) -->
-                    <field name="checkin_date"
-                           string="Check-in calculé"
-                           readonly="1"
-                           attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
-                    
-                    <field name="checkout_date"
-                           string="Check-out calculé"
-                           readonly="1"
-                           attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
+                         <!-- Vue formulaire pour le popup -->
+                           <form>
+                            <group>
+                                <group>
+                                    <field name="room_id" string="Room"
+                                           required="1"
+                                           options="{'no_open': True, 'no_create': True}"/>
+                                    
+                                    <!-- Champ : Type de réservation -->
+                                    <field name="reservation_type_id"
+                                           string="Type de réservation"
+                                           options="{'no_open': True, 'no_create': True}"
+                                           attrs="{'required': [('room_id', '!=', False)]}" />
 
+                                    <!-- Champ : Date de réservation -->
+                                    <field name="booking_date"
+                                           string="Date de réservation"
+                                           attrs="{'required': [('reservation_type_id', '!=', False)]}" />
+                                    
+                                    <!-- Champ : Date de fin de réservation -->
+                                    <field name="booking_end_date"
+                                           string="Date de fin"
+                                           attrs="{
+                                               'invisible': [('reservation_type_id.code', '!=', 'classic')],
+                                               'required': [('reservation_type_id.code', '=', 'classic')]
+                                           }" />
+                                </group>
+                                
+                                <group>
+                                    <!-- Champs calculés automatiquement -->
+                                    <field name="checkin_date"
+                                           string="Check-in"
+                                           readonly="1"
+                                           attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
+                                    
+                                    <field name="checkout_date"
+                                           string="Check-out"
+                                           readonly="1"
+                                           attrs="{'invisible': [('reservation_type_id.is_flexible', '=', True)]}" />
+
+                                    <field name="uom_qty" string="Duration"
+                                           readonly="1" force_save="1"/>
+                                    
+                                    <field name="uom_id"
+                                           readonly="booking_line_visible == True"
+                                           string="Unit of Measure"
+                                           options="{'no_open': True, 'no_create': True}"/>
+                                </group>
+                            </group>
+                            
+                            <group string="Tarification">
+                                <group>
+                                    <field name="price_unit"
+                                           readonly="booking_line_visible == True"/>
+                                    
+                                    <field name="tax_ids"
+                                           readonly="booking_line_visible == True "
+                                           options="{'no_create': True}"
+                                           widget="many2many_tags"/>
+                                </group>
+                                
+                                <group>
+                                    <field name="price_subtotal"
+                                           widget="monetary"
+                                           readonly="booking_line_visible == True"/>
+                                    
+                                    <field groups="account.group_account_manager"
+                                           name="price_total" widget="monetary"
+                                           readonly="booking_line_visible == True"/>
+                                </group>
+                            </group>
+
+                            <group string="Options Check-in/Check-out">
+                                <group>
+                                    <!-- Early Check-in -->
+                                    <field name="early_checkin_requested" string="Early Check-in demandé" />
+                                    <field name="early_checkin_hour" 
+                                           string="Heure Early Check-in"
+                                           
+                                           attrs="{
+                                               'invisible': [('early_checkin_requested', '=', False)],
+                                               'required': [('early_checkin_requested', '=', True)]
+                                           }"
+                                           help="Format: 10.5 = 10h30" />
+                                </group>
+                                
+                                <group>
+                                    <!-- Late Check-out -->
+                                    <field name="late_checkout_requested" string="Late Check-out demandé" />
+                                    <field name="late_checkout_hour" 
+                                           string="Heure Late Check-out"
+                                           
+                                           attrs="{
+                                               'invisible': [('late_checkout_requested', '=', False)],
+                                               'required': [('late_checkout_requested', '=', True)]
+                                           }"
+                                           help="Format: 15.5 = 15h30" />
+                                </group>
+                            </group>
+
+                            <group string="Informations de requalification" 
+                                   attrs="{'invisible': [('was_requalified_flexible', '=', False)]}">
+                                <field name="was_requalified_flexible" 
+                                       string="Requalifié en Flexible" 
+                                       readonly="1"/>
+                                
+                                <field name="extra_night_required" 
+                                       string="Nuit supplémentaire requise" 
+                                       readonly="1"/>
+                                
+                                <field name="requalification_reason" 
+                                       string="Motif de requalification" 
+                                       readonly="1"
+                                       widget="text"/>
+                            </group>
+                            
+                            <!-- Champs invisibles nécessaires -->
+                            <field name="booking_line_visible" invisible="1"/>
+                        </form>
+                     </field>   
                 </xpath>
             </field>
         </record>
