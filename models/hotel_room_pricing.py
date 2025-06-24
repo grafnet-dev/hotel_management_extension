@@ -8,16 +8,34 @@ class HotelRoomPricing(models.Model):
 
     room_id = fields.Many2one("hotel.room", required=True, ondelete="cascade")
     reservation_type_id = fields.Many2one("hotel.reservation.type", required=True)
-
+    # Prix fixe pour les types classiques (nuitée, day-use)
     price = fields.Float("Prix (Fixe ou base)", digits="Product Price")
+    # Dans hotel.room.pricing, ajoutez temporairement :
+    hourly_price = fields.Float(string="Hourly Price (DEPRECATED)", digits="Product Price")
 
-    # Si c'est un type flexible, permettre un tarif horaire
-    hourly_price = fields.Float("Tarif horaire", digits="Product Price")
+    # Tarification horaire (activée si le type de réservation est flexible)
     is_hourly_based = fields.Boolean(
         string="Tarif horaire actif",
         compute="_compute_is_hourly_based",
         store=True
     )
+    # Tarification par bloc (ex : 60€ les 6h)
+    price_per_block = fields.Float(
+        string="Prix par tranche",
+        digits="Product Price",
+        help="Tarif fixe pour une tranche définie (ex: 60€ les 6h)"
+    )
+    block_duration = fields.Float(
+        string="Durée d’un bloc (h)",
+        help="Durée couverte par la tranche tarifaire (ex: 6h)"
+    )
+    # Majoration si réservation inclut des heures de nuit (22h–6h)
+    night_extra_percent = fields.Float(
+        string="Majoration de nuit (%)",
+        default=0.0,
+        help="Pourcentage à appliquer si la réservation couvre des heures entre 22h et 6h"
+    )
+
 
     currency_id = fields.Many2one(
         'res.currency', required=False, default=lambda self: self.env.company.currency_id
@@ -31,3 +49,6 @@ class HotelRoomPricing(models.Model):
     _sql_constraints = [
         ('unique_room_type', 'unique(room_id, reservation_type_id)', 'Un tarif existe déjà pour cette chambre et ce type.')
     ]
+#Gérer des promotions, ex : early check-in gratuit si 2 nuits réservées
+
+#Automatiser selon la disponibilité réelle des chambres

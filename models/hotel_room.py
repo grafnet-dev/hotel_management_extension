@@ -47,7 +47,7 @@ class HotelRoom(models.Model):
     string="Tarifications par type"
     )
 
-    
+    #champs à supprimer 
     price_per_night = fields.Float(string="Prix par Nuitée", digits="Product Price")
     day_use_price = fields.Float(string="Day Use Price", digits="Product Price")
     hourly_rate = fields.Float(

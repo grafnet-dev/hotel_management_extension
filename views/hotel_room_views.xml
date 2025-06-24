@@ -21,6 +21,23 @@
             <!-- Ajout des nouveaux onglets dans le notebook -->
             <xpath expr="//notebook" position="inside">
 
+                <!-- 💰 Onglet Tarification -->
+                <page string="Tarification" name="pricing">
+                    <group>
+                        <group string="Configuration des tarifs">
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Information :</strong><br /> • Définissez un tarif pour
+                                chaque type de réservation accepté<br /> • Les tarifs horaires ne
+                                s'appliquent qu'aux types flexibles<br /> • Les majorations de nuit
+                                s'appliquent entre 22h et 6h </div>
+                        </group>
+                    </group>
+
+                    <field name="room_pricing_ids">
+                        <!-- Utilisation de la vue séparée -->
+                    </field>
+                </page>
+
 
                 <page string="Types de Réservation" name="reservation">
                     <group>
@@ -42,7 +59,6 @@
                         horaires<br /> • Vous pouvez avoir plusieurs créneaux pour un même type </div>
                 </page>
 
-               
 
                 <!-- 💡 Onglet Images -->
                 <page string="Images">
