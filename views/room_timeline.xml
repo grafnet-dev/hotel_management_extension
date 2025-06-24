@@ -2,7 +2,7 @@
   <data>
 
     <!-- 1️⃣ Vue Kanban -->
-   <record id="view_room_booking_line_kanban" model="ir.ui.view">
+  <record id="view_room_booking_line_kanban" model="ir.ui.view">
   <field name="name">room.booking.line.kanban</field>
   <field name="model">room.booking.line</field>
   <field name="arch" type="xml">
@@ -18,9 +18,10 @@
             <!-- HEADER -->
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <strong><field name="display_name"/></strong>
-              <span t-if="record.state.raw_value == 'confirmed'" class="badge badge-success">Confirmée</span>
-              <span t-if="record.state.raw_value == 'draft'" class="badge badge-warning">Brouillon</span>
-              <span t-if="record.state.raw_value == 'cancelled'" class="badge badge-danger">Annulée</span>
+               <span t-if="record.state.raw_value == 'check_in'" class="badge bg-success text-white">Confirmée</span>
+              <span t-if="record.state.raw_value == 'draft'" class="badge bg-warning text-white">En attente</span>
+              <span t-if="record.state.raw_value == 'cancelled'" class="badge bg-danger text-white">Annulée</span>
+              <span t-if="record.state.raw_value == 'check_out'" class="badge bg-secondary text-white">Terminée</span>
             </div>
 
          
@@ -34,11 +35,11 @@
       </templates>
     </kanban>
   </field>
-</record>
+  </record>
 
 
     <!-- 2️⃣ Vue List (remplace l'ancienne vue tree) -->
-    <record id="view_room_booking_line_list" model="ir.ui.view">
+  <record id="view_room_booking_line_list" model="ir.ui.view">
       <field name="name">room.booking.line.list</field>
       <field name="model">room.booking.line</field>
       <field name="arch" type="xml">
@@ -49,18 +50,43 @@
           <field name="reservation_type_id"/>
         </list>
       </field>
+  </record>
+
+<!-- Vue  Calendaire  -->
+  <record id="view_room_booking_line_calendar" model="ir.ui.view">
+      <field name="name">room.booking.line.calendar</field>
+      <field name="model">room.booking.line</field>
+      <field name="arch" type="xml">
+        <calendar date_start="checkin_date"
+                  date_stop="checkout_date"
+                  string="Planning des Réservations"
+                  color="room_id"
+                  event_open_popup="true"
+                  quick_create="false"
+                  mode="month"
+                  scales="day,week,month"
+        >
+          <!-- Champs affichés dans le calendrier -->
+          <field name="room_id"/>
+          <field name="reservation_type_id"/>
+          <field name="state"/>
+          <field name="display_name"/>
+        </calendar>
+      </field>
     </record>
 
-    
+
+
+    <!-- Action mise à jour -->
     <record id="action_room_booking_line_kanban" model="ir.actions.act_window">
       <field name="name">Réservations</field>
       <field name="res_model">room.booking.line</field>
-      <field name="view_mode">kanban,list,form</field>
-      <field name="view_id" ref="view_room_booking_line_kanban"/> <!-- Optionnel, Odoo cherche dans l'ordre -->
+      <field name="view_mode">kanban,list,form,calendar</field>
+      <field name="view_id" ref="view_room_booking_line_kanban"/>
     </record>
 
    
-    <menuitem id="menu_room_timeline" name="Planning " action="action_room_booking_line_kanban" sequence="30"/>
+  <menuitem id="menu_room_timeline" name="Planning " action="action_room_booking_line_kanban" sequence="30"/>
 
   </data>
 </odoo>
