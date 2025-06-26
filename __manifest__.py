@@ -39,6 +39,7 @@ Long description of module's purpose
         'views/hotel_room_pricing_views.xml',
         'views/room_booking_views.xml',
         'views/hotel_police_views.xml',
+        'views/product_template_views.xml',
         'views/views.xml',
         'views/templates.xml',  
         

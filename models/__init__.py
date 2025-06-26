@@ -9,4 +9,8 @@ from . import room_booking_line_extension
 from . import hotel_room_pricing
 from . import room_booking_extension
 from . import hotel_police_form
+from . import food_booking_line
+from . import hotel_pos_menu
+from . import hotel_pos_menu_line
+from . import product_template_extension
 
