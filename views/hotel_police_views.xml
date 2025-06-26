@@ -5,40 +5,40 @@
         <field name="arch" type="xml">
             <form string="Fiche de police - Enregistrement Client">
                 <group string="Identité du client">
-                    <field name="guest_name"/>
-                    <field name="gender"/>
-                    <field name="date_of_birth"/>
-                    <field name="place_of_birth"/>
-                    <field name="nationality"/>
+                    <field name="guest_name" />
+                    <field name="gender" />
+                    <field name="date_of_birth" />
+                    <field name="place_of_birth" />
+                    <field name="nationality" />
                 </group>
 
                 <group string="Pièce d'identité">
-                    <field name="id_type"/>
-                    <field name="id_number"/>
-                    <field name="id_issue_date"/>
-                    <field name="id_expiry_date"/>
-                    <field name="id_issue_place"/>
-                    <field name="id_document_file" filename="id_document_filename"/>
+                    <field name="id_type" />
+                    <field name="id_number" />
+                    <field name="id_issue_date" />
+                    <field name="id_expiry_date" />
+                    <field name="id_issue_place" />
+                    <field name="id_document_file" filename="id_document_filename" />
                 </group>
 
                 <group string="Informations sur le séjour">
-                    <field name="arrival_date"/>
-                    <field name="departure_date"/>
-                    <field name="room_number"/>
+                    <field name="arrival_date" />
+                    <field name="departure_date" />
+                    <field name="room_number" />
                 </group>
 
                 <group string="Autres">
-                    <field name="notes"/>
+                    <field name="notes" />
                 </group>
 
                 <footer>
                     <button name="action_validate_police_form"
-                            string="Valider et passer au Check-In"
-                            type="object"
-                            class="btn-primary"/>
+                        string="Valider et passer au Check-In"
+                        type="object"
+                        class="btn-primary" />
                     <button string="Annuler"
-                            special="cancel"
-                            class="btn-secondary"/>
+                        special="cancel"
+                        class="btn-secondary" />
                 </footer>
             </form>
         </field>

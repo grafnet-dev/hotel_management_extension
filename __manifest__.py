@@ -18,7 +18,8 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['hotel_management_odoo'],
+    'depends': ['hotel_management_odoo',
+                'pos_extension_hotel'],
      
     'assets': {
         'web.assets_backend': [
