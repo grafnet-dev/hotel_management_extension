@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Menu principal -->
+    <menuitem id="menu_hotel_ui_root" name="Hôtel UI" />
+
+    <!-- Action client (ouvre un composant JS au lieu d'une vue classique XML) -->
+    <record id="action_hotel_ui_app" model="ir.actions.client">
+        <field name="name">Hotel JS Interface</field>
+        <field name="tag">hotel_ui.app</field>
+        <!-- Ce tag est le lien avec ton composant JS -->
+    </record>
+
+    <!-- Lien menu -> action -->
+    <menuitem
+        id="menu_hotel_ui_app"
+        name="Réservations"
+        parent="menu_hotel_ui_root"
+        action="action_hotel_ui_app"
+    />
+</odoo>

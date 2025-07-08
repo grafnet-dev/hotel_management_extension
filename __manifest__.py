@@ -5,7 +5,7 @@
     'summary': "Short (1 phrase/line) summary of the module's purpose",
 
     'description': """
-Long description of module's purpose
+        Long description of module's purpose
     """,
 
     'author': "My Company",
@@ -18,15 +18,18 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['hotel_management_odoo',
-                'pos_extension_hotel'],
+    'depends': ['hotel_management_odoo','base','web'],
      
     'assets': {
         'web.assets_backend': [
+            'hotel_management_extension/static/src/js/hotel_ui_app.js',
+            'hotel_management_extension/static/src/xml/hotel_ui_template.xml',
+            'hotel_management_extension/static/src/js/test_simple.js',
             'hotel_management_extension/static/src/js/time_clock_widget.js',
             'hotel_management_extension/static/src/xml/time_clock_template.xml',
             'hotel_management_extension/static/src/js/time_float_widget.js',
             'hotel_management_extension/static/src/xml/time_float_template.xml',
+           
         ],
     },
 
@@ -40,6 +43,7 @@ Long description of module's purpose
         'views/room_booking_views.xml',
         'views/hotel_police_views.xml',
         'views/product_template_views.xml',
+        'views/hotel_ui_menu.xml',  # menu + action UI juste pour le test
         'views/views.xml',
         'views/templates.xml',  
         
