@@ -18,8 +18,7 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['hotel_management_odoo',
-                'pos_extension_hotel'],
+    'depends': ['hotel_management_odoo'],
      
     'assets': {
         'web.assets_backend': [
@@ -38,6 +37,7 @@ Long description of module's purpose
         'views/hotel_room_reservation_slot_views.xml',
         'views/hotel_room_pricing_views.xml',
         'views/room_booking_views.xml',
+        'views/room_timeline_views.xml',
         'views/hotel_police_views.xml',
         'views/product_template_views.xml',
         'views/views.xml',
