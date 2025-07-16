@@ -1,107 +1,311 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <record id="view_form_hotel_room_inherit_extension" model="ir.ui.view">
-        <field name="name">hotel.room.view.form.inherit.extension</field>
+    <!-- Vue Liste des Chambres -->
+    <!-- view_form_hotel_room_inherit_extension-->
+    <!-- Vue Liste des Chambres - Héritage et Remplacement -->
+    <record id="view_list_hotel_room_inherit_extension" model="ir.ui.view">
+        <field name="name">hotel.room.view.list.inherit.extension</field>
         <field name="model">hotel.room</field>
-        <field name="inherit_id" ref="hotel_management_odoo.hotel_room_view_form" />
+        <field name="inherit_id" ref="hotel_management_odoo.hotel_room_view_tree" />
         <field name="arch" type="xml">
-            <!-- Ne pas supprimer le champ d'origine pour éviter l'erreur sur le champ image -->
-            <!-- <xpath expr="//field[@name='room_image']" position="replace"/> -->
-            <!-- 1. Supprimer le champ image d'origine -->
-            <!-- <xpath expr="//field[@name='room_image']" position="replace"/> -->
-            <!-- Au lieu de remplacer le champ, vous pourriez le masquer -->
-            <!-- Ou masquer le champ original si vous préférez -->
-            <xpath expr="//field[@name='room_image']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <!-- Masquer le champ list_price existant -->
-            <xpath expr="//field[@name='list_price']" position="attributes">
-                <attribute name="invisible">0</attribute>
-            </xpath>
-            <!-- Ajout des nouveaux onglets dans le notebook -->
-            <xpath expr="//notebook" position="inside">
-
-                <!-- 💰 Onglet Tarification -->
-                <page string="Tarification" name="pricing">
-                    <group>
-                        <group string="Configuration des tarifs">
-                            <div class="alert alert-info" role="alert">
-                                <strong>💡 Information :</strong><br /> • Définissez un tarif pour
-                                chaque type de réservation accepté<br /> • Les tarifs horaires ne
-                                s'appliquent qu'aux types flexibles<br /> • Les majorations de nuit
-                                s'appliquent entre 22h et 6h </div>
-                        </group>
-                    </group>
-
-                    <field name="room_pricing_ids">
-                        <!-- Utilisation de la vue séparée -->
-                    </field>
-                </page>
-
-
-                <page string="Types de Réservation" name="reservation">
-                    <group>
-                        <group string="Types Acceptés">
-                            <field name="reservation_type_ids"
-                                widget="many2many_tags"
-                                options="{'no_create_edit': True}" />
-                        </group>
-                    </group>
-
-                    <separator string="Créneaux Horaires" />
-                    <!-- Section pour gérer les créneaux -->
-
-
-                    <!-- Message d'aide -->
-                    <div class="alert alert-info" role="alert" style="margin-top: 10px;">
-                        <strong>💡 Aide :</strong><br /> • <em>Flexible</em> : Pas besoin de
-                        créneaux horaires<br /> • <em>Nuitée/Day Use</em> : Définissez les créneaux
-                        horaires<br /> • Vous pouvez avoir plusieurs créneaux pour un même type </div>
-                </page>
-
-
-                <!-- 💡 Onglet Images -->
-                <page string="Images">
-                    <field name="room_image_ids">
-                        <!-- Changement de tree à list -->
-                        <list editable="bottom">
-                            <field name="image" widget="image" />
-                            <field name="description" />
-                        </list>
-                    </field>
-                </page>
-
-
-                <!-- 🛠 Maintenance -->
-                <page string="Maintenance">
-                    <group>
-                        <field name="is_in_maintenance" />
-                        <field name="maintenance_notes" />
-                        <field name="last_maintenance_date" />
-                        <field name="next_maintenance_date" />
-                    </group>
-                </page>
-                <!-- 🧳 Commodités -->
-                <page string="Commodités">
-                    <field name="room_amenities_ids"
-                        context="{'default_type': 'room'}"
-                        options="{'no_create': False}"
-                        widget="many2many_tags" />
-                </page>
-                <!-- 🛏️ Confort -->
-                <page string="Confort">
-                    <group>
-                        <field name="bed_type" />
-                        <field name="surface_area" />
-                        <field name="flooring_type" />
-                        <field name="view_type" />
-                    </group>
-                    <group>
-                        <field name="is_smoking_allowed" />
-                        <field name="is_pets_allowed" />
-                    </group>
-                </page>
-            </xpath>
+            <!-- Masquer les champs du module principal -->
+            <field name="name" position="replace">
+                <field name="name" string="Numéro de Chambre"/>
+            </field>
+            
+            <field name="room_type" position="replace">
+                <field name="room_type_id" string="Type de Chambre"/>
+            </field>
+            
+            <field name="floor_id" position="replace">
+                <field name="floor_id" string="Étage"/>
+            </field>
+            
+            <field name="list_price" position="replace">
+                <field name="base_price" string="Prix de base"/>
+            </field>
+            
+            <field name="status" position="replace">
+                <field name="status" string="Statut"/>
+                <field name="available_count" string="Total Disponibilités"/>
+            </field>
+            
+            <!-- Optionnel: Ajouter des décorations pour le statut--> 
+            <list position="attributes">
+                <attribute name="decoration-success">status == 'available'</attribute>
+                <attribute name="decoration-danger">status == 'occupied'</attribute>
+                <attribute name="decoration-warning">status == 'cleaning'</attribute>
+                <attribute name="decoration-muted">status == 'maintenance'</attribute>
+            </list>
         </field>
     </record>
+
+
+    <!-- Vue Kanban des Chambres -->
+    <record id="hotel_room_view_kanban" model="ir.ui.view">
+        <field name="name">hotel.room.kanban</field>
+        <field name="model">hotel.room</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="room_type_id">
+                <field name="name"/>
+                <field name="room_type_id"/>
+                <field name="status"/>
+                <field name="available_count"/>
+                <field name="is_in_maintenance"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                    </div>
+                                    <div class="o_kanban_record_badge">
+                                        <span t-if="record.status.raw_value == 'available'" class="badge badge-success">
+                                            <i class="fa fa-check" title="Disponible"/> Disponible
+                                        </span>
+                                        <span t-if="record.status.raw_value == 'occupied'" class="badge badge-danger">
+                                            <i class="fa fa-user" title="Occupée"/> Occupée
+                                        </span>
+                                        <span t-if="record.status.raw_value == 'cleaning'" class="badge badge-warning">
+                                            <i class="fa fa-cleaning" title="Nettoyage"/> Nettoyage
+                                        </span>
+                                        <span t-if="record.status.raw_value == 'maintenance'" class="badge badge-secondary">
+                                            <i class="fa fa-wrench" title="Maintenance"/> Maintenance
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div>Type: <field name="room_type_id"/></div>
+                                    <div t-if="record.available_count.raw_value > 0">
+                                        <i class="fa fa-home" title="Disponibles"/> <field name="available_count"/> disponibles
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue Formulaire des Chambres -->
+    <record id="hotel_room_view_form" model="ir.ui.view">
+        <field name="name">hotel.room.form</field>
+        <field name="model">hotel.room</field>
+        <field name="arch" type="xml">
+            <form string="Chambre">
+                <header>
+                    <button name="action_set_available" string="Disponible" type="object" 
+                            class="btn-success" invisible="status == 'available'"/>
+                    <button name="action_set_occupied" string="Occupée" type="object" 
+                            class="btn-danger" invisible="status == 'occupied'"/>
+                    <button name="action_set_cleaning" string="Nettoyage" type="object" 
+                            class="btn-warning" invisible="status == 'cleaning'"/>
+                    <button name="action_set_maintenance" string="Maintenance" type="object" 
+                            class="btn-secondary" invisible="status == 'maintenance'"/>
+                    <field name="status" widget="statusbar" statusbar_visible="available,occupied,cleaning,maintenance"/>
+                </header>
+                
+                <xpath expr="//notebook" position="inside">
+                
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Numéro de chambre"/>
+                        </h1>
+                    </div>
+                    
+                    <!-- Alerte si pas de type de chambre 
+                    <div class="alert alert-warning" role="alert" invisible="room_type_id">
+                        <strong>⚠️ Attention :</strong> Vous devez d'abord créer un type de chambre avant d'enregistrer cette chambre.
+                        <br/>
+                        <a href="/web#action=hotel_management_odoo.hotel_room_type_action&amp;view_type=form" target="_blank">
+                            → Créer un type de chambre
+                        </a>
+                    </div>-->
+
+                    <group>
+                        <group string="Informations Principales">
+                            <field name="room_type_id" 
+                                   options="{'no_create': False, 'no_open': False}"
+                                   required="1"
+                                   readonly="id"/>
+                            <field name="floor_id" options="{'no_create': False}"/>
+                            <field name="capacity" string="Capacité" readonly="1"/>
+                        </group>
+                        
+                        <group string="Statut et Disponibilité">
+                            <field name="status" widget="selection"/>
+                            <field name="available_count" readonly="1" 
+                                   string="Chambres disponibles (même type)"/>
+                            <field name="is_in_maintenance"/>
+                        </group>
+                    </group>
+                    
+                    <!--<xpath expr="//notebook" position="inside">-->
+                    <notebook>
+                    
+                       
+
+                        <!-- Onglet Types de Réservation
+                        <page string="📅 Types de Réservation" name="reservation_types">
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Information :</strong><br/>
+                                • Les types de réservation sont définis au niveau du type de chambre<br/>
+                                • Cette chambre hérite des types acceptés par son type
+                            </div>
+                            <group>
+                                <field name="reservation_type_id" invisible="1"/>
+                                <button name="action_view_room_type_reservation_types" 
+                                        string="Gérer Types de Réservation" 
+                                        type="object" 
+                                        class="btn-primary"
+                                        invisible="not room_type_id"/>
+                            </group>
+                            
+                        </page>-->
+                        <!-- Onglet Maintenance -->
+                        <page string="🛠️ Maintenance" name="maintenance">
+                            <group>
+                                <group string="État de Maintenance">
+                                    <field name="is_in_maintenance" 
+                                           readonly="status != 'maintenance'"/>
+                                    <field name="last_maintenance_date"/>
+                                    <field name="next_maintenance_date"/>
+                                </group>
+                                <group string="Notes">
+                                    <field name="maintenance_notes" nolabel="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Onglet Caractéristiques 
+                        <page string="🛏️ Caractéristiques" name="characteristics">
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Information :</strong><br/>
+                                • Les caractéristiques sont héritées du type de chambre<br/>
+                                • Pour modifier, éditez le type de chambre
+                            </div>
+                            <group>
+                               <group string="Caractéristiques Physiques" invisible="not room_type_id">
+                                    <field name="room_type_id" readonly="1" invisible="1"/>
+                                    <field name="bed_type" readonly="1"/>
+                                    <field name="surface_area" readonly="1"/>
+                                    <field name="max_occupancy" readonly="1"/>
+                                </group>
+                            </group>
+                            <group>
+                                <button name="action_view_room_type_details" 
+                                        string="Voir Détails du Type" 
+                                        type="object" 
+                                        class="btn-primary"
+                                        invisible="not room_type_id"/>
+                            </group>
+                        </page>-->
+
+                        <!-- Onglet Images 
+                        <page string="📸 Images" name="images">
+                            <div class="alert alert-info" role="alert">
+                                <strong>💡 Information :</strong><br/>
+                                • Les images principales sont gérées au niveau du type de chambre<br/>
+                                • Vous pouvez ajouter des images spécifiques à cette chambre ici
+                            </div>
+                            <field name="room_image_ids">
+                                <list editable="bottom">
+                                    <field name="image" widget="image"/>
+                                    <field name="description"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Types de Réservation" name="reservation">
+                            <group>
+                                <group string="Types Acceptés">
+                                    <field name="reservation_type_ids"
+                                        widget="many2many_tags"
+                                        options="{'no_create_edit': True}" />
+                                </group>
+                            </group> 
+                        </page>-->
+
+                        <!-- Onglet Historique des Réservations 
+                        <page string="📋 Historique" name="history">
+                            <field name="booking_line_ids">
+                                <list>
+                                    <field name="checkin_date"/>
+                                    <field name="checkout_date"/>
+                                    <field name="state"/>
+                                    <field name="guest_name"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <page string="📋 Historique" name="history">
+                            <field name="reservation">
+                                
+                            </field>
+                        </page>-->
+                         
+                    </notebook>
+                    <!--</xpath>-->
+                    
+                </xpath>
+            
+               
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Recherche des Chambres 
+    <record id="hotel_room_view_search" model="ir.ui.view">
+        <field name="name">hotel.room.search</field>
+        <field name="model">hotel.room</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Numéro"/>
+                <field name="room_type_id" string="Type"/>
+                <field name="floor_id" string="Étage"/>
+                <separator/>
+                <filter name="available" string="Disponibles" domain="[('status', '=', 'available')]"/>
+                <filter name="occupied" string="Occupées" domain="[('status', '=', 'occupied')]"/>
+                <filter name="maintenance" string="En Maintenance" domain="[('is_in_maintenance', '=', True)]"/>
+                <filter name="active" string="Actives" domain="[('active', '=', True)]"/>
+                <separator/>
+                <group expand="0" string="Grouper par">
+                    <filter name="group_by_room_type" string="Type de Chambre" context="{'group_by': 'room_type_id'}"/>
+                    <filter name="group_by_status" string="Statut" context="{'group_by': 'status'}"/>
+                    <filter name="group_by_floor" string="Étage" context="{'group_by': 'floor_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>-->
+
+    <!-- Action pour les Chambres
+    <record id="hotel_room_action" model="ir.actions.act_window">
+        <field name="name">Chambres</field>
+        <field name="res_model">hotel.room</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créez votre première chambre !
+            </p>
+            <p>
+                Avant de créer une chambre, assurez-vous d'avoir créé au moins un type de chambre.
+                <br/>
+                <a href="/web#action=hotel_management_odoo.hotel_room_type_action&amp;view_type=form" target="_blank">
+                    → Créer un type de chambre
+                </a>
+            </p>
+        </field>
+    </record>-->
+
+    <!-- Menu 
+    <menuitem id="hotel_room_menu" 
+              name="Chambres" 
+              parent="hotel_management_odoo.hotel_main_menu"
+              action="hotel_room_action"
+              sequence="20"/>
+              -->
 </odoo>

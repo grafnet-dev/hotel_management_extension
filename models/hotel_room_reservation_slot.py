@@ -5,7 +5,8 @@ class HotelRoomReservationSlot(models.Model):
     _name = "hotel.room.reservation.slot"
     _description = "Créneau horaire personnalisé pour type de réservation"
 
-    room_id = fields.Many2one('hotel.room', string="Chambre", required=True, ondelete="cascade")
+    room_id = fields.Many2one('hotel.room', string="Chambre", required=False, ondelete="cascade")
+    room_type_id = fields.Many2one('hotel.room.type', string="Type de Chambre", required=True, ondelete="cascade")
     reservation_type_id = fields.Many2one('hotel.reservation.type', string="Type de réservation", required=True, ondelete="cascade")
     
     checkin_time = fields.Float(string="Heure d'arrivée", required=True)
@@ -44,17 +45,33 @@ class HotelRoomReservationSlot(models.Model):
             }
             
     # Contraintes de validation
-    @api.constrains('reservation_type_id', 'checkin_time', 'checkout_time')
-    def _check_slot_validation(self):
-        for slot in self:
+    #@api.constrains('reservation_type_id', 'checkin_time', 'checkout_time')
+    #def _check_slot_validation(self):
+        #for slot in self:
             # Vérifier que le type n'est pas flexible
-            if slot.reservation_type_id.is_flexible:
-                raise ValidationError(
-                    f"Impossible de définir un créneau horaire pour le type flexible '{slot.reservation_type_id.name}'."
-                )
+            #if slot.reservation_type_id.is_flexible:
+                #raise ValidationError(
+                    #f"Impossible de définir un créneau horaire pour le type flexible '{slot.reservation_type_id.name}'."
+               # )
             
             # Vérifier que le type est accepté par la chambre
-            if slot.reservation_type_id not in slot.room_id.reservation_type_ids:
+            #if slot.reservation_type_id not in slot.room_id.reservation_type_ids:
+                #raise ValidationError(
+                    #f"Le type de réservation '{slot.reservation_type_id.name}' n'est pas accepté par cette chambre."
+                #)
+    @api.constrains('checkin_time', 'checkout_time')
+    def _check_slot_validation(self):
+        for slot in self:
+            room_type = slot.room_type_id
+            if not room_type:
+                continue  # ou raise une erreur si obligatoire
+
+            # Si le type de chambre est flexible, on n'autorise pas les créneaux
+            if room_type.is_flexible:
                 raise ValidationError(
-                    f"Le type de réservation '{slot.reservation_type_id.name}' n'est pas accepté par cette chambre."
+                    f"Impossible de définir un créneau horaire pour une chambre de type flexible '{room_type.name}'."
                 )
+
+            # (Optionnel) Vérifier que l'horaire est cohérent avec les règles du type de chambre
+            if slot.checkin_time >= slot.checkout_time:
+                raise ValidationError("L'heure d'arrivée doit être avant l'heure de départ.")

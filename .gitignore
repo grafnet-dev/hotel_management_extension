@@ -1,0 +1,27 @@
+# Fichiers Python compilés
+__pycache__/
+_pycache_/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs et temporaires
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Éventuels dossiers de cache (scripts ou tests locaux)
+.cache/
+*.egg-info/
+dist/
+build/
+
+# Éditeurs de texte / IDE
+.vscode/
+.idea/
+*.iml
+
+# Mac / Windows / Linux
+.DS_Store
+Thumbs.db

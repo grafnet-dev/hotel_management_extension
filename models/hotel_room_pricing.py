@@ -6,7 +6,8 @@ class HotelRoomPricing(models.Model):
     _name = "hotel.room.pricing"
     _description = "Tarification par type de réservation pour les chambres"
 
-    room_id = fields.Many2one("hotel.room", required=True, ondelete="cascade")
+    room_id = fields.Many2one("hotel.room", required=False, ondelete="cascade")
+    room_type_id = fields.Many2one('hotel.room.type', string="Type de Chambre", required=True, ondelete="cascade")
     reservation_type_id = fields.Many2one("hotel.reservation.type", required=True)
     # Prix fixe pour les types classiques (nuitée, day-use)
     price = fields.Float("Prix (Fixe ou base)", digits="Product Price")

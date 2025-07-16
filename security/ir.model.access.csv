@@ -5,4 +5,6 @@ access_hotel_reservation_type_all,access_hotel_reservation_type_all,model_hotel_
 access_hotel_room_reservation_slot_all,access_hotel_room_reservation_slot_all,model_hotel_room_reservation_slot,,1,1,1,1
 access_hotel_room_pricing_all,access_hotel_room_pricing_all,model_hotel_room_pricing,,1,1,1,1
 access_hotel_police_form_all,access_hotel_police_form_all,model_hotel_police_form,,1,1,1,1
+access_hotel_room_type_all,access_hotel_room_type_all,model_hotel_room_type,,1,1,1,1
+access_hotel_room_type_image_all,access_hotel_room_type_image_all,model_hotel_room_type_image,,1,1,1,1
 

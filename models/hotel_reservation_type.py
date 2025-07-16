@@ -8,6 +8,7 @@ class HotelReservationType(models.Model):
     _name = "hotel.reservation.type"
     _description = "Type de réservation"
 
+    room_type_id = fields.Many2one('hotel.room.type', string="Type de Chambre", required=True, ondelete="cascade")
     name = fields.Char("Nom du type", required=True)  # Ex: Classique, Day Use, Flexible
     code = fields.Selection(
         [
