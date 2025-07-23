@@ -49,6 +49,7 @@
         "views/hotel_room_reservation_slot_views.xml",
         "views/hotel_room_pricing_views.xml",
         "views/room_booking_views.xml",
+        'views/room_timeline_views.xml',
         "views/hotel_police_views.xml",
         "views/product_template_views.xml",
         "views/hotel_ui_menu.xml",  # menu + action UI juste pour le test

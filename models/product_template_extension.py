@@ -9,7 +9,7 @@ class ProductTemplate(models.Model):
         ('dessert', 'Dessert'),
         ('ingredient', 'Ingrédient'),
         ('service', 'Service'),
-        ('food', 'Food')
+        ('food', 'Food'),
     ], string="Type de produit hôtelier")
 
     is_available_restaurant = fields.Boolean(string="Dispo. Restaurant", default=False)
