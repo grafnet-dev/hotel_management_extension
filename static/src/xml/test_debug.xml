@@ -1,0 +1,6 @@
+<t t-name="hotel_management_extension.TestDebug" owl="1">
+    <div class="container mt-3">
+        <h4>🔥 TEST DEBUG - ÇA MARCHE !</h4>
+        <p>Si tu vois ce message, l'enregistrement fonctionne.</p>
+    </div>
+</t>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="hotel_management_extension.ReceptionStandaloneAppRoot">
+    <div class="p-4">
+        <nav class="mb-4 space-x-4">
+            <Link to="'/'">Accueil</Link>
+            <Link to="'/about'">À propos</Link>
+            <Link to="'/about/sedjro'">À propos Sèdjro</Link>
+        </nav>
+
+        <div class="border p-4">
+            <t t-if="currentComponent.value">
+                <t t-component="currentComponent.value" t-props="currentProps.value" />
+            </t>
+        </div>
+    </div>
+</t>
+</templates>

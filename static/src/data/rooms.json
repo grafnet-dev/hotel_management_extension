@@ -1,0 +1,8 @@
+[
+  { "id": 1, "name": "Chambre Deluxe", "type": "Suite", "available": true },
+  { "id": 2, "name": "Chambre Simple", "type": "Standard", "available": false },
+  { "id": 3, "name": "Chambre Familiale", "type": "Famille", "available": true },
+  { "id": 4, "name": "Chambre Présidentielle", "type": "Luxe", "available": false },
+  { "id": 5, "name": "Chambre Supérieure", "type": "Supérieure", "available": true }
+]
+  
