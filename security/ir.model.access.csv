@@ -7,4 +7,5 @@ access_hotel_room_pricing_all,access_hotel_room_pricing_all,model_hotel_room_pri
 access_hotel_police_form_all,access_hotel_police_form_all,model_hotel_police_form,,1,1,1,1
 access_hotel_room_type_all,access_hotel_room_type_all,model_hotel_room_type,,1,1,1,1
 access_hotel_room_type_image_all,access_hotel_room_type_image_all,model_hotel_room_type_image,,1,1,1,1
+access_hotel_room_planning_all,access_hotel_room_planning_all,model_hotel_room_planning,,1,1,1,1
 

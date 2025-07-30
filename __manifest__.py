@@ -26,6 +26,7 @@ Long description of module's purpose
             'hotel_management_extension/static/src/xml/time_clock_template.xml',
             'hotel_management_extension/static/src/js/time_float_widget.js',
             'hotel_management_extension/static/src/xml/time_float_template.xml',
+            'hotel_management_extension/static/src/js/hotel_dashboard.js',
         ],
     },
 
@@ -40,7 +41,10 @@ Long description of module's purpose
         'views/room_booking_views.xml',
         'views/hotel_police_views.xml',
         'views/views.xml',
-        'views/templates.xml',  
+        'views/templates.xml',
+        'views/hotel_room_planning_views.xml',
+        
+        
         
         
     ],

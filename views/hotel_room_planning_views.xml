@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue Liste Planning -->
+    <record id="view_hotel_room_planning_list" model="ir.ui.view">
+        <field name="name">hotel.room.planning.list</field>
+        <field name="model">hotel.room.planning</field>
+        <field name="arch" type="xml">
+            <list string="Planning Chambres" create="false" edit="false" delete="false">
+                <field name="room_type_name"/>
+                <field name="room_name"/>
+                <field name="date"/>
+                <field name="status" widget="badge" 
+                       decoration-success="status == 'available'"
+                       decoration-warning="status in ['reserved', 'checkin', 'checkout']"
+                       decoration-danger="status in ['occupied', 'maintenance', 'out_of_order']"
+                       decoration-info="status == 'cleaning'"/>
+                <field name="reservation_ref"/>
+                
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue Pivot Planning -->
+    <record id="view_hotel_room_planning_pivot" model="ir.ui.view">
+        <field name="name">hotel.room.planning.pivot</field>
+        <field name="model">hotel.room.planning</field>
+        <field name="arch" type="xml">
+            <pivot string="Planning Chambres" disable_linking="True">
+                <field name="room_type_name" type="row"/>
+                <field name="room_name" type="row"/>
+                <field name="status" type="row"/>
+                <field name="date" type="col" interval="day"/>
+                <field name="base_price" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Vue Graphique Planning -->
+    <record id="view_hotel_room_planning_graph" model="ir.ui.view">
+        <field name="name">hotel.room.planning.graph</field>
+        <field name="model">hotel.room.planning</field>
+        <field name="arch" type="xml">
+            <graph string="Planning Chambres" type="bar" stacked="True">
+                <field name="date" type="row" interval="day"/>
+                <field name="status" type="col"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Vue Calendrier Planning -->
+    <record id="view_hotel_room_planning_calendar" model="ir.ui.view">
+        <field name="name">hotel.room.planning.calendar</field>
+        <field name="model">hotel.room.planning</field>
+        <field name="arch" type="xml">
+            <calendar string="Planning Chambres" 
+                     date_start="date" 
+                     color="status"
+                     event_open_popup="true"
+                     quick_create="false"
+                     mode="month"
+                     scales="day,week,month">
+                <field name="room_type_name"/>
+                <field name="room_name"/>
+                <field name="status"/>
+                
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Vue Recherche Planning -->
+    <record id="view_hotel_room_planning_search" model="ir.ui.view">
+        <field name="name">hotel.room.planning.search</field>
+        <field name="model">hotel.room.planning</field>
+        <field name="arch" type="xml">
+            <search string="Recherche Planning">
+                <field name="room_name"/>
+                <field name="room_type_name"/>
+                <field name="reservation_ref"/>
+                
+                <filter name="available" string="Disponible" 
+                        domain="[('status', '=', 'available')]"/>
+                <filter name="reserved" string="Réservé" 
+                        domain="[('status', '=', 'reserved')]"/>
+                <filter name="occupied" string="Occupé" 
+                        domain="[('status', '=', 'occupied')]"/>
+                <filter name="maintenance" string="Maintenance" 
+                        domain="[('status', '=', 'maintenance')]"/>
+                
+                <separator/>
+                <filter name="today" string="Aujourd'hui" domain="[('date', '=', context.get('today'))]"/>
+                <filter name="this_week" string="Cette Semaine" domain="[('date', '>=', context.get('start_week')),('date', '&lt;', context.get('end_week'))]"/>
+                <filter name="this_month" string="Ce Mois" domain="[('date', '>=', context.get('start_month')),('date', '&lt;', context.get('end_month'))]"/>
+
+                
+                <group expand="0" string="Grouper par">
+                    <filter name="group_room_type" string="Type de Chambre" 
+                            context="{'group_by': 'room_type_name'}"/>
+                    <filter name="group_room" string="Chambre" 
+                            context="{'group_by': 'room_name'}"/>
+                    <filter name="group_date" string="Date" 
+                            context="{'group_by': 'date'}"/>
+                    <filter name="group_status" string="Statut" 
+                            context="{'group_by': 'status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Assistant Planning - Vue Formulaire -->
+    <record id="view_hotel_room_planning_wizard_form" model="ir.ui.view">
+        <field name="name">hotel.room.planning.wizard.form</field>
+        <field name="model">hotel.room.planning.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assistant Planning Chambres">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="view_mode"/>
+                            <field name="room_type_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Afficher Planning" name="action_show_planning" 
+                            type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action Planning Principal -->
+    <record id="action_hotel_room_planning" model="ir.actions.act_window">
+        <field name="name">Planning des Chambres</field>
+        <field name="res_model">hotel.room.planning.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Action Planning Direct -->
+    <record id="action_hotel_room_planning_direct" model="ir.actions.act_window">
+        <field name="name">Planning des Chambres</field>
+        <field name="res_model">hotel.room.planning</field>
+        <field name="view_mode">pivot,list,graph,calendar</field>
+        <field name="domain">[]</field>
+        <field name="context">{
+            'group_by': ['room_type_name', 'room_name'],
+            'pivot_column_groupby': ['date'],
+            'pivot_row_groupby': ['room_type_name', 'room_name'],
+            'search_default_this_month': 1}
+        </field>
+    </record>
+
+    <!-- Menu Planning -->
+    <menuitem id="menu_hotel_planning"
+              name="Planning"
+              sequence="15"/>
+              
+    <menuitem id="menu_hotel_room_planning"
+              name="Planning Chambres"
+              parent="menu_hotel_planning"
+              action="action_hotel_room_planning"
+              sequence="10"/>
+
+    <menuitem id="menu_hotel_room_planning_direct"
+              name="Vue Planning"
+              parent="menu_hotel_planning"
+              action="action_hotel_room_planning_direct"
+              sequence="20"/>
+
+   
+</odoo>

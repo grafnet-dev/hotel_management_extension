@@ -1,0 +1,11 @@
+<!-- File: hotel_dashboard/views/assets.xml -->
+<odoo>
+    <template id="assets_dashboard" name="Hotel Dashboard assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/hotel_management_extension/static/src/js/hotel_dashboard.js"/>
+            <link rel="stylesheet" href="/hotel_management_extension/static/src/css/hotel_dashboard.css"/>
+        </xpath>
+    </template>
+</odoo>
+
+

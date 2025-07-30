@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="hotel_dashboard_content" name="Hotel Dashboard Content">
+            <div>
+                <!-- KPI cards -->
+                <div class="dashboard-kpi-cards o_hotel_kpis">
+                    <div class="kpi-card" id="kpi-total-confirmed">
+                        <div>0</div>
+                        <div class="kpi-label">Total Confirmed Reservations</div>
+                    </div>
+                    <div class="kpi-card" id="kpi-total-checkout">
+                        <div>0</div>
+                        <div class="kpi-label">Total Check-Out</div>
+                    </div>
+                    <div class="kpi-card" id="kpi-today-availability">
+                        <div>0</div>
+                        <div class="kpi-label">Today's Availability</div>
+                    </div>
+                    <div class="kpi-card" id="kpi-total-reservations">
+                        <div>0</div>
+                        <div class="kpi-label">Total Reservations</div>
+                    </div>
+                </div>
+
+                <!-- Rest of your dashboard content -->
+                <!-- Status Buttons Bar -->
+                <div class="status-filter-bar" role="toolbar" aria-label="Filter Reservations by Status">
+                    <button type="button" class="status-filter-button status-booking" data-status="booking" title="Booking">BOOKING</button>
+                    <button type="button" class="status-filter-button status-confirmed" data-status="confirmed" title="Confirmed">CONFIRMED</button>
+                    <button type="button" class="status-filter-button status-checked-in" data-status="checked_in" title="Checked-In">CHECKED-IN</button>
+                    <button type="button" class="status-filter-button status-checkout" data-status="checkout" title="Check-Out">CHECKOUT</button>
+                    <button type="button" class="status-filter-button status-under-cleaning" data-status="cleaning" title="Under Cleaning">UNDER CLEANING</button>
+                    <button type="button" class="status-filter-button status-under-maintenance" data-status="maintenance" title="Under Maintenance">UNDER MAINTENANCE</button>
+                    <button type="button" class="status-filter-button status-all" data-status="all" style="background:#555;">ALL</button>
+                </div>
+
+                <!-- Calendar Controls -->
+                <div class="calendar-controls" role="region" aria-label="Calendar navigation">
+                    <div class="calendar-buttons" role="group" aria-label="Time navigation buttons">
+                        <button type="button" class="calendar-button" data-action="today">Today</button>
+                        <button type="button" class="calendar-button" data-action="prev-month">&lt;</button>
+                        <button type="button" class="calendar-button" data-action="next-month">&gt;</button>
+                    </div>
+                    <div>
+                        <span id="calendar-current-month" aria-live="polite" aria-atomic="true" aria-relevant="text" style="font-weight: 600; font-size: 15px;"></span>
+                    </div>
+                </div>
+
+                <!-- Main Calendar -->
+                <div class="hotel-calendar" role="grid" aria-label="Rooms availability calendar">
+                    <div class="calendar-left-column" role="rowgroup" aria-label="Room types and rooms listing" tabindex="0" aria-readonly="true" aria-rowcount="0" aria-colcount="1">
+                        <!-- Left column: Room types and rooms -->
+                    </div>
+                    <div class="calendar-main" role="grid" aria-readonly="true" aria-colcount="0" aria-rowcount="0" tabindex="0" aria-label="Room availability calendar cells">
+                        <!-- Right calendar grid -->
+                    </div>
+                </div>
+
+                <!-- Styles -->
+                <style>
+                /* KPI Cards Styles */
+                .dashboard-kpi-cards {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 15px;
+                }
+                .kpi-card {
+                    background: #f9f9f9;
+                    border-radius: 8px;
+                    padding: 15px;
+                    flex: 1;
+                    margin: 0 7px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    font-weight: 600;
+                    font-size: 22px;
+                    color: #333;
+                    min-height: 90px;
+                }
+                .kpi-label {
+                    font-size: 14px;
+                    opacity: 0.7;
+                    margin-top: 6px;
+                    font-weight: normal;
+                }
+                /* Status Buttons */
+                .status-filter-bar {
+                    margin-bottom: 15px;
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+                .status-filter-button {
+                    border: none;
+                    border-radius: 3px;
+                    padding: 7px 15px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: white;
+                    cursor: pointer;
+                    user-select: none;
+                    white-space: nowrap;
+                    transition: background-color 0.3s ease;
+                }
+                .status-booking { background-color: #2f49a7; }
+                .status-confirmed { background-color: #1b2f6a; }
+                .status-checked-in { background-color: #2d8a36; }
+                .status-checkout { background-color: #f08c11; }
+                .status-under-cleaning, .status-under-maintenance { background-color: #7d7d7d; }
+
+                .status-filter-button.active {
+                    box-shadow: 0 0 6px 2px rgba(0,0,0,0.2);
+                }
+                /* Calendar styles */
+                .hotel-calendar {
+                    display: flex;
+                    border: 1px solid #ddd;
+                    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                    font-size: 13px;
+                    user-select: none;
+                }
+                .calendar-left-column {
+                    min-width: 150px;
+                    border-right: 1px solid #ddd;
+                    background: #fafafa;
+                    overflow: auto;
+                    max-height: 600px;
+                }
+                .room-type-header {
+                    font-weight: 700;
+                    padding: 8px 10px;
+                    border-bottom: 1px solid #e5e5e5;
+                    background: #f0f0f0;
+                    position: sticky;
+                    top: 0;
+                    z-index: 2;
+                }
+                .room-name-cell {
+                    border-bottom: 1px solid #eee;
+                    padding: 6px 10px;
+                    white-space: nowrap;
+                    cursor: default;
+                }
+                .calendar-main {
+                    flex: 1;
+                    overflow: auto;
+                    max-height: 600px;
+                    border-left: 1px solid #ddd;
+                }
+                .calendar-header {
+                    display: flex;
+                    border-bottom: 1px solid #ddd;
+                    background: #fafafa;
+                    position: sticky;
+                    top: 0;
+                    z-index: 3;
+                }
+                .calendar-header-cell {
+                    flex: 1;
+                    border-left: 1px solid #ddd;
+                    padding: 6px 5px;
+                    text-align: center;
+                    font-weight: 600;
+                    background: #fafafa;
+                    white-space: nowrap;
+                }
+                .calendar-row {
+                    display: flex;
+                    border-bottom: 1px solid #eee;
+                }
+                .calendar-row-cell {
+                    flex: 1;
+                    border-left: 1px solid #ddd;
+                    border-right: 1px solid #ddd;
+                    border-bottom: 1px solid #ddd;
+                    height: 36px;
+                    padding: 2px 4px;
+                    cursor: pointer;
+                    position: relative;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .calendar-row-cell.left-column {
+                    border: none;
+                    border-bottom: 1px solid #ddd;
+                    background: #fafafa;
+                    cursor: default;
+                    flex: none;
+                    width: 150px;
+                }
+                .calendar-cell-available {
+                    background-color: #fff9db;
+                }
+                .calendar-cell-reserved {
+                    background-color: #ff5c5c;
+                    color: white;
+                    font-weight: 600;
+                    padding-left: 6px;
+                }
+                .calendar-cell-occupied {
+                    background-color: #39b54a;
+                    color: white;
+                    font-weight: 600;
+                    padding-left: 6px;
+                }
+                .calendar-cell-maintenance {
+                    background-color: #8c8c8c;
+                    color: white;
+                    font-style: italic;
+                    font-weight: 600;
+                    padding-left: 6px;
+                }
+                .calendar-cell-hover {
+                    outline: 2px solid #3a7bd5;
+                    z-index: 5;
+                }
+                /* Calendar top controls */
+                .calendar-controls {
+                    margin-bottom: 15px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-wrap: wrap;
+                }
+                .calendar-buttons {
+                    display: flex;
+                    gap: 10px;
+                }
+                .calendar-button {
+                    cursor: pointer;
+                    border: none;
+                    padding: 7px 15px;
+                    border-radius: 3px;
+                    background-color: #3a7bd5;
+                    color: white;
+                    font-weight: 600;
+                    transition: background-color 0.3s ease;
+                }
+                .calendar-button:hover {
+                    background-color: #2c5cad;
+                }
+                /* Modal styles */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0; left: 0;
+                    width: 100vw; height: 100vh;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                }
+                .modal-window {
+                    background: white;
+                    border-radius: 8px;
+                    padding: 20px;
+                    width: 360px;
+                    max-width: 90vw;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+                    position: relative;
+                }
+                .modal-window h3 {
+                    margin-top: 0;
+                    margin-bottom: 15px;
+                    font-weight: 700;
+                    font-size: 20px;
+                    color: #1a1a1a;
+                }
+                .modal-close {
+                    position: absolute;
+                    top: 12px;
+                    right: 12px;
+                    font-size: 18px;
+                    cursor: pointer;
+                    color: #666;
+                }
+                .modal-close:hover {
+                    color: #000;
+                }
+                .form-group {
+                    margin-bottom: 15px;
+                }
+                .form-group label {
+                    display: block;
+                    margin-bottom: 4px;
+                    font-weight: 600;
+                    color: #333;
+                }
+                .form-group input[type="text"],
+                .form-group select,
+                .form-group input[type="date"] {
+                    width: 100%;
+                    padding: 7px 10px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    font-size: 14px;
+                }
+                .modal-footer {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                }
+                .btn-primary {
+                    background-color: #3a7bd5;
+                    color: white;
+                    border: none;
+                    padding: 7px 15px;
+                    font-weight: 600;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                }
+                .btn-primary:hover {
+                    background-color: #2c5cad;
+                }
+                .btn-secondary {
+                    background-color: #eee;
+                    color: #333;
+                    border: none;
+                    padding: 7px 15px;
+                    font-weight: 600;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                }
+                .btn-secondary:hover {
+                    background-color: #ddd;
+                }
+                /* Scrollbar styling for calendar */
+                .calendar-main::-webkit-scrollbar,
+                .calendar-left-column::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+                .calendar-main::-webkit-scrollbar-thumb,
+                .calendar-left-column::-webkit-scrollbar-thumb {
+                    background-color: rgba(0,0,0,0.1);
+                    border-radius: 4px;
+                }
+            </style>
+            </div>
+        </template>
+        <template id="hotel_dashboard_template" name="Hotel Room Status Dashboard" page="True">
+            <t t-call="web.layout">
+                <div class="oe_single_form_footer">
+                    <div class="o_hotel_dashboard_container container-fluid">
+                        <t t-call="hotel_management_extension.hotel_dashboard_content"/>
+                    </div>
+                </div>
+            </t>
+        </template>
+    </data>                          
+</odoo>
