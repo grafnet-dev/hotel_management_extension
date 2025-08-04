@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<templates xml:space="preserve">
-    <t t-name="hotel_management_extension.Link">
-        <a t-att-href="props.to" t-on-click="navigate">
-            <t t-slot="default"/>
-        </a>
-    </t>
-</templates>

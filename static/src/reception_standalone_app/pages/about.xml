@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<templates xml:space="preserve">
-    <t t-name="hotel_management_extension.AboutPage">
-    <div class="about-container">
-        <h1 class="about-title">ℹ️ À propos</h1>
-        <p t-if="props.name">Bonjour <t t-esc="props.name" /> !</p>
-    </div>
-</t>
-</templates>

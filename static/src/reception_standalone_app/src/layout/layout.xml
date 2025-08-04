@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+  <t t-name="hotel_management_extension.Layout">
+    <div class="flex h-screen font-sans">
+      <!-- Sidebar -->
+      <div class="w-60 bg-cyan-900 text-white flex flex-col shadow-lg">
+        <Sidebar />
+      </div>
+
+      <div class="flex-1 flex flex-col bg-slate-50">
+        <!-- Header -->
+        <div class="bg-white p-4 border-b border-slate-200 shadow-sm">
+          <Header />
+        </div>
+
+        <!-- Contenu principal -->
+        <main class="flex-1 overflow-y-auto p-4">
+          <t t-if="props.currentComponent">
+            <t t-component="props.currentComponent" t-props="props.currentProps" />
+          </t>
+        </main>
+      </div>
+    </div>
+  </t>
+</templates>

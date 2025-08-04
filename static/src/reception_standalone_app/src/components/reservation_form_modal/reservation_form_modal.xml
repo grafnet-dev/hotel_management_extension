@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+  <t t-name="hotel_management_extension.ReservationFormModal">
+    <div class="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+      <div class="bg-white w-full max-w-xl rounded-lg shadow-lg p-6 space-y-6">
+        <h2 class="text-xl font-semibold text-cyan-900">Nouvelle réservation</h2>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-medium">Nom du client</label>
+            <input t-model="newReservation.client.name" class="w-full border px-3 py-2 rounded"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium">Téléphone</label>
+            <input t-model="newReservation.client.phone" class="w-full border px-3 py-2 rounded"/>
+          </div>
+          <div>
+            <label class="text-sm font-medium">Email</label>
+            <input t-model="newReservation.client.email" class="w-full border px-3 py-2 rounded"/>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+          <button t-on-click="close" class="px-4 py-2 bg-gray-200 rounded">Annuler</button>
+          <button t-on-click="save" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">
+            💾 Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </t>
+</templates>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="hotel_management_extension.HomePage">
+        <h1>🏠 Bienvenue sur la page d'accueil</h1>
+    </t>
+
+    
+</templates>

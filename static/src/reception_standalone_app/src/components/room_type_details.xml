@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+<!-- RoomTypeDetail -->
+<t t-name="reception_standalone_app.RoomTypeDetail">
+  <t t-if="props.roomType">
+    <div class="border p-4 rounded shadow">
+      <img t-att-src="props.roomType.image" class="w-full h-40 object-cover rounded mb-2"/>
+      <h2 class="text-xl font-bold"><t t-esc="props.roomType.name"/></h2>
+      <p class="text-gray-600"><t t-esc="props.roomType.description"/></p>
+      <div class="mt-2">
+        🛏️ <t t-esc="props.roomType.bed_type"/> — 👥 <t t-esc="props.roomType.capacity"/> personnes
+      </div>
+      <div>
+        📐 Surface: <t t-esc="props.roomType.surface_area"/> m²
+      </div>
+      <div class="text-green-700 font-semibold mt-2">
+        💰 <t t-esc="props.roomType.price_per_night"/> FCFA / nuit
+      </div>
+    </div>
+  </t>
+  <t t-if="!props.roomType">
+    <div class="text-gray-400 italic">Sélectionnez une chambre pour voir les détails.</div>
+  </t>
+</t>
+</templates>

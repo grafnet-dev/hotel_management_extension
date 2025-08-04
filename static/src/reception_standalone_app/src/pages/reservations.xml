@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+  <t t-name="hotel_management_extension.Reservations">
+    <div class="min-h-screen bg-gray-50">
+      <!-- Navigation breadcrumb -->
+      <div class="bg-white ">
+        <div class="max-w-7xl mx-auto px-6 py-3">
+          <nav class="flex items-center space-x-2 text-sm">
+            <a href="#" class="text-cyan-600 hover:text-cyan-700 font-medium">Dashboard</a>
+            <span class="text-gray-400">/</span>
+            <span class="text-gray-600">Réservations</span>
+            <t t-if="state.screen === 'detail'">
+              <span class="text-gray-400">/</span>
+              <span class="text-gray-900 font-medium" t-esc="state.selectedBooking.group_code"/>
+            </t>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Contenu principal avec transition -->
+      <div class="transition-all duration-300 ease-in-out">
+        <t t-if="state.screen === 'list'">
+          <ReservationList onSelect="showDetails" />
+        </t>
+        <t t-elif="state.screen === 'detail'">
+          <ReservationDetail booking="state.selectedBooking" onBack="backToList" />
+        </t>
+      </div>
+    </div>
+  </t>
+</templates>

@@ -1,0 +1,215 @@
+export const roomTypes = [
+  {
+    id: 1,
+    name: "Chambre Standard",
+    description: "Une chambre confortable pour 1 à 2 personnes.",
+    capacity: 2,
+    price_per_night: 45000,
+    default_check_in_time: 14.0,
+    default_check_out_time: 12.0,
+    day_use_check_in: 10.0,
+    day_use_check_out: 17.0,
+    day_use_price: 12000.0,
+    hourly_rate: 5000.0,
+    bed_type: "double",
+    flooring_type: "tile",
+    surface_area: 28.0,
+    amenities: [1, 2, 3],
+    reservation_types: ["overnight", "flexible", "day_use"],
+    image:
+      "http://localhost:8069/hotel_management_extension/static/src/reception_standalone_app/src/images/room0.jpg",
+    rooms: [
+      {
+        id: 101,
+        name: "Chambre 101",
+        floor: 1,
+        view: "city",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: true,
+        is_smoking_allowed: false,
+        room_imagestypes: [
+          {
+            image:
+              "http://localhost:8069/hotel_management_extension/static/src/reception_standalone_app/src/images/room1.jpg",
+          },
+          {
+            image:
+              "http://localhost:8069/hotel_management_extension/static/src/reception_standalone_app/src/images/room2.jpg",
+          },
+        ],
+        last_maintenance: "2025-07-20",
+        cleaning_status: "clean",
+      },
+      {
+        id: 103,
+        name: "Chambre 103",
+        floor: 1,
+        view: "city",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: true,
+        is_smoking_allowed: false,
+        room_imagestypes: [],
+        cleaning_status: "clean",
+      },
+      {
+        id: 104,
+        name: "Chambre 104",
+        floor: 1,
+        view: "city",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: false,
+        is_smoking_allowed: false,
+        room_imagestypes: [],
+        cleaning_status: "clean",
+      },
+      {
+        id: 106,
+        name: "Chambre 106",
+        floor: 1,
+        view: "city",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: false,
+        is_smoking_allowed: false,
+        room_imagestypes: [],
+        cleaning_status: "clean",
+      },
+      {
+        id: 107,
+        name: "Chambre 107",
+        floor: 1,
+        view: "city",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: false,
+        is_smoking_allowed: false,
+        room_imagestypes: [],
+        cleaning_status: "clean",
+      },
+      {
+        id: 108,
+        name: "Chambre 108",
+        floor: 1,
+        view: "city",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: false,
+        is_smoking_allowed: false,
+        room_imagestypes: [],
+        cleaning_status: "clean",
+      },
+    ],
+  },
+  {
+    id: 2,
+    name: "Suite Luxe",
+    description: "Suite spacieuse avec salon, bain à remous et vue panoramique.",
+    capacity: 4,
+    price_per_night: 120000,
+    default_check_in_time: 15.0,
+    default_check_out_time: 11.0,
+    day_use_check_in: 10.0,
+    day_use_check_out: 18.0,
+    day_use_price: 30000.0,
+    hourly_rate: 10000.0,
+    bed_type: "king",
+    flooring_type: "wood",
+    surface_area: 60.0,
+    amenities: [1, 2, 3, 4],
+    reservation_types: ["overnight", "flexible", "day_use"],
+    image:
+      "http://localhost:8069/hotel_management_extension/static/src/reception_standalone_app/src/images/room4.jpg",
+    rooms: [
+      {
+        id: 102,
+        name: "Suite 102",
+        floor: 2,
+        view: "sea",
+        status: "occupied",
+        is_available: false,
+        is_pets_allowed: false,
+        is_smoking_allowed: true,
+        room_imagestypes: [
+          {
+            image:
+              "http://localhost:8069/hotel_management_extension/static/src/reception_standalone_app/src/images/room5.jpg",
+          },
+          {
+            image:
+              "http://localhost:8069/hotel_management_extension/static/src/reception_standalone_app/src/images/room0.jpg",
+          },
+        ],
+        slots: [
+          {
+            id: 3,
+            reservation_type: "overnight",
+            start: "2025-07-26T14:00:00",
+            end: "2025-07-27T12:00:00",
+          },
+          {
+            id: 4,
+            reservation_type: "flexible",
+            start: "2025-07-27T12:30:00",
+            end: "2025-07-27T18:30:00",
+          },
+        ],
+      },
+      {
+        id: 105,
+        name: "Suite 105",
+        floor: 2,
+        view: "sea",
+        status: "available",
+        is_available: true,
+        is_pets_allowed: false,
+        is_smoking_allowed: false,
+        room_imagestypes: [],
+        cleaning_status: "clean",
+      },
+    ],
+  },
+];
+
+export const amenities = [
+  {
+    id: 1,
+    name: "Climatisation",
+    icon: "❄️",
+    description: "Climatisation réglable pour un confort optimal.",
+  },
+  {
+    id: 2,
+    name: "Wi-Fi",
+    icon: "📶",
+    description: "Connexion internet sans fil haut débit.",
+  },
+  {
+    id: 3,
+    name: "TV écran plat",
+    icon: "📺",
+    description: "Télévision haute définition avec chaînes internationales.",
+  },
+  {
+    id: 4,
+    name: "Service en chambre",
+    icon: "🛎️",
+    description: "Commande de repas et services directement en chambre.",
+  },
+  {
+    id: 5,
+    name: "Bureau",
+    icon: "🪑",
+    description: "Espace de travail pour une bonne productivité.",
+  },
+];
+
+export const reservationTypes = [
+  { id: "overnight", name: "Nuitée" },
+  { id: "dayuse", name: "Day Use" },
+  { id: "flexible", name: "Flexible" },
+];
+
+console.log("📄 [Data] Updated roomTypes:", roomTypes);
