@@ -15,13 +15,14 @@ export class Root extends Component {
     console.log("📦 Root setup");
     const env = useEnv();
     console.log("ENV par défaut injecté par mountComponent:", env);
-    //const store = useService("hm_reception_store");
 
-    const { state, actions } = useStore();
+    const { state, actions, getters } = useStore();
     this.state = state;
     this.actions = actions;
+    this.getters = getters
     console.log("📊 État du store:", this.state);
     console.log("🔧 Actions disponibles:", Object.keys(this.actions));
+    console.log("📚 Getters disponibles:", Object.keys(this.getters));
 
     onMounted(() => {
       console.log("🎭 Root mounted:");

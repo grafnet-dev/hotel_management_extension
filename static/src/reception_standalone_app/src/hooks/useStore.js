@@ -1,4 +1,3 @@
-
 import { useService } from "@web/core/utils/hooks";
 
 /**
@@ -12,8 +11,10 @@ import { useService } from "@web/core/utils/hooks";
  *   actions.selectRoom(id);
  */
 export function useStore() {
-    const store = useService("hm_reception_store"); 
-    const state = store.state; 
-    return { state, actions: store };
-    
+  const store = useService("hm_reception_store");
+  return {
+    state: store.state,
+    actions: store.actions,
+    getters: store.getters,
+  };
 }

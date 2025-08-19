@@ -219,16 +219,16 @@
           <h3 class="text-lg font-medium text-gray-900 mb-2">Pas encore de réservation</h3>
           <p class="text-gray-500 mb-6">Commencez par créer votre première réservation</p>
           <button 
-          t-on-click="handleAddBooking"
+          t-on-click="handleNewReservation"
           class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
             + Créer une réservation
           </button>
         </div>
       </t>
     </div>
-    <!--t t-if="ui.showModal">
-      <ReservationFormModal onSave="handleSaveReservation" onClose="handleCloseModal"/>
-    </t> -->
+    <t t-if="ui.showModal">
+      <ReservationFormModal  onClose="handleCloseModal"/>
+    </t>
 
   </t>
 </templates>

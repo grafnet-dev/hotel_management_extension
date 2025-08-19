@@ -109,7 +109,7 @@
                       <div>
                         <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Points fidélité</label>
                         <p class="mt-1 text-amber-600 font-semibold">
-                          <t t-esc="props.booking.client.points.toLocaleString()"/> pts
+                           pts
                         </p>
                       </div>
                     </div>
@@ -130,7 +130,7 @@
                   </span>
                   <span class="text-sm text-gray-500">
                     Total: <span class="font-bold text-amber-600">
-                      <t t-esc="Math.round(props.booking.stays.reduce((sum, stay) => sum + stay.price, 0) / 1000).toLocaleString()"/>k FCFA
+                      k FCFA
                     </span>
                   </span>
                 </h2>
@@ -160,8 +160,8 @@
                           </div>
                         </t>
 
-                        <!-- Bouton Check-in amélioré -->
-                        <t t-if="stay.status === 'confirmed'">
+                        <!-- Bouton Check-in  -->
+                        <t t-if="stay.status === 'pending'">
                           <button
                             t-on-click="() => this.triggerCheckin(stay)"
                             class="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 ease-in-out"
@@ -175,7 +175,7 @@
                         
                         <div class="text-right">
                           <div class="text-lg font-bold text-amber-600">
-                            <t t-esc="Math.round(stay.price / 1000).toLocaleString()"/>k FCFA
+                            
                           </div>
                           <t t-set="status" t-value="stay.status"/>
                           <span t-att-class="'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ' + 
@@ -385,7 +385,7 @@
                 
                 <div class="flex justify-between items-center">
                   <span class="text-gray-600">Date de réservation</span>
-                  <span class="font-medium" t-esc="new Date(props.booking.booking_date).toLocaleDateString('fr-FR')"/>
+                  
                 </div>
                 
                 <div class="flex justify-between items-center">
@@ -404,7 +404,7 @@
                 <div class="flex justify-between items-center text-lg">
                   <span class="font-semibold text-gray-900">Total</span>
                   <span class="font-bold text-amber-600">
-                    <t t-esc="Math.round(props.booking.stays.reduce((sum, stay) => sum + stay.price, 0) / 1000).toLocaleString()"/>k FCFA
+                    k FCFA
                   </span>
                 </div>
               </div>
@@ -445,7 +445,7 @@
                     <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"/>
                     <div class="flex-1">
                       <p class="text-sm font-medium text-gray-900">Réservation créée</p>
-                      <p class="text-xs text-gray-500" t-esc="new Date(props.booking.booking_date).toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})"/>
+                      
                     </div>
                   </div>
                   
@@ -493,9 +493,9 @@
       <!-- Modal police form--> 
       <t t-if="state.showPoliceForm">
         <PoliceFormModal
-          stay="state.selectedStay"
+           stay="state.activeStay"
           onValidate.bind="handleFormValidate"
-          onCancel.bind="closeFormModal"
+          onCancel.bind="handleCancel"
         />
       </t>
 
