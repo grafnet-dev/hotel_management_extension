@@ -18,6 +18,7 @@ export class Sidebar extends Component {
       { name: "Sèdjro", to: "/about/sedjro" },
       { name: "Chambres", to: "/rooms" },
        { name: "Reservations", to: "/bookings" },
+        { name: "Test RPC", to: "/test" },
     ];
   }
 }

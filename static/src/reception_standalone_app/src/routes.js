@@ -4,6 +4,7 @@ import { HomePage } from "./pages/home";
 import { AboutPage } from "./pages/about";
 import { RoomsPage } from "./pages/rooms";
 import { Reservations } from "./pages/reservations";
+import { TestRPC } from "./pages/test_rpc";
 
 export function setupRouter(state) {
   const page = window.page;
@@ -41,6 +42,11 @@ export function setupRouter(state) {
   page("/bookings", () => {
     console.log("➡️ Route /bookings");
     state.currentComponent.set(Reservations);
+    state.currentProps.set({});
+  });
+    page("/test", () => {
+    console.log("➡️ Route /test");
+    state.currentComponent.set(TestRPC);
     state.currentProps.set({});
   });
 
