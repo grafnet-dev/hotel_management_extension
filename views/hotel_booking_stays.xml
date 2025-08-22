@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="hotel_booking_stay_list_view" model="ir.ui.view">
+        <field name="name">hotel.booking.stay.list</field>
+        <field name="model">hotel.booking.stay</field>
+        <field name="arch" type="xml">
+            <list string="Séjours de Réservation" decoration-info="state=='draft'"
+                decoration-success="state=='reserved'" decoration-warning="state=='check_in'"
+                decoration-muted="state in ('done','cancel')">
+                <field name="booking_id" />
+                <field name="room_id" />
+                <field name="occupant_names" />
+                <field name="reservation_type_id" />
+                <field name="checkin_date" />
+                <field name="checkout_date" />
+                <field name="uom_qty" string="Durée" />
+                <field name="price_total" sum="Total" />
+                <field name="currency_id" invisible="1" />
+                <field name="state" />
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="hotel_booking_stay_form_view" model="ir.ui.view">
+        <field name="name">hotel.booking.stay.form</field>
+        <field name="model">hotel.booking.stay</field>
+        <field name="arch" type="xml">
+            <form string="Séjour de Réservation">
+                <header>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,reserved,check_in,done" />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="room_id" placeholder="Sélectionner une chambre" />
+                        </h1>
+                        <h2>
+                            <field name="occupant_names" placeholder="Occupants non définis" />
+                        </h2>
+                    </div>
+
+                    <group>
+                        <group name="booking_info" string="Informations de Réservation">
+                            <field name="booking_id" />
+                            <field name="reservation_type_id" required="1" />
+                            <field name="original_reservation_type_id"
+                                readonly="1"
+                                invisible="not original_reservation_type_id" />
+
+                        </group>
+                        <group name="occupants" string="Occupants">
+                            <field name="occupant_ids" widget="many2many_tags"
+                                placeholder="Sélectionner les occupants" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Page Dates et Horaires -->
+                        <page string="Dates &amp; Horaires" name="dates_times">
+                            <group>
+                                <group name="booking_dates" string="Dates de Réservation">
+                                    <field name="booking_date" required="1" />
+                                    <field name="booking_end_date"
+                                        required="reservation_type_id.code == 'classic'"
+                                        invisible="reservation_type_id.code != 'classic'" />
+
+                                </group>
+                                <group name="checkin_checkout" string="Check-in / Check-out">
+                                    <field name="checkin_date" required="1" />
+                                    <field name="checkout_date" required="1" />
+                                    <field name="uom_qty" string="Durée (jours)" readonly="1" />
+                                    <field name="uom_id" readonly="1" />
+                                </group>
+                            </group>
+
+                            <separator string="Options Horaires Spéciales" />
+                            <group>
+                                <group name="early_checkin" string="Early Check-in">
+                                    <field name="early_checkin_requested" />
+                                    <field name="early_checkin_hour"
+                                        invisible="not early_checkin_requested"
+                                        widget="float_time" />
+                                    <field name="early_checkin_time_display"
+                                        invisible="not early_checkin_requested"
+                                        widget="datetime" />
+                                </group>
+                                <group name="late_checkout" string="Late Check-out">
+                                    <field name="late_checkout_requested" />
+                                    <field name="late_checkout_hour"
+                                      invisible="not late_checkout_requested"
+                                        widget="float_time" />
+                                    <field name="late_checkout_time_display"
+                                        invisible="not late_checkout_requested"
+                                        widget="datetime" />
+                                </group>
+                            </group>
+
+                            <!-- Alertes de requalification -->
+                            <div class="alert alert-warning" invisible="not was_requalified_flexible">
+                                <strong>Requalification Automatique:</strong>
+                                <field name="requalification_reason" readonly="1" />
+                            </div>
+
+                            <div class="alert alert-warning"  invisible="not was_requalified_flexible">
+
+                                <strong>Attention:</strong> Une nuit supplémentaire pourrait être
+                                nécessaire selon les horaires demandés. </div>
+
+                            <!-- Champs techniques cachés -->
+                            <group invisible="1">
+                                <field name="was_requalified_flexible" />
+                                <field name="extra_night_required" />
+                                <field name="is_manual_flexible" />
+                            </group>
+                        </page>
+
+                        <!-- Page Services -->
+
+
+                        <!-- Page Prix -->
+                        <page string="Prix &amp; Facturation" name="pricing">
+                            <group>
+                                <group name="pricing_info" string="Informations Tarifaires">
+                                    <field name="price_unit" readonly="1" />
+                                    <field name="currency_id" />
+                                </group>
+                                <group name="totals" string="Totaux">
+                                    <field name="price_subtotal" readonly="1" />
+                                    <field name="price_tax" readonly="1" />
+                                    <field name="price_total" readonly="1"
+                                        class="oe_subtotal_footer_separator" />
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="hotel_booking_stay_search_view" model="ir.ui.view">
+        <field name="name">hotel.booking.stay.search</field>
+        <field name="model">hotel.booking.stay</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher Séjours">
+                <field name="booking_id" />
+                <field name="room_id" />
+                <field name="occupant_ids" />
+                <field name="occupant_names" />
+                <field name="reservation_type_id" />
+                <field name="checkin_date" />
+                <field name="checkout_date" />
+
+                <separator />
+                <filter string="Aujourd'hui" name="today"
+                    domain="[('booking_date', '=', context_today().strftime('%Y-%m-%d'))]" />
+                <filter string="Cette Semaine" name="this_week"
+                    domain="[('booking_date', '>=', context_today().strftime('%Y-%m-%d')), ('booking_date', '&lt;', (context_today() + datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]" />
+                <filter string="Ce Mois" name="this_month"
+                    domain="[('booking_date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('booking_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1).strftime('%Y-%m-%d'))]" />
+
+                <separator />
+                <filter string="Early Check-in" name="early_checkin"
+                    domain="[('early_checkin_requested', '=', True)]" />
+                <filter string="Late Check-out" name="late_checkout"
+                    domain="[('late_checkout_requested', '=', True)]" />
+                <filter string="Requalifiés Flexible" name="requalified"
+                    domain="[('was_requalified_flexible', '=', True)]" />
+                <filter string="Nuit Extra Requise" name="extra_night"
+                    domain="[('extra_night_required', '=', True)]" />
+
+                <separator />
+                <filter string="Brouillon" name="draft" domain="[('state', '=', 'draft')]" />
+                <filter string="Réservé" name="reserved" domain="[('state', '=', 'reserved')]" />
+                <filter string="Arrivé" name="check_in" domain="[('state', '=', 'check_in')]" />
+                <filter string="Terminé" name="done" domain="[('state', '=', 'done')]" />
+
+                <group expand="0" string="Regrouper Par">
+                    <filter string="Booking" name="group_booking"
+                        context="{'group_by': 'booking_id'}" />
+                    <filter string="Chambre" name="group_room" context="{'group_by': 'room_id'}" />
+                    <filter string="Type de Réservation" name="group_reservation_type"
+                        context="{'group_by': 'reservation_type_id'}" />
+                    <filter string="État" name="group_state" context="{'group_by': 'state'}" />
+                    <filter string="Date de Réservation" name="group_booking_date"
+                        context="{'group_by': 'booking_date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+    <!-- Action -->
+    <record id="action_hotel_booking_stay" model="ir.actions.act_window">
+        <field name="name">Séjours de Réservation</field>
+        <field name="res_model">hotel.booking.stay</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer un nouveau séjour de réservation
+            </p>
+            <p>
+                Gérez les séjours individuels pour chaque réservation de chambre.
+                Vous pouvez définir les occupants, les dates, les services et suivre l'état de
+                chaque séjour.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem
+        id="menu_hotel_booking_stay"
+        name="Séjours de Réservation"
+        parent="hotel_management_odoo.hotel_config_menu"
+        action="action_hotel_booking_stay"
+        sequence="0" />
+
+</odoo>
