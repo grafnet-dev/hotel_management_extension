@@ -8,6 +8,15 @@
                      <field name="mode">extension</field>
                      <field name="arch" type="xml">
 
+                            <xpath expr="//header" position="inside">
+                                   <button name="action_view_booking_stays"
+                                          type="object"
+                                          string="Séjours"
+                                          class="btn-secondary"
+                                          icon="fa-hotel"
+                                          invisible="is_checkin or state in ['check_in','check_out','done','cancel']"/>
+                            </xpath>
+
                             <xpath expr="//button[@name='action_checkin']" position="replace">
                                    <button name="action_start_checkin_wizard"
                                           string="Check-In"

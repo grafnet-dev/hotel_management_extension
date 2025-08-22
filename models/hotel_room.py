@@ -143,7 +143,6 @@ class HotelRoom(models.Model):
 
             # 3. Ajoute les informations dans la timeline
             timeline.append({
-                'booking_id': booking.id,
                 'start': booking.checkin_date,
                 'end': booking.checkout_date,
                 'start_buffered': start_b,

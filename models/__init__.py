@@ -11,5 +11,6 @@ from . import room_booking_line_extension
 from . import hotel_room_pricing
 from . import room_booking_extension
 from . import hotel_police_form
+from . import hotel_booking_stays
 
 
