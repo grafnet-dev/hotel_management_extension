@@ -91,8 +91,7 @@ class HotelRoomType(models.Model):
         string="Tarifications"
     )
     
-    # Prix de base (à conserver pour compatibilité)
-    base_price = fields.Float(string="Prix de base", digits="Product Price")
+    
     
     # Chambres de ce type
     room_ids = fields.One2many('hotel.room', 'room_type_id', string="Chambres")
@@ -177,56 +176,3 @@ class HotelRoomType(models.Model):
         return all_rooms - occupied_rooms
 
 
-class HotelRoomTypeImage(models.Model):
-    _name = "hotel.room.type.image"
-    _description = "Hotel Room Type Image"
-    _order = "sequence, id"
-
-    name = fields.Char(string="Nom", required=True)
-    image = fields.Binary(string="Image", required=True, attachment=True)
-    sequence = fields.Integer(string="Séquence", default=10)
-    room_type_id = fields.Many2one('hotel.room.type', string="Type de chambre", required=True, ondelete='cascade')
-    description = fields.Text(string="Description")
-
-
-class HotelRoomTypeReservationSlot(models.Model):
-    _name = "hotel.room.type.reservation.slot"
-    _description = "Hotel Room Type Reservation Slot"
-
-    name = fields.Char(string="Nom du créneau", required=True)
-    room_type_id = fields.Many2one('hotel.room.type', string="Type de chambre", required=True, ondelete='cascade')
-    reservation_type_id = fields.Many2one('hotel.reservation.type', string="Type de réservation", required=True)
-    start_time = fields.Float(string="Heure de début", required=True)
-    end_time = fields.Float(string="Heure de fin", required=True)
-    duration = fields.Float(string="Durée (heures)", compute='_compute_duration', store=True)
-    active = fields.Boolean(string="Actif", default=True)
-    
-    @api.depends('start_time', 'end_time')
-    def _compute_duration(self):
-        for record in self:
-            if record.end_time > record.start_time:
-                record.duration = record.end_time - record.start_time
-            else:
-                record.duration = (24 - record.start_time) + record.end_time
-
-
-class HotelRoomTypePricing(models.Model):
-    _name = "hotel.room.type.pricing"
-    _description = "Hotel Room Type Pricing"
-
-    name = fields.Char(string="Nom", required=True)
-    room_type_id = fields.Many2one('hotel.room.type', string="Type de chambre", required=True, ondelete='cascade')
-    reservation_type_id = fields.Many2one('hotel.reservation.type', string="Type de réservation", required=True)
-    price = fields.Float(string="Prix", required=True, digits="Product Price")
-    currency_id = fields.Many2one('res.currency', string="Devise", default=lambda self: self.env.company.currency_id)
-    date_start = fields.Date(string="Date de début")
-    date_end = fields.Date(string="Date de fin")
-    active = fields.Boolean(string="Actif", default=True)
-    
-    @api.depends('reservation_type_id', 'room_type_id')
-    def _compute_name(self):
-        for record in self:
-            if record.reservation_type_id and record.room_type_id:
-                record.name = f"{record.room_type_id.name} - {record.reservation_type_id.name}"
-            else:
-                record.name = "Nouveau tarif"

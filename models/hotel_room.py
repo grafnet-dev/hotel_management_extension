@@ -20,7 +20,6 @@ class HotelRoom(models.Model):
         related='room_type_id.reservation_slots_ids',
         string="Créneaux personnalisés"
     )
-    base_price = fields.Float(related='room_type_id.base_price',string="Prix de base")
     flooring_type = fields.Selection(related='room_type_id.flooring_type', string="Type de sol")
     view_type = fields.Selection(related='room_type_id.view_type', string="Type de vue")
     is_smoking_allowed = fields.Boolean(related='room_type_id.is_smoking_allowed',string="Fumeur autorisé")

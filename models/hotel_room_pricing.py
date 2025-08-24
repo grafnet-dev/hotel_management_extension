@@ -1,55 +1,80 @@
-from odoo import models, fields
+from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-from odoo import api
 
 class HotelRoomPricing(models.Model):
     _name = "hotel.room.pricing"
-    _description = "Tarification par type de réservation pour les chambres"
+    _description = "Tarification par type de chambre et réservation"
+    _order = "room_type_id, reservation_type_id"
 
-    room_id = fields.Many2one("hotel.room", required=False, ondelete="cascade")
-    room_type_id = fields.Many2one('hotel.room.type', string="Type de Chambre", required=True, ondelete="cascade")
-    reservation_type_id = fields.Many2one("hotel.reservation.type", required=True)
-    # Prix fixe pour les types classiques (nuitée, day-use)
-    price = fields.Float("Prix (Fixe ou base)", digits="Product Price")
-    # Dans hotel.room.pricing, ajoutez temporairement :
-    hourly_price = fields.Float(string="Hourly Price (DEPRECATED)", digits="Product Price")
-
-    # Tarification horaire (activée si le type de réservation est flexible)
-    is_hourly_based = fields.Boolean(
-        string="Tarif horaire actif",
-        compute="_compute_is_hourly_based",
-        store=True
-    )
-    # Tarification par bloc (ex : 60€ les 6h)
-    price_per_block = fields.Float(
-        string="Prix par tranche",
-        digits="Product Price",
-        help="Tarif fixe pour une tranche définie (ex: 60€ les 6h)"
-    )
-    block_duration = fields.Float(
-        string="Durée d’un bloc (h)",
-        help="Durée couverte par la tranche tarifaire (ex: 6h)"
-    )
-    # Majoration si réservation inclut des heures de nuit (22h–6h)
-    night_extra_percent = fields.Float(
-        string="Majoration de nuit (%)",
-        default=0.0,
-        help="Pourcentage à appliquer si la réservation couvre des heures entre 22h et 6h"
+    room_type_id = fields.Many2one(
+        "hotel.room.type",
+        string="Type de chambre",
+        required=True,
+        ondelete="cascade"
     )
 
-
+    reservation_type_id = fields.Many2one(
+        "hotel.reservation.type",
+        string="Type de réservation",
+        required=True,
+        ondelete="cascade"
+    )
+    
     currency_id = fields.Many2one(
-        'res.currency', required=False, default=lambda self: self.env.company.currency_id
+    'res.currency',
+    string="Devise",
+    default=lambda self: self.env.company.currency_id.id,
+    required=True
     )
 
-    @api.depends('reservation_type_id')
-    def _compute_is_hourly_based(self):
-        for rec in self:
-            rec.is_hourly_based = rec.reservation_type_id.is_flexible
+
+    pricing_mode = fields.Selection([
+        ("fixed", "Prix fixe"),
+        ("percentage", "Pourcentage du prix de base"),
+        ("hourly", "Tarif horaire"),
+    ], string="Mode tarifaire", required=True)
+
+    price_value = fields.Float(
+        string="Valeur",
+        required=True,
+        help="Si mode = fixe → montant, "
+             "si mode = percentage → pourcentage (%), "
+             "si mode = hourly → prix par heure."
+    )
+
+    min_hours = fields.Float(
+        string="Durée minimale (h)",
+        default=1.0,
+        help="Applicable uniquement si mode horaire."
+    )
+
+    active = fields.Boolean(default=True)
 
     _sql_constraints = [
-        ('unique_room_type', 'unique(room_id, reservation_type_id)', 'Un tarif existe déjà pour cette chambre et ce type.')
+        (
+            "unique_tariff_per_type",
+            "unique(room_type_id, reservation_type_id, pricing_mode)",
+            "Une règle de tarification existe déjà pour ce couple chambre + type de réservation + mode."
+        )
     ]
-#Gérer des promotions, ex : early check-in gratuit si 2 nuits réservées
 
-#Automatiser selon la disponibilité réelle des chambres
+    # -------------------
+    # MÉTHODE DE CALCUL
+    # -------------------
+    def compute_price(self, base_price, duration_hours=None):
+        """Calcule le prix selon la règle tarifaire"""
+        self.ensure_one()
+
+        if self.pricing_mode == "fixed":
+            return self.price_value
+
+        elif self.pricing_mode == "percentage":
+            return base_price * (self.price_value / 100.0)
+
+        elif self.pricing_mode == "hourly":
+            if not duration_hours:
+                raise ValidationError("La durée est requise pour une tarification horaire.")
+            hours = max(duration_hours, self.min_hours)
+            return hours * self.price_value
+
+        return base_price

@@ -21,9 +21,7 @@
                 <field name="floor_id" string="Étage"/>
             </field>
             
-            <field name="list_price" position="replace">
-                <field name="base_price" string="Prix de base"/>
-            </field>
+           
             
             <field name="status" position="replace">
                 <field name="status" string="Statut"/>
