@@ -106,6 +106,9 @@ class HotelRoomType(models.Model):
         'amenity_id',
         string="Équipements"
     )
+    _sql_constraints = [
+        ('code_unique', 'unique(code)', 'Le code du type de chambre doit être unique !'),
+    ]
     
     @api.depends('room_ids')
     def _compute_room_count(self):

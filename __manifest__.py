@@ -35,6 +35,7 @@ Long description of module's purpose
         'security/ir.model.access.csv',
         'views/hotel_room_type_views.xml',
         'views/hotel_room_views.xml',
+        'views/hotel_reservation_type.xml',
         'views/hotel_room_reservation_slot_views.xml',
         'views/hotel_room_pricing_views.xml',
         'views/room_booking_views.xml',

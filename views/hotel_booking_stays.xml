@@ -9,7 +9,7 @@
                 decoration-success="state=='reserved'" decoration-warning="state=='check_in'"
                 decoration-muted="state in ('done','cancel')">
                 <field name="booking_id" />
-                <field name="room_id" />
+                <field name="room_type_id" />
                 <field name="occupant_names" />
                 <field name="reservation_type_id" />
                 <field name="checkin_date" />
@@ -30,12 +30,21 @@
             <form string="Séjour de Réservation">
                 <header>
                     <field name="state" widget="statusbar"
-                        statusbar_visible="draft,reserved,check_in,done" />
+                        statusbar_visible="draft,ongoing,checked_out,cancelled" />
+
+                    <!-- Boutons -->
+                    <button name="action_start_checkin_wizard" type="object" string="Démarrer"
+                        invisible="state != 'draft'" />
+                    <button name="action_checkout" type="object" string="Check-out"
+                        invisible="state != 'ongoing'" />
+                    <button name="action_cancel" type="object" string="Annuler"
+                        invisible="not (state in ['draft','ongoing'])" />
+
                 </header>
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="room_id" placeholder="Sélectionner une chambre" />
+                            <field name="room_type_id" placeholder="Sélectionner un Type de Chambre" />
                         </h1>
                         <h2>
                             <field name="occupant_names" placeholder="Occupants non définis" />
@@ -61,16 +70,25 @@
                         <!-- Page Dates et Horaires -->
                         <page string="Dates &amp; Horaires" name="dates_times">
                             <group>
-                                <group name="booking_dates" string="Dates de Réservation">
-                                    <field name="booking_date" required="1" />
+                                <group name="booking_start_date" string="Dates de Réservation">
+                                    <!-- Dates choisies par le user -->
+                                    <field name="booking_start_date"
+                                        invisible="is_flexible_reservation"
+                                        required="not is_flexible_reservation" />
                                     <field name="booking_end_date"
-                                        required="reservation_type_id.code == 'classic'"
-                                        invisible="reservation_type_id.code != 'classic'" />
+                                        invisible="is_flexible_reservation"
+                                        required="not is_flexible_reservation" />
 
                                 </group>
                                 <group name="checkin_checkout" string="Check-in / Check-out">
-                                    <field name="checkin_date" required="1" />
-                                    <field name="checkout_date" required="1" />
+                                    <!-- Datetimes effectifs -->
+                                    <field name="checkin_date"
+                                        readonly="not is_flexible_reservation"
+                                        required="is_flexible_reservation" />
+                                    <field name="checkout_date"
+                                        readonly="not is_flexible_reservation"
+                                        required="is_flexible_reservation" />
+
                                     <field name="uom_qty" string="Durée (jours)" readonly="1" />
                                     <field name="uom_id" readonly="1" />
                                 </group>
@@ -90,7 +108,7 @@
                                 <group name="late_checkout" string="Late Check-out">
                                     <field name="late_checkout_requested" />
                                     <field name="late_checkout_hour"
-                                      invisible="not late_checkout_requested"
+                                        invisible="not late_checkout_requested"
                                         widget="float_time" />
                                     <field name="late_checkout_time_display"
                                         invisible="not late_checkout_requested"
@@ -99,12 +117,14 @@
                             </group>
 
                             <!-- Alertes de requalification -->
-                            <div class="alert alert-warning" invisible="not was_requalified_flexible">
+                            <div class="alert alert-warning"
+                                invisible="not was_requalified_flexible">
                                 <strong>Requalification Automatique:</strong>
                                 <field name="requalification_reason" readonly="1" />
                             </div>
 
-                            <div class="alert alert-warning"  invisible="not was_requalified_flexible">
+                            <div class="alert alert-warning"
+                                invisible="not was_requalified_flexible">
 
                                 <strong>Attention:</strong> Une nuit supplémentaire pourrait être
                                 nécessaire selon les horaires demandés. </div>
@@ -148,7 +168,7 @@
         <field name="arch" type="xml">
             <search string="Rechercher Séjours">
                 <field name="booking_id" />
-                <field name="room_id" />
+                <field name="room_type_id" />
                 <field name="occupant_ids" />
                 <field name="occupant_names" />
                 <field name="reservation_type_id" />
@@ -157,11 +177,14 @@
 
                 <separator />
                 <filter string="Aujourd'hui" name="today"
-                    domain="[('booking_date', '=', context_today().strftime('%Y-%m-%d'))]" />
+                    domain="[('booking_start_date', '=', context_today())]" />
+
                 <filter string="Cette Semaine" name="this_week"
-                    domain="[('booking_date', '>=', context_today().strftime('%Y-%m-%d')), ('booking_date', '&lt;', (context_today() + datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]" />
+                    domain="[('booking_start_date', '&gt;=', context_today()), 
+             ('booking_start_date', '&lt;', (context_today() + relativedelta(days=7)))]" />
                 <filter string="Ce Mois" name="this_month"
-                    domain="[('booking_date', '>=', context_today().replace(day=1).strftime('%Y-%m-%d')), ('booking_date', '&lt;', (context_today().replace(day=1) + datetime.timedelta(days=32)).replace(day=1).strftime('%Y-%m-%d'))]" />
+                    domain="[('booking_start_date', '&gt;=', context_today().replace(day=1)), 
+             ('booking_start_date', '&lt;', (context_today().replace(day=1) + relativedelta(months=1)))]" />
 
                 <separator />
                 <filter string="Early Check-in" name="early_checkin"
@@ -182,12 +205,13 @@
                 <group expand="0" string="Regrouper Par">
                     <filter string="Booking" name="group_booking"
                         context="{'group_by': 'booking_id'}" />
-                    <filter string="Chambre" name="group_room" context="{'group_by': 'room_id'}" />
+                    <filter string="Chambre" name="group_room"
+                        context="{'group_by': 'room_type_id'}" />
                     <filter string="Type de Réservation" name="group_reservation_type"
                         context="{'group_by': 'reservation_type_id'}" />
                     <filter string="État" name="group_state" context="{'group_by': 'state'}" />
-                    <filter string="Date de Réservation" name="group_booking_date"
-                        context="{'group_by': 'booking_date'}" />
+                    <filter string="Date de Réservation" name="group_booking_start_date"
+                        context="{'group_by': 'booking_start_date'}" />
                 </group>
             </search>
         </field>
