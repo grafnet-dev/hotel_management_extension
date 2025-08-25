@@ -36,10 +36,15 @@ class HotelBookingStayS(models.Model):
         "room.booking", string="Booking", help="Indicates the Room", ondelete="cascade"
     )
     room_type_id = fields.Many2one(
-        "hotel.room.type", string="Type de Chambre", help="Indicates the Room Type", required=True
+        "hotel.room.type",
+        string="Type de Chambre",
+        help="Indicates the Room Type",
+        required=True,
     )
     room_id = fields.Many2one(
-        "hotel.room", string="Chambre", help="Indicates the Room",
+        "hotel.room",
+        string="Chambre",
+        help="Indicates the Room",
     )
     reservation_type_id = fields.Many2one(
         "hotel.reservation.type",
@@ -57,7 +62,7 @@ class HotelBookingStayS(models.Model):
     # # Jours choisis par le user
     booking_start_date = fields.Date(
         string="Date de début de réservation (choisie)",
-        help="Date  de début utilisée pour calculer automatiquement les horaires de check-in et check-out"
+        help="Date  de début utilisée pour calculer automatiquement les horaires de check-in et check-out",
     )
     booking_end_date = fields.Date(
         string="Date de fin de réservation (choisie)",
@@ -69,7 +74,6 @@ class HotelBookingStayS(models.Model):
         help="computed based on booking date and room's reservation type slot , or user input for flexible type",
         compute="_compute_checkin_checkout",
         store=True,
-        
     )
 
     checkout_date = fields.Datetime(
@@ -78,13 +82,10 @@ class HotelBookingStayS(models.Model):
         compute="_compute_checkin_checkout",
         store=True,
     )
-    ##champs ajoutés pour la gestion dyanmque de la vue dans le xml 
+    ##champs ajoutés pour la gestion dyanmque de la vue dans le xml
     is_flexible_reservation = fields.Boolean(
-    compute="_compute_is_flexible_reservation",
-    store=False
+        compute="_compute_is_flexible_reservation", store=False
     )
-
-    
 
     # Gestion du early check-in et late check-out
     early_checkin_requested = fields.Boolean("Early Check-in demandé")
@@ -92,25 +93,24 @@ class HotelBookingStayS(models.Model):
     early_checkin_hour = fields.Float("Heure Early Check-in", help="Ex: 10.5 = 10h30")
     early_checkin_time_display = fields.Datetime(
         string="Heure Early Check-in (affichée)",
-        
-        
         store=False,
     )
 
     late_checkout_hour = fields.Float("Heure Late Check-out")
     late_checkout_time_display = fields.Datetime(
         string="Heure Late Check-out (affichée)",
-    
         store=False,
     )
     requalification_reason = fields.Char("Motif de requalification")
     # Stocker le résultat de la requalification automatique
     was_requalified_flexible = fields.Boolean("Requalifié en Flexible")
-    extra_night_required = fields.Boolean(string="Nuit supplémentaire requise", default=False)
-    #Distinguer flexible manuel vs automatique
+    extra_night_required = fields.Boolean(
+        string="Nuit supplémentaire requise", default=False
+    )
+    # Distinguer flexible manuel vs automatique
     is_manual_flexible = fields.Boolean(
         "Flexible sélectionné manuellement",
-        help="True si l'utilisateur a directement sélectionné le type flexible, False si requalification automatique"
+        help="True si l'utilisateur a directement sélectionné le type flexible, False si requalification automatique",
     )
 
     # Durée & Unité
@@ -149,19 +149,19 @@ class HotelBookingStayS(models.Model):
     )
 
     # Prix & Facturation -> à définir les champs nécessaires plus tard et logique de calcul
-    price_unit = fields.Float(
-        related="room_id.list_price",
-        string="Rent",
-        digits="Product Price",
-        help="The rent price of the selected room.",
-    )
-
     currency_id = fields.Many2one(
         string="Currency",
         related="booking_id.pricelist_id.currency_id",
         help="The currency used",
     )
-
+    
+    room_price_total = fields.Monetary(
+        string="Prix chambre",
+        compute="_compute_room_price_total",
+        store=True,
+        currency_field="currency_id",
+    )
+    
     price_subtotal = fields.Float(
         string="Subtotal",
         compute="_compute_price_subtotal",
@@ -182,28 +182,31 @@ class HotelBookingStayS(models.Model):
         store=True,
     )
 
-    state = fields.Selection([
-        ('draft', 'Brouillon'),
-        ('ongoing', 'En cours'),
-        ('checked_out', 'Sorti'),
-        ('cancelled', 'Annulé'),
-    ], string="État", default='draft', tracking=True)
+    state = fields.Selection(
+        [
+            ("draft", "Brouillon"),
+            ("ongoing", "En cours"),
+            ("checked_out", "Sorti"),
+            ("cancelled", "Annulé"),
+        ],
+        string="État",
+        default="draft",
+        tracking=True,
+    )
 
-    #ouvrir un modal pour la fiche de police
+    # ouvrir un modal pour la fiche de police
     def action_start_checkin_wizard(self):
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'Fiche de Police',
-            'res_model': 'hotel.police.form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_stay_id': self.id,
-            }
+            "type": "ir.actions.act_window",
+            "name": "Fiche de Police",
+            "res_model": "hotel.police.form",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_stay_id": self.id,
+            },
         }
 
-   
-    
     # Méthode pour calculer les noms des occupants
     @api.depends("occupant_ids")
     def _compute_occupant_names(self):
@@ -211,7 +214,6 @@ class HotelBookingStayS(models.Model):
             stay.occupant_names = (
                 ", ".join(stay.occupant_ids.mapped("name")) if stay.occupant_ids else ""
             )
-
 
     def action_start(self):
         self.state = "ongoing"
@@ -221,7 +223,6 @@ class HotelBookingStayS(models.Model):
 
     def action_cancel(self):
         self.state = "cancelled"
-   
 
     def _set_default_uom_id(self):
         return self.env.ref("uom.product_uom_day")
@@ -244,7 +245,6 @@ class HotelBookingStayS(models.Model):
                 }
             }
 
-
     # calcul automatique
     @api.depends("checkin_date", "checkout_date")
     def _compute_duration(self):
@@ -254,7 +254,6 @@ class HotelBookingStayS(models.Model):
                 rec.uom_qty = diff.days + (1 if diff.total_seconds() > 0 else 0)
             else:
                 rec.uom_qty = 0
-
 
     # Constraint = validation cohérence dates
     @api.constrains("checkin_date", "checkout_date")
@@ -269,8 +268,6 @@ class HotelBookingStayS(models.Model):
                     _("La date de départ ne peut pas être avant la date d'arrivée.")
                 )
 
-
-    
         if self.extra_night_required:
             return {
                 "warning": {
@@ -278,7 +275,6 @@ class HotelBookingStayS(models.Model):
                     "message": "L'horaire demandé sort des limites standards. Une nuit supplémentaire sera peut-être requise.",
                 }
             }
-
 
     @api.constrains("booking_start_date", "booking_end_date", "reservation_type_id")
     def _check_booking_dates_order(self):
@@ -295,33 +291,40 @@ class HotelBookingStayS(models.Model):
                         "La date de fin de réservation ne peut pas être antérieure à la date de début."
                     )
                 )
-                
+
     @api.depends("reservation_type_id")
     def _compute_is_flexible_reservation(self):
         for rec in self:
             rec.is_flexible_reservation = bool(rec.reservation_type_id.is_flexible)
-        
+
     # ----------- LOGIQUE COMMUNE -------------
     def _compute_dates_logic(self, rec):
         """
         Logique partagée entre compute et onchange
         Recalcule automatiquement checkin_date et checkout_date en fonction du type de réservation.
-        
+
         """
         rec.checkin_date = False
         rec.checkout_date = False
 
-        if not rec.booking_start_date or not rec.booking_end_date or not rec.reservation_type_id:
+        if (
+            not rec.booking_start_date
+            or not rec.booking_end_date
+            or not rec.reservation_type_id
+        ):
             return
 
         if rec.reservation_type_id.is_flexible:
             # Flexible = l'utilisateur saisit directement
             return
 
-        slot = self.env["hotel.room.reservation.slot"].search([
-            ("room_type_id", "=", rec.room_type_id.id),
-            ("reservation_type_id", "=", rec.reservation_type_id.id),
-        ], limit=1)
+        slot = self.env["hotel.room.reservation.slot"].search(
+            [
+                ("room_type_id", "=", rec.room_type_id.id),
+                ("reservation_type_id", "=", rec.reservation_type_id.id),
+            ],
+            limit=1,
+        )
 
         if not slot:
             return
@@ -334,19 +337,63 @@ class HotelBookingStayS(models.Model):
         )
 
         # Cas classique : checkout <= checkin -> +1 jour
-        if rec.reservation_type_id.code == "classic" and rec.checkout_date <= rec.checkin_date:
+        if (
+            rec.reservation_type_id.code == "classic"
+            and rec.checkout_date <= rec.checkin_date
+        ):
             rec.checkout_date += timedelta(days=1)
-            
+
     # ----------- PERSISTANCE -------------
-    @api.depends("booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id")
+    @api.depends(
+        "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
+    )
     def _compute_checkin_checkout(self):
         for rec in self:
             self._compute_dates_logic(rec)
 
     # ----------- UX : CALCUL INSTANTANÉ DANS LE FORMULAIRE -------------
-    @api.onchange("booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id")
+    @api.onchange(
+        "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
+    )
     def _onchange_dates_and_type(self):
         for rec in self:
             self._compute_dates_logic(rec)
-     
+
     
+
+    @api.depends("room_type_id", "reservation_type_id", "booking_start_date", "booking_end_date")
+    def _compute_room_price_total(self):
+        for stay in self:
+            stay.room_price_total = 0.0
+
+            # Vérification des infos nécessaires
+            if not (stay.room_type_id and stay.reservation_type_id and stay.booking_start_date and stay.booking_end_date):
+                continue
+
+            # Récupération de la règle tarifaire
+            pricing_rule = self.env["hotel.room.pricing"].search([
+                ("room_type_id", "=", stay.room_type_id.id),
+                ("reservation_type_id", "=", stay.reservation_type_id.id),
+                ("active", "=", True)
+            ], limit=1)
+
+            if not pricing_rule:
+                stay.room_price_total = 0.0
+                continue
+
+            # Calcul de la durée en heures
+            duration_days = (stay.booking_end_date - stay.booking_start_date).days or 1
+            duration_hours = duration_days * 24
+
+            # Prix de base = prix standard du type de chambre (si défini)
+            base_price = stay.room_type_id.base_price or 0.0
+
+            # Utilisation de la méthode compute_price pour centraliser la logique
+            stay.room_price_total = pricing_rule.compute_price(
+                base_price=base_price,
+                duration_hours=duration_hours
+            )
+
+            # Si le mode n'est pas horaire, on multiplie par le nombre de jours
+            if pricing_rule.pricing_mode != "hourly":
+                stay.room_price_total *= duration_days

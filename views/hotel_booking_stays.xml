@@ -144,8 +144,12 @@
                         <page string="Prix &amp; Facturation" name="pricing">
                             <group>
                                 <group name="pricing_info" string="Informations Tarifaires">
-                                    <field name="price_unit" readonly="1" />
+                                    
                                     <field name="currency_id" />
+                                    <!-- Ajout du prix calculé de la chambre -->
+                                    <!-- On ajoute le prix total de la chambre -->
+                                    <field name="room_price_total" readonly="1"
+                                        invisible="room_price_total == 0" />
                                 </group>
                                 <group name="totals" string="Totaux">
                                     <field name="price_subtotal" readonly="1" />

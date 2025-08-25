@@ -90,6 +90,12 @@ class HotelRoomType(models.Model):
         'room_type_id',
         string="Tarifications"
     )
+    base_price = fields.Float(
+        string="Prix de base / nuit",
+        required=True,
+        default=0.0,
+        help="Prix standard de la chambre par nuit. Utilisé comme base pour les pourcentages."
+    )
     
     
     
