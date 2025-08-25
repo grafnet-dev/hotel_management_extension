@@ -36,7 +36,7 @@
             ("include", "web._assets_core"),
             ("include", "web.assets_common"),  # OWL, utils, etc.
             ("include", "web.assets_backend_helpers"),
-            "hotel_management_extension/static/src/reception_standalone_app/**/*",
+            "hotel_management_extension/static/src/reception_standalone_app/src/**/*",
             # JS
             # XML
             # CSS (si besoin)
