@@ -16,6 +16,21 @@ __pycache__/
 dist/
 build/
 
+# Node / JS (standalone app)
+node_modules/
+package-lock.json
+*.lock
+*.cache
+.npm/
+.pnpm/
+.yarn/
+styles/*.css   # si tu veux ignorer aussi le build (styles.css)
+!styles/input.css  # mais garder le fichier source Tailwind
+!tailwind.config.js
+!postcss.config.mjs
+!package.json
+
+
 # Éditeurs de texte / IDE
 .vscode/
 .idea/
