@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Vue formulaire personnalisée pour les produits hôteliers -->
+    <record id="view_product_template_form_hotel" model="ir.ui.view">
+        <field name="name">product.template.hotel.form</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <!-- On insère les champs personnalisés dans l'onglet général -->
+            <xpath expr="//sheet/notebook/page[@name='general_information']" position="inside">
+                <group string="Informations Hôtelières">
+                    <field name="hotel_product_type"/>
+                    <field name="kitchen_note" placeholder="Ex. : Allergènes, cuisson, etc."/>
+                    <field name="is_available_restaurant"/>
+                    <field name="is_available_room_service"/>
+                    <field name="is_available_minibar"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vue liste personnalisée pour les produits hôteliers -->
+    <record id="view_product_template_tree_hotel" model="ir.ui.view">
+        <field name="name">product.template.hotel.list</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <!-- Ajouter les champs après le champ 'name' -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="hotel_product_type"/>
+                <field name="is_available_restaurant" widget="boolean_toggle"/>
+                <field name="is_available_room_service" widget="boolean_toggle"/>
+                <field name="is_available_minibar" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vue kanban personnalisée pour les produits hôteliers -->
+    <record id="view_product_template_kanban_hotel" model="ir.ui.view">
+        <field name="name">product.template.hotel.kanban</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="id"/>
+                <field name="name"/>
+                <field name="list_price"/>
+                <field name="hotel_product_type"/>
+                <field name="is_available_restaurant"/>
+                <field name="is_available_room_service"/>
+                <field name="is_available_minibar"/>
+                <field name="image_128"/>
+                <field name="company_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <img t-att-src="kanban_image('product.template', 'image_128', record.id.raw_value)" alt="Product"/>
+                            </div>
+                            <div class="oe_kanban_details">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <div class="o_kanban_record_subtitle">
+                                            <field name="hotel_product_type"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="hotel_price">
+                                        <strong>Prix: <field name="list_price" widget="monetary"/></strong>
+                                    </div>
+                                    <div class="hotel_availability_badges mt-2">
+                                        <span t-if="record.is_available_restaurant.raw_value" class="badge badge-success me-1">Restaurant</span>
+                                        <span t-if="record.is_available_room_service.raw_value" class="badge badge-info me-1">Room Service</span>
+                                        <span t-if="record.is_available_minibar.raw_value" class="badge badge-warning me-1">Minibar</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Action adaptée inspirée de lunch_product_action -->
+    <record id="hotel_product_action_adapted" model="ir.actions.act_window">
+        <field name="name">Produits Hôteliers</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <!-- Spécifier les vues personnalisées -->
+        <field name="view_ids" eval="[(5, 0, 0),
+                                      (0, 0, {'view_mode': 'list', 'view_id': ref('view_product_template_tree_hotel')}),
+                                      (0, 0, {'view_mode': 'kanban', 'view_id': ref('view_product_template_kanban_hotel')}),
+                                      (0, 0, {'view_mode': 'form', 'view_id': ref('view_product_template_form_hotel')})]"/>
+        <!-- Contexte par défaut pour les nouveaux produits -->
+        <field name="context">{
+            'default_type': 'consu',
+            'default_hotel_product_type': 'food'
+        }</field>
+        <!-- Domaine pour filtrer uniquement les produits hôteliers -->
+        <field name="domain">[('hotel_product_type', '!=', False)]</field>
+        <!-- Message d'aide personnalisé -->
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Aucun produit hôtelier trouvé ! Créons-en un
+            </p>
+            <p>
+                Gérez vos produits alimentaires et boissons pour le restaurant, 
+                le room service et le minibar de votre hôtel.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu principal pour les produits hôteliers -->
+    <menuitem id="hotel_product_menu_root" 
+              name="Produits Hôteliers" 
+              parent="hotel_management_odoo.food_menu" 
+              sequence="50"/>
+
+    <!-- Menu pour l'action des produits hôteliers -->
+    <menuitem id="menu_hotel_products_adapted" 
+              name="Produits Hôteliers" 
+              parent="hotel_product_menu_root" 
+              action="hotel_product_action_adapted"
+              sequence="10"/>
+
+    <!-- Alternative: Action simplifiée si vous préférez une approche plus directe -->
+    <record id="hotel_product_action_simple" model="ir.actions.act_window">
+        <field name="name">Produits</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,kanban,form</field>
+        <!-- Utiliser directement votre vue liste -->
+        <field name="view_id" ref="view_product_template_tree_hotel"/>
+        <field name="context">{'default_type': 'consu', 'default_hotel_product_type': 'food'}</field>
+        <field name="domain">[('hotel_product_type', '!=', False)]</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Aucun produit trouvé ! Créons-en un
+            </p>
+        </field>
+    </record>
+
+</odoo>

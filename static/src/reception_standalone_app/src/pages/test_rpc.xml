@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="hotel_management_extension.TestRPC">
+        <div class="p-4">
+            <h2>Test RPC - Liste des Partenaires</h2>
+            <ul>
+                <t t-foreach="state.partners" t-as="p" t-key="p.id">
+                    <li>
+                        <strong><t t-esc="p.name"/></strong>
+                        (<t t-esc="p.email"/>)
+                    </li>
+                </t>
+            </ul>
+        </div>
+    </t>
+</templates>

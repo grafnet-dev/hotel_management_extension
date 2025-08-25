@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="hotel_management_extension.reception_standalone_app">
+        &lt;!DOCTYPE html&gt;
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>Application Réceptionniste</title>
+                <script type="text/javascript">
+                    var odoo = {
+                        csrf_token: "<t t-nocache='The csrf token must always be up to date.' t-esc='request.csrf_token(None)'/>",
+                        debug: "<t t-out='debug'/>",
+                        __session_info__: <t t-esc='json.dumps(session_info)'/>,
+                    };
+                </script>
+                
+
+                <!-- 🔗 Ajout du CDN de page.js ici -->
+                 <script src="https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js" integrity="sha512-MkYIEFfyoRmnQFt8ZoTflIGLT8RR+PfZSHtsG5Knc5uFayAspGft8XTaMIOozqD4KkGzE6xa7jU+tfWtcXMqtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+                
+                <link rel="stylesheet" href="/hotel_management_extension/static/src/reception_standalone_app/styles/styles.css"/>
+
+                <!-- Chargement des assets Odoo -->
+                <t t-call-assets="hotel_management_extension.assets_reception_standalone_app" />
+            </head>
+            <body/>
+        </html>
+    </template>
+
+</odoo>

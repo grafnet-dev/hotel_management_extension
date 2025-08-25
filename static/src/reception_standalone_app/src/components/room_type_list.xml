@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+<!-- RoomTypeList -->
+<t t-name="reception_standalone_app.RoomTypeList">
+  <div>
+    <t t-foreach="props.roomTypes" t-as="roomType" t-key="roomType.id">
+      <RoomTypeCard
+        roomType="roomType"
+        onClick="() => props.onSelectRoomType(roomType)"
+      />
+    </t>
+  </div>
+</t>
+</templates>

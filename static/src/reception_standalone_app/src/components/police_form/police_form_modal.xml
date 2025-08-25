@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<t t-name="hotel_management_extension.PoliceFormModal">
+  <!-- Overlay avec animation d'entrée fluide -->
+  <div
+    class="fixed inset-0 flex items-center justify-center  bg-opacity-60 z-50 animate-fadeIn backdrop-blur-sm">
+    <!-- Modal avec animation d'entrée -->
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform animate-slideUp">
+
+      <!-- Header du modal -->
+      <div class="bg-gradient-to-r from-cyan-900 to-cyan-700 px-6 py-4 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div
+              class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white">Fiche de Police</h2>
+              <p class="text-cyan-100 text-sm">Enregistrement au check-in</p>
+            </div>
+          </div>
+
+          <button t-on-click="props.onCancel"
+            class="text-white hover:text-black transition-colors p-2 hover:bg-white hover:bg-opacity-10 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenu du formulaire -->
+      <div class="p-6">
+        <div class="space-y-5">
+
+          <!-- Prénom et Nom sur la même ligne -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-cyan-700" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Prénom
+              </label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Prénom de l'occupant"
+                t-model="form.first_name" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">
+                Nom
+              </label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Nom de l'occupant"
+                t-model="form.last_name" />
+            </div>
+          </div>
+
+          <!-- Nationalité et Lieu de naissance sur la même ligne -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-cyan-700" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Nationalité
+              </label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Ex: Française, Béninoise..."
+                t-model="form.nationality" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">
+                Lieu de naissance
+              </label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Ex: Cotonou"
+                t-model="form.birthplace" />
+            </div>
+          </div>
+
+          <!-- Adresse -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700">Adresse</label>
+            <input type="text"
+              class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+              placeholder="Ex: 12 rue ..."
+              t-model="form.address" />
+          </div>
+
+          <!-- Type de pièce et numéro sur la même ligne -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-cyan-700" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 00-2 2v1"></path>
+                </svg>
+                Type de pièce
+              </label>
+              <select
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none bg-white"
+                t-model="form.id_type">
+                <option value="">-- Sélectionner --</option>
+                <option value="passport">Passeport</option>
+                <option value="id_card">Carte d'identité</option>
+                <option value="residence_permit">Titre de séjour</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-cyan-700" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                </svg>
+                Numéro de pièce
+              </label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Numéro d'identification"
+                t-model="form.id_number" />
+            </div>
+          </div>
+
+          <!-- Date + Lieu de délivrance -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">Date de délivrance</label>
+              <input type="date"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                t-model="form.id_issue_date" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">Lieu de délivrance</label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Ex: Préfecture de ..."
+                t-model="form.id_issue_place" />
+            </div>
+          </div>
+
+          <!-- Genre seul (plus large) -->
+          <div class="space-y-2">
+            <label class="block text-sm font-semibold text-gray-700 flex items-center">
+              <svg class="w-4 h-4 mr-2 text-cyan-700" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              Genre
+            </label>
+            <select
+              class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none bg-white"
+              t-model="form.gender">
+              <option value="">-- Sélectionner --</option>
+              <option value="male">Homme</option>
+              <option value="female">Femme</option>
+            </select>
+          </div>
+
+          <!-- Motif du séjour et Moyen de transport sur la même ligne -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">Motif du séjour</label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Ex: Affaires, Tourisme..."
+                t-model="form.reason"/>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700">Moyen de transport</label>
+              <input type="text"
+                class="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 transition-all outline-none"
+                placeholder="Ex: Avion, Train, Bus..."
+                t-model="form.transport"/>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer avec boutons -->
+      <div class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-100">
+        <div class="flex justify-end space-x-3">
+          <button t-on-click="props.onCancel"
+            class="px-6 py-2.5 rounded-lg bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium transition-all hover:shadow-md transform hover:scale-105">
+            Annuler
+          </button>
+          <button t-on-click="submit"
+            class="px-8 py-2.5 rounded-lg bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 13l4 4L19 7"></path>
+            </svg> Valider le check-in </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Styles CSS pour les animations -->
+  <style>
+    @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+    from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    }
+    to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    }
+    }
+
+    .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+    }
+
+    .animate-slideUp {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
+</t>

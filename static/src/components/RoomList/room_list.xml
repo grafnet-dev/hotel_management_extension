@@ -1,0 +1,81 @@
+<t t-name="hotel_management_extension.RoomList" owl="1">
+    <div class="modern-room-container">
+        <t t-if="rooms.loading">
+            <div class="loading-container">
+                <div class="loading-spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                </div>
+                <p class="loading-text">Chargement des chambres...</p>
+            </div>
+        </t>
+        <t t-else="">
+            <div class="room-header">
+                <h1 class="room-title">
+                    <span class="title-icon">🏨</span>
+                    Nos Chambres d'Exception
+                </h1>
+                <p class="room-subtitle">Découvrez notre sélection de chambres premium</p>
+            </div>
+            
+            <div class="room-grid">
+                <t t-foreach="rooms.items" t-as="room" t-key="room.id">
+                    <div class="room-card-wrapper">
+                        <div class="room-card">
+                            <div class="room-card-header">
+                                <div class="room-number">
+                                    <span t-esc="room.name" />
+                                </div>
+                                <div class="room-status">
+                                    <span t-if="room.available" class="status-available">
+                                        <i class="status-icon">✓</i>
+                                        Disponible
+                                    </span>
+                                    <span t-else="" class="status-occupied">
+                                        <i class="status-icon">⚠</i>
+                                        Occupée
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="room-card-body">
+                                <div class="room-type">
+                                    <span class="type-label">Type de chambre</span>
+                                    <span class="type-value" t-esc="room.type" />
+                                </div>
+                                
+                                <div class="room-features">
+                                    <div class="feature-item">
+                                        <i class="feature-icon">🛏️</i>
+                                        <span>Lit King Size</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="feature-icon">📶</i>
+                                        <span>WiFi Gratuit</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="feature-icon">🛁</i>
+                                        <span>Salle de bain</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="room-card-footer">
+                                <button class="btn-details" t-if="room.available">
+                                    <span>Voir Détails</span>
+                                    <i class="btn-arrow">→</i>
+                                </button>
+                                <button class="btn-unavailable" t-else="">
+                                    <span>Non Disponible</span>
+                                </button>
+                            </div>
+                            
+                            <div class="room-card-overlay"></div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </div>
+</t>

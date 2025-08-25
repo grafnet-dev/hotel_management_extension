@@ -22,12 +22,12 @@
 
                 <!-- Pièce d'identité -->
                 <group string="Pièce d'identité">
-                    <field name="id_type"/>
-                    <field name="id_number"/>
-                    <field name="id_issue_date"/>
-                    <field name="id_expiry_date"/>
-                    <field name="id_issue_place"/>
-                    <field name="id_document_file" filename="id_document_filename"/>
+                    <field name="id_type" />
+                    <field name="id_number" />
+                    <field name="id_issue_date" />
+                    <field name="id_expiry_date" />
+                    <field name="id_issue_place" />
+                    <field name="id_document_file" filename="id_document_filename" />
                 </group>
 
                 <!-- Informations sur le séjour -->
@@ -60,12 +60,12 @@
                 <!-- Footer -->
                 <footer>
                     <button name="action_validate_police_form"
-                            string="Valider et passer au Check-In"
-                            type="object"
-                            class="btn-primary"/>
+                        string="Valider et passer au Check-In"
+                        type="object"
+                        class="btn-primary" />
                     <button string="Annuler"
-                            special="cancel"
-                            class="btn-secondary"/>
+                        special="cancel"
+                        class="btn-secondary" />
                 </footer>
 
             </form>

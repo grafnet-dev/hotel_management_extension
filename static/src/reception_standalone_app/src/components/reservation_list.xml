@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="hotel_management_extension.ReservationList">
+    <div class="min-h-screen bg-gray-50 p-6">
+
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-cyan-900 mb-2">Réservations</h1>
+            <p class="text-gray-600">Gérez vos réservations en cours</p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="bg-white rounded-lg px-4 py-2 shadow-sm border">
+              <span class="text-sm text-gray-500">Total</span>
+              <div class="text-2xl font-bold text-cyan-900" t-esc="bookings.length"/>
+            </div>
+            <button 
+            t-on-click="handleNewReservation"
+            class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg">
+              + Nouvelle réservation
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtres -->
+      <div class="mb-6 bg-white rounded-xl shadow-sm  p-4">
+        <div class="flex items-center space-x-4">
+          <div class="flex-1">
+            <input type="text" placeholder="Rechercher par nom, code réservation..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"/>
+          </div>
+          <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500">
+            <option>Tous les statuts</option>
+            <option>Confirmé</option>
+            <option>En attente</option>
+            <option>En cours</option>
+          </select>
+          <button class="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
+            <span class="text-gray-600">🔍</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Liste des réservations -->
+      <div class="space-y-4">
+        <t t-foreach="bookings" t-as="booking" t-key="booking.id">
+          <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer transform hover:-translate-y-1"
+               t-on-click="() => handleSelect(booking)">
+
+            <!-- En-tête de carte -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-100">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-cyan-900 to-cyan-700 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  <t t-if="booking.client">
+  <div class="w-12 h-12 bg-gradient-to-br from-cyan-900 to-cyan-700 rounded-full flex items-center justify-center text-white font-bold text-lg">
+    <t t-esc="booking.client.name.split(' ').map(n => n[0]).join('').substring(0, 2)"/>
+  </div>
+                    <!-- Infos client -->
+  <div class="space-y-2">
+    <h4 class="text-sm font-medium text-gray-700 uppercase tracking-wide">Client</h4>
+    <div class="space-y-1">
+      <div class="flex items-center text-sm text-gray-600">
+        <span class="w-4 text-center">📞</span>
+        <span class="ml-2" t-esc="booking.client.phone"/>
+      </div>
+      <div class="flex items-center text-sm text-gray-600">
+        <span class="w-4 text-center">✉️</span>
+        <span class="ml-2" t-esc="booking.client.email"/>
+      </div>
+      <div class="flex items-center text-sm">
+        <span class="w-4 text-center">⭐</span>
+        <span class="ml-2 font-medium text-amber-600" t-esc="booking.client.membership_status"/>
+      </div>
+    </div>
+  </div>
+  <div>
+    <h3 class="text-lg font-semibold text-gray-900" t-esc="booking.client.name"/>
+  </div>
+</t>
+<t t-if="!booking.client">
+  <div class="text-sm text-red-500">Client non défini</div>
+</t>
+
+                  <div class="flex items-center space-x-2 mt-1">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                      <t t-esc="booking.group_code"/>
+                    </span>
+                    <span class="text-sm text-gray-500" t-esc="booking.booking_date"/>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- Badge de statut -->
+              <div class="flex items-center space-x-3">
+                <t t-set="status" t-value="booking.status"/>
+                <span t-att-class="'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ' + 
+                  (status === 'confirmed' ? 'bg-green-100 text-green-800' : 
+                   status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                   status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
+                   'bg-gray-100 text-gray-800')">
+                  <t t-if="status === 'confirmed'">✅ Confirmé</t>
+                  <t t-elif="status === 'pending'">⏳ En attente</t>
+                  <t t-elif="status === 'in_progress'">🏨 En cours</t>
+                  <t t-else=""><t t-esc="status"/></t>
+                </span>
+
+                <div class="text-right">
+                  <div class="text-lg font-bold text-amber-600">
+                    <t t-esc="Math.round(booking.total_booking_amount / 1000).toLocaleString()"/>k FCFA
+                  </div>
+                  <div class="text-sm text-gray-500">
+                    <t t-esc="booking.stays.length"/> séjour<t t-if="booking.stays.length > 1">s</t>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Corps -->
+            <div class="p-6 pt-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Séjours -->
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700 uppercase tracking-wide">Séjours</h4>
+                  <div class="space-y-2">
+                    <t t-foreach="booking.stays.slice(0, 2)" t-as="stay" t-key="stay.id">
+                      <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                          <span class="w-4 text-center">🛏️</span>
+                          <span class="ml-2 font-medium" t-esc="stay.room_name"/>
+                        </div>
+                        <span class="text-gray-500" t-esc="stay.room_type"/>
+                      </div>
+                    </t>
+                    <t t-if="booking.stays.length > 2">
+                      <div class="text-xs text-gray-500">
+                        +<t t-esc="booking.stays.length - 2"/> autre<t t-if="booking.stays.length > 3">s</t>
+                      </div>
+                    </t>
+                  </div>
+                </div>
+
+                <!-- Dates -->
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-gray-700 uppercase tracking-wide">Période</h4>
+                  <div class="space-y-1">
+                    <t t-set="firstStay" t-value="booking.stays[0]"/>
+                    <div class="flex items-center text-sm text-gray-600">
+                      <span class="w-4 text-center">📅</span>
+                      <span class="ml-2">
+                        <t t-esc="new Date(firstStay.checkin_date).toLocaleDateString('fr-FR', {day: '2-digit', month: 'short'})"/>
+                      </span>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                      <span class="w-4 text-center">🏁</span>
+                      <span class="ml-2">
+                        <t t-esc="new Date(firstStay.checkout_date).toLocaleDateString('fr-FR', {day: '2-digit', month: 'short'})"/>
+                      </span>
+                    </div>
+                    <t t-set="nights" t-value="Math.ceil((new Date(firstStay.checkout_date) - new Date(firstStay.checkin_date)) / (1000 * 60 * 60 * 24))"/>
+                    <div class="text-xs text-amber-600 font-medium">
+                      <t t-esc="nights"/> nuit<t t-if="nights > 1">s</t>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Options spéciales -->
+              <t t-if="firstStay.early_checkin_requested or firstStay.late_checkout_requested or firstStay.extra_night_required">
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                  <div class="flex flex-wrap gap-2">
+                    <t t-if="firstStay.early_checkin_requested">
+                      <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-800">
+                        🌅 Check-in anticipé
+                      </span>
+                    </t>
+                    <t t-if="firstStay.late_checkout_requested">
+                      <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800">
+                        🌆 Check-out tardif
+                      </span>
+                    </t>
+                    <t t-if="firstStay.extra_night_required">
+                      <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                        🛏️ Nuit supplémentaire
+                      </span>
+                    </t>
+                  </div>
+                </div>
+              </t>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex items-center justify-between">
+              <div class="text-sm text-gray-500">
+                <t t-if="firstStay.notes">
+                  💬 <t t-esc="firstStay.notes.substring(0, 50)"/><t t-if="firstStay.notes.length > 50">...</t>
+                </t>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button class="text-cyan-600 hover:text-cyan-700 text-sm font-medium">
+                  👁️ Voir détails
+                </button>
+                <span class="text-gray-300">|</span>
+                <button class="text-gray-600 hover:text-gray-700 text-sm">
+                  ✏️ Modifier
+                </button>
+              </div>
+            </div>
+          </div>
+        </t>
+      </div>
+
+      <!-- Message si vide -->
+      <t t-if="!bookings or bookings.length === 0">
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">🏨</div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Pas encore de réservation</h3>
+          <p class="text-gray-500 mb-6">Commencez par créer votre première réservation</p>
+          <button 
+          t-on-click="handleNewReservation"
+          class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+            + Créer une réservation
+          </button>
+        </div>
+      </t>
+    </div>
+    <t t-if="ui.showModal">
+      <ReservationFormModal  onClose="handleCloseModal"/>
+    </t>
+
+  </t>
+</templates>

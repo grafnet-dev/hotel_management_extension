@@ -1,0 +1,63 @@
+@tailwind utilities;
+
+@layer base {
+  h1 {
+    @apply font-title text-3xl text-primary;
+  }
+  h2 {
+    @apply font-title text-2xl text-primary;
+  }
+  h3 {
+    @apply font-title text-xl text-primary;
+  }
+  p {
+    @apply font-body text-base text-gray-800;
+  }
+  label {
+    @apply font-body text-sm text-gray-600;
+  }
+}
+
+@layer components {
+  .title-primary {
+    @apply text-2xl font-title text-primary;
+  }
+  .subtitle-gold {
+    @apply text-xl font-title text-gold;
+  }
+  .text-body {
+    @apply font-body text-base text-gray-800;
+  }
+  .label {
+    @apply font-body text-sm text-gray-600;
+  }
+}
+
+/* Classes pour la Sidebar */
+  .sidebar-content {
+    @apply flex flex-col h-full;
+  }
+  .logo {
+    @apply text-2xl font-bold mb-8 text-center;
+  }
+  .nav-links ul {
+    @apply list-none p-0 m-0;
+  }
+  .nav-links li {
+    @apply mb-4;
+  }
+  .nav-link {
+    @apply text-slate-300 no-underline font-medium transition-colors duration-200 hover:text-white;
+  }
+
+  /* Classes pour le Header */
+  .header-content {
+    @apply flex justify-between items-center h-15;
+  }
+  .welcome-message {
+    @apply text-lg font-semibold text-slate-800;
+  }
+  .logout-button {
+    @apply bg-primary text-white border-none px-4 py-2 rounded-md cursor-pointer font-medium transition-colors duration-200 hover:bg-red-600;
+  }
+}

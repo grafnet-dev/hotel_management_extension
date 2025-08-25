@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+  <t t-name="hotel_management_extension.ReservationFormModal">
+    <div class="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center">
+      <div class="bg-white w-full max-w-xl rounded-lg shadow-lg p-6 space-y-6">
+        <h2 class="text-xl font-semibold text-cyan-900">Nouvelle réservation</h2>
+
+        <div class="space-y-4">
+
+          <!-- Sélection du client -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">👤 Sélectionner un client</label>
+            <select
+              class="w-full border rounded px-3 py-2"
+              t-model="localState.selectedClientId"
+            >
+              <option t-att-value="null">Sélectionner un client...</option>
+              <t t-foreach="getters.getAllClients()" t-as="client" t-key="client.id">
+                <option t-att-value="client.id">
+                  <t t-esc="client.name" />
+                </option>
+              </t>
+            </select>
+          </div>
+
+          <!-- Message de test -->
+          <t t-if="localState.selectedClientId">
+            <p class="text-green-700 font-semibold">Client sélectionné ID : <t
+                t-esc="localState.selectedClientId" /></p>
+          </t>
+
+          <!-- 🛏️ Formulaire d'ajout de séjour -->
+          <div class="border p-4 rounded space-y-3 bg-gray-50">
+            <h3 class="text-lg font-medium text-gray-800">Ajouter un séjour</h3>
+
+            <!-- Sélection de la chambre -->
+            <div>
+              <label class="block text-sm mb-1">🏨 Chambre</label>
+              <select
+                class="w-full border rounded px-2 py-1"
+                t-model="localState.stayForm.room_id"
+              >
+                <option value="">Choisir une chambre</option>
+                <t t-foreach="state.rooms.list" t-as="room" t-key="room.id">
+                  <option t-att-value="room.id">
+                    <t t-esc="room.name" /> — <t t-esc="room.price_per_night" /> FCFA/nuit </option>
+                </t>
+              </select>
+            </div>
+
+            <!-- Dates -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm mb-1">📅 Check-in</label>
+                <input
+                  type="date"
+                  class="w-full border rounded px-2 py-1"
+                  t-model="localState.stayForm.check_in"
+                />
+              </div>
+              <div>
+                <label class="block text-sm mb-1">📅 Check-out</label>
+                <input
+                  type="date"
+                  class="w-full border rounded px-2 py-1"
+                  t-model="localState.stayForm.check_out"
+                />
+              </div>
+            </div>
+
+            <!-- Bouton ajouter -->
+            <button
+              t-on-click="addDraftStay"
+              class="mt-2 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+            >
+              ➕ Ajouter ce séjour
+            </button>
+          </div>
+          <!-- Liste des séjours ajoutés -->
+          <t t-if="localState.draftStays.length > 0">
+            <div class="mt-6">
+              <h3 class="text-md font-semibold text-gray-800">🗂️ Séjours ajoutés</h3>
+              <ul class="space-y-2 mt-2">
+                <t t-foreach="localState.draftStays" t-as="stay"
+                  t-key="stay.check_in + stay.room_id">
+                  <li class="border p-3 rounded bg-white shadow">
+                    <p> 🏨 Chambre ID : <strong>
+                        <t t-esc="stay.room_id" />
+                      </strong><br /> 📅 <t
+                        t-esc="stay.check_in" /> → <t t-esc="stay.check_out" />
+                    </p>
+                  </li>
+                </t>
+              </ul>
+            </div>
+          </t>
+
+
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+          <button t-on-click="close" class="px-4 py-2 bg-gray-200 rounded">Annuler</button>
+          <button t-on-click="save"
+            class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">
+            💾 Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </t>
+</templates>
