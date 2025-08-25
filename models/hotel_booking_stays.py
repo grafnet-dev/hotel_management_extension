@@ -214,8 +214,10 @@ class HotelBookingStayS(models.Model):
             stay.occupant_names = (
                 ", ".join(stay.occupant_ids.mapped("name")) if stay.occupant_ids else ""
             )
+            
 
     def action_start(self):
+        self.ensure_one()
         self.state = "ongoing"
 
     def action_checkout(self):

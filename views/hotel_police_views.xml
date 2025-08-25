@@ -32,9 +32,14 @@
 
                 <!-- Informations sur le séjour -->
                 <group string="Séjour">
-                    <field name="arrival_date"/>
-                    <field name="arrival_time"/>
-                    <field name="departure_date"/>
+                    <!-- Date et Heure d'arrivée prévue -->
+                    <field name="arrival_date_time" readonly="1"/>
+                    <!-- Date et Heure de départ prévue -->
+                    <field name="departure_date_time" readonly="1"/>
+                    <!-- Date et Heure d'arrivée réelle -->
+                    <field name="actual_arrival_date_time"/>
+                    <!-- Date et Heure de départ réel -->
+                    <field name="actual_departure_date_time"/>
                     <field name="number_of_guests"/>
                     <field name="room_id"/>
                 </group>
