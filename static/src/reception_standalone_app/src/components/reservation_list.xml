@@ -142,7 +142,7 @@
                   </div>
                 </div>
 
-                <!-- Dates -->
+                <!-- Dates 
                 <div class="space-y-2">
                   <h4 class="text-sm font-medium text-gray-700 uppercase tracking-wide">Période</h4>
                   <div class="space-y-1">
@@ -164,8 +164,8 @@
                       <t t-esc="nights"/> nuit<t t-if="nights > 1">s</t>
                     </div>
                   </div>
-                </div>
-              </div>
+                </div>-->
+              </div> 
 
               <!-- Options spéciales -->
               <t t-if="firstStay.early_checkin_requested or firstStay.late_checkout_requested or firstStay.extra_night_required">

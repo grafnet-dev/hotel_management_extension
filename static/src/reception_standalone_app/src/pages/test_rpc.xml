@@ -11,6 +11,17 @@
                     </li>
                 </t>
             </ul>
+
+            <button type="button" class="btn btn-primary mt-3"
+                    t-on-click="createStay">
+                Créer un Stay Test
+            </button>
+
+            <t t-if="state.lastStay">
+                <p class="mt-2 text-success">
+                    ✅ Stay créé avec ID : <t t-esc="state.lastStay"/>
+                </p>
+            </t>
         </div>
     </t>
 </templates>

@@ -7,43 +7,200 @@ import {
   bookingTransitions,
   stayTransitions,
 } from "../data/statuts";
-
+import { methodCall } from "./api";
 const SERVICE_NAME = "hm_reception_store";
+
+function formatDateForOdoo(date) {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, "0");
+  return (
+    d.getFullYear() +
+    "-" +
+    pad(d.getMonth() + 1) +
+    "-" +
+    pad(d.getDate()) +
+    " " +
+    pad(d.getHours()) +
+    ":" +
+    pad(d.getMinutes()) +
+    ":" +
+    pad(d.getSeconds())
+  );
+}
 // (facultatif) actions centralisées
 function createActions(state) {
   return {
     /***********************************Action Bookings**************************************************/
     // Créer une nouvelle réservation avec une liste vide de stays.
-    addBooking(bookingData) {
-      console.log("🟢 [addBooking] Données reçues :", bookingData);
+    async createBooking(bookingData) {
+      console.log("🟢 [createBooking] Données reçues :", bookingData);
 
-      const id = generateUniqueId();
-      const newBooking = {
-        id,
+      // Mapping front → backend
+      const payload = {
+        //partner_id: Number(bookingData.client_id),
+        partner_id: 8,
+        //date_order: bookingData.booking_date || new Date().toISOString(),
+        date_order: formatDateForOdoo(new Date()),
+        pricelist_id: 1, // à gérer plus tard 
+      };
+      console.log("📤 [createBooking] Payload envoyé à Odoo :", payload);
+      // Création Optimistic (UI réactive immédiatement)
+      const tempId = generateUniqueId(); // id temporaire (UUID ou compteur local)
+      const optimisticBooking = {
+        id: tempId,
         client_id: Number(bookingData.client_id),
         booking_date: bookingData.booking_date || new Date(),
-        stay_ids: [], // sera rempli après
+        stay_ids: [],
         group_code: bookingData.group_code || "DEFAULT_GROUP",
         status: BOOKING_STATUS.PENDING,
-        total_booking_amount: 0, // sera calculé plus tard
+        total_booking_amount: 0,
+        _optimistic: true, // flag pour indiquer que ce n’est pas encore confirmé par Odoo
       };
 
-      // Ajout dans le state
-      state.reservations.bookings.push(newBooking);
+      state.reservations.bookings.push(optimisticBooking);
 
-      console.log("📦 [addBooking] Nouvelle réservation ajoutée :", newBooking);
       console.log(
-        `📦 Booking créé (status="${BOOKING_STATUS.PENDING}")`,
-        newBooking
-      );
-      console.log(
-        "📂 [addBooking] État actuel des réservations :",
-        state.reservations.bookings
+        "📦 [createBooking] Réservation optimiste ajoutée :",
+        optimisticBooking
       );
 
-      return id;
+      try {
+        //  Appel au backend (Odoo) via RPC
+        const response = await methodCall("room.booking", "create_booking", [payload]);
+
+        if (response.success) {
+          //  Synchronisation : remplacer le booking optimiste par le vrai
+          const bookingDataFromMethod = response.data;
+          console.log(
+            "📦 [createBooking] Données reçues d'Odoo :",
+            bookingDataFromMethod
+          );
+          const index = state.reservations.bookings.findIndex(
+            (b) => b.id === tempId
+          );
+          if (index !== -1) {
+            state.reservations.bookings[index] = {
+              ...optimisticBooking,
+              id: bookingDataFromMethod.id, // remplace par l'ID Odoo
+              status: bookingDataFromMethod.state || BOOKING_STATUS.CONFIRMED,
+              _optimistic: false,
+            };
+          }
+
+          console.log(
+            "✅ [createBooking] Réservation validée par Odoo :",
+            state.reservations.bookings[index]
+          );
+          return response.id;
+        } else {
+          // Si Odoo renvoie une erreur → rollback
+          state.reservations.bookings = state.reservations.bookings.filter(
+            (b) => b.id !== tempId
+          );
+          console.error(
+            "❌ [createBooking] Erreur renvoyée par Odoo :",
+            response.message
+          );
+          throw new Error(response.message);
+        }
+      } catch (error) {
+        // Rollback si erreur réseau / RPC
+        state.reservations.bookings = state.reservations.bookings.filter(
+          (b) => b.id !== tempId
+        );
+        console.error("🚨 [createBooking] Erreur RPC :", error);
+        throw error;
+      }
     },
 
+    //mettre à jour le statut d'un booking
+    updateBookingStatus(bookingId, newStatus) {
+      console.log(
+        `🔄 [updateBookingStatus] Tentative de passage Booking ${bookingId} → ${newStatus}`
+      );
+
+      const booking = state.reservations.bookings.find(
+        (b) => b.id === bookingId
+      );
+      if (!booking) {
+        console.error(`❌ Booking ${bookingId} introuvable`);
+        return false;
+      }
+
+      const allowed = bookingTransitions[booking.status] || [];
+      if (!allowed.includes(newStatus)) {
+        console.warn(
+          `⚠️ Transition refusée : ${booking.status} → ${newStatus}`
+        );
+        return false;
+      }
+
+      booking.status = newStatus;
+      console.log(`✅ Booking ${bookingId} est maintenant "${newStatus}"`);
+
+      // Effet cascade
+      if (newStatus === BOOKING_STATUS.CANCELLED) {
+        booking.stay_ids.forEach((stayId) => {
+          this.updateStayStatus(stayId, STAY_STATUS.CANCELLED);
+        });
+      }
+
+      return true;
+    },
+    // Synchroniser le statut d'un booking en fonction de celui de ses stays
+    syncBookingStatusFromStays(bookingId) {
+      console.log(
+        `🔄 [syncBookingStatusFromStays] Recalcul du statut Booking ${bookingId}`
+      );
+
+      const booking = state.reservations.bookings.find(
+        (b) => b.id === bookingId
+      );
+      if (!booking) {
+        console.error(`❌ Booking ${bookingId} introuvable`);
+        return;
+      }
+
+      const stays = state.reservations.stays.filter((s) =>
+        booking.stay_ids.includes(s.id)
+      );
+
+      const allCheckedOut = stays.every(
+        (s) => s.status === STAY_STATUS.CHECKED_OUT
+      );
+      const anyCheckedIn = stays.some(
+        (s) => s.status === STAY_STATUS.CHECKED_IN
+      );
+      const allPending = stays.every((s) => s.status === STAY_STATUS.PENDING);
+      const allCancelled = stays.every(
+        (s) => s.status === STAY_STATUS.CANCELLED
+      );
+
+      if (allCancelled) {
+        this.updateBookingStatus(bookingId, BOOKING_STATUS.CANCELLED);
+      } else if (allCheckedOut) {
+        this.updateBookingStatus(bookingId, BOOKING_STATUS.COMPLETED);
+      } else if (anyCheckedIn) {
+        // 👉 Cas important : check-in alors que booking est encore pending
+        if (booking.status === BOOKING_STATUS.PENDING) {
+          console.log(
+            `🔄 Booking ${bookingId} est encore "pending", on le confirme d'abord`
+          );
+          this.updateBookingStatus(bookingId, BOOKING_STATUS.CONFIRMED);
+        }
+        // Ensuite, passage à in_progress
+        this.updateBookingStatus(bookingId, BOOKING_STATUS.IN_PROGRESS);
+      } else if (allPending) {
+        if (
+          booking.status === BOOKING_STATUS.CONFIRMED ||
+          booking.status === BOOKING_STATUS.PENDING
+        ) {
+          console.log(`ℹ️ Booking ${bookingId} reste "${booking.status}"`);
+        }
+      }
+    },
+
+    /***********************************Action Stays**************************************************/
     // Ajouter un séjour à une réservation, enrichir, calculer les totaux.
     addStay(bookingId, stayData) {
       console.log("🟡 [addStay] bookingId reçu :", bookingId);
@@ -237,41 +394,6 @@ function createActions(state) {
       return total;
     },
 
-    //mettre à jour le statut d'un booking
-    updateBookingStatus(bookingId, newStatus) {
-      console.log(
-        `🔄 [updateBookingStatus] Tentative de passage Booking ${bookingId} → ${newStatus}`
-      );
-
-      const booking = state.reservations.bookings.find(
-        (b) => b.id === bookingId
-      );
-      if (!booking) {
-        console.error(`❌ Booking ${bookingId} introuvable`);
-        return false;
-      }
-
-      const allowed = bookingTransitions[booking.status] || [];
-      if (!allowed.includes(newStatus)) {
-        console.warn(
-          `⚠️ Transition refusée : ${booking.status} → ${newStatus}`
-        );
-        return false;
-      }
-
-      booking.status = newStatus;
-      console.log(`✅ Booking ${bookingId} est maintenant "${newStatus}"`);
-
-      // Effet cascade
-      if (newStatus === BOOKING_STATUS.CANCELLED) {
-        booking.stay_ids.forEach((stayId) => {
-          this.updateStayStatus(stayId, STAY_STATUS.CANCELLED);
-        });
-      }
-
-      return true;
-    },
-
     //mettre à jour le statut d'un stay
     updateStayStatus(stayId, newStatus) {
       console.log(
@@ -297,59 +419,6 @@ function createActions(state) {
       this.syncBookingStatusFromStays(stay.booking_id);
 
       return true;
-    },
-
-    // Synchroniser le statut d'un booking en fonction de celui de ses stays
-    syncBookingStatusFromStays(bookingId) {
-      console.log(
-        `🔄 [syncBookingStatusFromStays] Recalcul du statut Booking ${bookingId}`
-      );
-
-      const booking = state.reservations.bookings.find(
-        (b) => b.id === bookingId
-      );
-      if (!booking) {
-        console.error(`❌ Booking ${bookingId} introuvable`);
-        return;
-      }
-
-      const stays = state.reservations.stays.filter((s) =>
-        booking.stay_ids.includes(s.id)
-      );
-
-      const allCheckedOut = stays.every(
-        (s) => s.status === STAY_STATUS.CHECKED_OUT
-      );
-      const anyCheckedIn = stays.some(
-        (s) => s.status === STAY_STATUS.CHECKED_IN
-      );
-      const allPending = stays.every((s) => s.status === STAY_STATUS.PENDING);
-      const allCancelled = stays.every(
-        (s) => s.status === STAY_STATUS.CANCELLED
-      );
-
-      if (allCancelled) {
-        this.updateBookingStatus(bookingId, BOOKING_STATUS.CANCELLED);
-      } else if (allCheckedOut) {
-        this.updateBookingStatus(bookingId, BOOKING_STATUS.COMPLETED);
-      } else if (anyCheckedIn) {
-        // 👉 Cas important : check-in alors que booking est encore pending
-        if (booking.status === BOOKING_STATUS.PENDING) {
-          console.log(
-            `🔄 Booking ${bookingId} est encore "pending", on le confirme d'abord`
-          );
-          this.updateBookingStatus(bookingId, BOOKING_STATUS.CONFIRMED);
-        }
-        // Ensuite, passage à in_progress
-        this.updateBookingStatus(bookingId, BOOKING_STATUS.IN_PROGRESS);
-      } else if (allPending) {
-        if (
-          booking.status === BOOKING_STATUS.CONFIRMED ||
-          booking.status === BOOKING_STATUS.PENDING
-        ) {
-          console.log(`ℹ️ Booking ${bookingId} reste "${booking.status}"`);
-        }
-      }
     },
 
     /**************************************Actions CLients********************************************************/

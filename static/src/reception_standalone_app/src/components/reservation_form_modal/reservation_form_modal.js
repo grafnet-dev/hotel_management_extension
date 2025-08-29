@@ -58,14 +58,8 @@ export class ReservationFormModal extends Component {
     };
   }
 
-  save() {
+  async save() {
     console.log("✅ Bouton Enregistrer cliqué...📤 Envoi du formulaire...");
-    console.log("📤 Tentative d'enregistrement du formulaire...");
-    console.log(
-      "👤 ID du client sélectionné :",
-      this.localState.selectedClientId
-    );
-    console.log("Séjours draft enregistrés :", this.localState.draftStays);
 
     const clientId = this.localState.selectedClientId;
     const stays = this.localState.draftStays;
@@ -80,39 +74,33 @@ export class ReservationFormModal extends Component {
       return;
     }
 
-    // Création de la réservation
-    const bookingId = this.actions.addBooking({
-      client_id: clientId,
-      booking_date: new Date().toISOString(),
-    });
+    try {
+      // 1️⃣ Création du booking côté backend (Odoo)
+      const bookingId = await this.actions.createBooking({
+        client_id: clientId,
+        booking_date: new Date().toISOString(),
+      });
 
-    console.log(`📘 Réservation créée avec ID : ${bookingId}`);
+      console.log(`📘 Réservation créée avec ID Odoo : ${bookingId}`);
 
-    // 2️⃣ Ajout des séjours bruts (enrichissement automatique dans addStay)
-    const stayIds = [];
-    /*for (const enrichedStay of enrichedStays) {
-      const stayId = this.actions.addStay(bookingId, enrichedStay);
-      stayIds.push(stayId);
-    }*/
-   for (const stay of stays) {
-      const stayId = this.actions.addStay(bookingId, stay);
-      stayIds.push(stayId);
+      // 2️⃣ Ajout des séjours en local (pas envoyés à Odoo pour l'instant)
+      const stayIds = [];
+      for (const stay of stays) {
+        const stayId = this.actions.addStay(bookingId, stay);
+        stayIds.push(stayId);
+      }
+
+      // 3️⃣ Résumé final
+      console.log("✅ Réservation complète !");
+      console.log("🧾 Résumé :");
+      console.log("Client ID :", clientId);
+      console.log("Stay IDs :", stayIds);
+      console.log("Réservation ID :", bookingId);
+
+      this.props.onClose(); // Ferme la modal
+    } catch (error) {
+      console.error("🚨 Erreur lors de la création du booking :", error);
+      alert("Impossible de créer la réservation : " + error.message);
     }
-
-    // Résumé final
-    console.log("✅ Réservation complète !");
-    console.log("🧾 Résumé :");
-    console.log("Client ID :", clientId);
-    //console.log("Séjours :", enrichedStays);
-    console.log("Stay IDs :", stayIds);
-    console.log("Réservation ID :", bookingId);
-
-    this.props.onClose(); // Ferme la modal via la prop du parent
-  }
-
-  close() {
-    console.log("❌ Bouton Annuler cliqué");
-    console.log("🔴 Fermeture de la modal demandée");
-    this.props.onClose(); // Ferme la modal via la prop du parent
   }
 }
