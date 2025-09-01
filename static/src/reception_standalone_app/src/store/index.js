@@ -6,6 +6,7 @@ import { ProductStore } from "./products";
 import { EventsStore } from "./events";
 import { ServicesStore } from "./services";
 import {PoliceFormStore} from "./police_form";
+import { ReservationTypeStore } from "./reservation_type";
 import { UIStore } from "./ui";
 
 
@@ -19,4 +20,5 @@ export const AppState = {
     events: EventsStore,
     services: ServicesStore,
     police_forms: PoliceFormStore,
+    reservation_types: ReservationTypeStore,
 };

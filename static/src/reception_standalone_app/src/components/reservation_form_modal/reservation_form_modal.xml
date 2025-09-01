@@ -14,7 +14,7 @@
               class="w-full border rounded px-3 py-2"
               t-model="localState.selectedClientId"
             >
-              <option t-att-value="null">Sélectionner un client...</option>
+              <option t-att-value="0">Sélectionner un client...</option>
               <t t-foreach="getters.getAllClients()" t-as="client" t-key="client.id">
                 <option t-att-value="client.id">
                   <t t-esc="client.name" />
@@ -29,9 +29,25 @@
                 t-esc="localState.selectedClientId" /></p>
           </t>
 
-          <!-- 🛏️ Formulaire d'ajout de séjour -->
+          <!-- Formulaire d'ajout de séjour -->
           <div class="border p-4 rounded space-y-3 bg-gray-50">
             <h3 class="text-lg font-medium text-gray-800">Ajouter un séjour</h3>
+
+            <!-- Sélection type réservation -->
+            <div>
+              <label class="block text-sm mb-1">📌 Type de réservation</label>
+              <select
+                class="w-full border rounded px-2 py-1"
+                t-model="localState.stayForm.reservation_type_id"
+              >
+                <option value="">Choisir un type</option>
+                <t t-foreach="state.reservation_types.list" t-as="resaType" t-key="resaType.id">
+                  <option t-att-value="resaType.id">
+                    <t t-esc="resaType.name" />
+                  </option>
+                </t>
+              </select>
+            </div>
 
             <!-- Sélection de la chambre -->
             <div>
@@ -48,26 +64,79 @@
               </select>
             </div>
 
-            <!-- Dates -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm mb-1">📅 Check-in</label>
-                <input
-                  type="date"
-                  class="w-full border rounded px-2 py-1"
-                  t-model="localState.stayForm.check_in"
-                />
-              </div>
-              <div>
-                <label class="block text-sm mb-1">📅 Check-out</label>
-                <input
-                  type="date"
-                  class="w-full border rounded px-2 py-1"
-                  t-model="localState.stayForm.check_out"
-                />
-              </div>
-            </div>
 
+            <!-- Bloc dates : VERSION CORRIGÉE -->
+            <div class="grid grid-cols-2 gap-4">
+              <!-- RÉSERVATION NON-FLEXIBLE : booking dates + checkin/out calculés -->
+              <t t-if="!isFlexibleReservation">
+                <div>
+                  <label class="block text-sm mb-1">📅 Début réservation</label>
+                  <input type="date"
+                    class="w-full border rounded px-2 py-1"
+                    t-model="localState.stayForm.booking_start_date"
+                    t-on-change="computeDatesFromBackend" />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1">📅 Fin réservation</label>
+                  <input type="date"
+                    class="w-full border rounded px-2 py-1"
+                    t-model="localState.stayForm.booking_end_date"
+                    t-on-change="computeDatesFromBackend" />
+                </div>
+
+                <!-- Dates calculées (read-only) -->
+                <div>
+                  <label class="block text-sm mb-1 text-gray-600">🕐 Check-in calculé</label>
+                  <input type="datetime-local"
+                    class="w-full border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                    t-att-value="localState.stayForm.check_in"
+                    readonly="readonly" />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1 text-gray-600">🕐 Check-out calculé</label>
+                  <input type="datetime-local"
+                    class="w-full border rounded px-2 py-1 bg-gray-100 text-gray-600"
+                    t-att-value="localState.stayForm.check_out"
+                    readonly="readonly" />
+                </div>
+              </t>
+
+              <!-- RÉSERVATION FLEXIBLE : checkin/checkout directement modifiables -->
+              <t t-if="isFlexibleReservation">
+                <div>
+                  <label class="block text-sm mb-1">📅 Check-in</label>
+                  <input type="datetime-local"
+                    class="w-full border rounded px-2 py-1"
+                    t-model="localState.stayForm.check_in" />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1">📅 Check-out</label>
+                  <input type="datetime-local"
+                    class="w-full border rounded px-2 py-1"
+                    t-model="localState.stayForm.check_out" />
+                </div>
+
+                <!-- Pour les réservations flexibles, on peut cacher les champs booking dates ou les
+                mettre en lecture seule -->
+                <t t-if="!isFlexibleReservation">
+                  <div>
+                    <label class="block text-sm mb-1 text-gray-500">📅 Début réservation</label>
+                    <input type="date"
+                      class="w-full border rounded px-2 py-1"
+                      t-att-value="localState.stayForm.booking_start_date"
+                      t-on-change="(e) => localState.stayForm.booking_start_date = e.target.value" />
+                  </div>
+                  <div>
+                    <label class="block text-sm mb-1 text-gray-500">📅 Fin réservation</label>
+                    <input type="date"
+                      class="w-full border rounded px-2 py-1"
+                      t-att-value="localState.stayForm.booking_end_date"
+                      t-on-change="(e) => localState.stayForm.booking_end_date = e.target.value" />
+                  </div>
+                </t>
+
+              </t>
+            </div>
             <!-- Bouton ajouter -->
             <button
               t-on-click="addDraftStay"
@@ -76,13 +145,14 @@
               ➕ Ajouter ce séjour
             </button>
           </div>
+
           <!-- Liste des séjours ajoutés -->
           <t t-if="localState.draftStays.length > 0">
             <div class="mt-6">
               <h3 class="text-md font-semibold text-gray-800">🗂️ Séjours ajoutés</h3>
               <ul class="space-y-2 mt-2">
                 <t t-foreach="localState.draftStays" t-as="stay"
-                  t-key="stay.check_in + stay.room_id">
+                  t-key="stay.room_id + '_' + (stay.check_in || 'draft')">
                   <li class="border p-3 rounded bg-white shadow">
                     <p> 🏨 Chambre ID : <strong>
                         <t t-esc="stay.room_id" />
@@ -94,7 +164,6 @@
               </ul>
             </div>
           </t>
-
 
         </div>
 

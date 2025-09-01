@@ -19,12 +19,12 @@ export class Root extends Component {
     const { state, actions, getters } = useStore();
     this.state = state;
     this.actions = actions;
-    this.getters = getters
+    this.getters = getters;
     console.log("📊 État du store:", this.state);
     console.log("🔧 Actions disponibles:", Object.keys(this.actions));
     console.log("📚 Getters disponibles:", Object.keys(this.getters));
 
-    onMounted(() => {
+    onMounted(async () => {
       console.log("🎭 Root mounted:");
       console.log("  - currentComponent:", this.currentComponent.value);
       console.log("  - currentProps:", this.currentProps.value);
@@ -34,6 +34,20 @@ export class Root extends Component {
         Object.keys(this.actions)
       );
       console.log("acceder au rooms, ", this.state);
+
+      try {
+        // Appel de l'action qui fait le RPC et met à jour le state
+        await this.actions.fetchReservationTypes();
+        console.log(
+          "✅ Types de réservation chargés :",
+          this.state.reservation_types.list
+        );
+      } catch (error) {
+        console.error(
+          "❌ Impossible de charger les types de réservation :",
+          error
+        );
+      }
     });
 
     // Initialisation avec des valeurs par défaut

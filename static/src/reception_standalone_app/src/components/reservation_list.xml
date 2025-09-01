@@ -167,7 +167,7 @@
                 </div>-->
               </div> 
 
-              <!-- Options spéciales -->
+              <!-- Options spéciales 
               <t t-if="firstStay.early_checkin_requested or firstStay.late_checkout_requested or firstStay.extra_night_required">
                 <div class="mt-4 pt-4 border-t border-gray-100">
                   <div class="flex flex-wrap gap-2">
@@ -188,7 +188,7 @@
                     </t>
                   </div>
                 </div>
-              </t>
+              </t>-->
             </div>
 
             <!-- Footer -->

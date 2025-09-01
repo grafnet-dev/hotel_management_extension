@@ -1,6 +1,7 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError  
 from datetime import datetime, timedelta, time
+from ..constants.booking_stays_state import STAY_STATES     
 
 
 def float_to_time(float_hour):
@@ -17,9 +18,9 @@ class HotelBookingStayS(models.Model):
     # Infos occupants
     occupant_ids = fields.Many2many(
         "res.partner",
-        "hotel_booking_stay_res_partner_rel",  # nom de la table de relation
-        "stay_id",  # clé étrangère vers hotel.booking.stay
-        "partner_id",  # clé étrangère vers res.partner
+        "hotel_booking_stay_res_partner_rel",  
+        "stay_id",  
+        "partner_id",  
         string="Occupants",
         help="Occupants of the room for this stay",
     )
@@ -128,24 +129,44 @@ class HotelBookingStayS(models.Model):
     )
 
     # consommations du séjour
-    need_food = fields.Boolean("Need Food")
+    need_food = fields.Boolean(
+        default=False,
+        string="Besoin de nourriture ?",
+        help="Check if a Event to be added with" " the Booking",
+    )
     food_order_line_ids = fields.One2many(
         "food.booking.line", "booking_id", string="Food Order Lines", copy=True
     )
 
-    need_service = fields.Boolean("Need Services")
+    need_service = fields.Boolean(
+        default=False,
+        string="Besoin de services ?",
+        help="Check if a Service to be added with" " the Stay",
+    )
     service_booking_line_ids = fields.One2many(
-        "service.booking.line", "booking_id", string="Service Booking Lines", copy=True
+        "service.booking.line", "booking_id", string="Service Stay Lines", copy=True
     )
 
-    need_fleet = fields.Boolean("Need Fleet")
+    need_fleet = fields.Boolean(
+        default=False,
+        string="Besoin de véhicule ?",
+        help="Check if a Fleet to be added with" " the Stay",
+    )
     fleet_booking_line_ids = fields.One2many(
-        "fleet.booking.line", "booking_id", string="Fleet Booking Lines", copy=True
+        "fleet.booking.line",
+        "booking_id",
+        string="Fleet Stay Lines",
+        copy=True,
+        help="Check if a Event to be added with" " the Stay",
     )
 
-    need_event = fields.Boolean("Need Event")
+    need_event = fields.Boolean(
+        default=False,
+        string="Participer à un événement ? ",
+        help="Check if a Event to be added with" " the Stay",
+    )
     event_booking_line_ids = fields.One2many(
-        "event.booking.line", "booking_id", string="Event Booking Lines", copy=True
+        "event.booking.line", "booking_id", string="Event Stay Lines", copy=True
     )
 
     # Prix & Facturation -> à définir les champs nécessaires plus tard et logique de calcul
@@ -154,14 +175,14 @@ class HotelBookingStayS(models.Model):
         related="booking_id.pricelist_id.currency_id",
         help="The currency used",
     )
-    
+
     room_price_total = fields.Monetary(
         string="Prix chambre",
         compute="_compute_room_price_total",
         store=True,
         currency_field="currency_id",
     )
-    
+
     price_subtotal = fields.Float(
         string="Subtotal",
         compute="_compute_price_subtotal",
@@ -183,16 +204,17 @@ class HotelBookingStayS(models.Model):
     )
 
     state = fields.Selection(
-        [
-            ("draft", "Brouillon"),
-            ("ongoing", "En cours"),
-            ("checked_out", "Sorti"),
-            ("cancelled", "Annulé"),
+        selection=[
+            (STAY_STATES["PENDING"], "En attente"),
+            (STAY_STATES["ONGOING"], "En cours"),
+            (STAY_STATES["COMPLETED"], "Terminé"),
+            (STAY_STATES["CANCELLED"], "Annulé"),
         ],
         string="État",
-        default="draft",
+        default=STAY_STATES["PENDING"],
         tracking=True,
     )
+
 
     # ouvrir un modal pour la fiche de police
     def action_start_checkin_wizard(self):
@@ -214,17 +236,16 @@ class HotelBookingStayS(models.Model):
             stay.occupant_names = (
                 ", ".join(stay.occupant_ids.mapped("name")) if stay.occupant_ids else ""
             )
-            
 
     def action_start(self):
         self.ensure_one()
-        self.state = "ongoing"
+        self.state = STAY_STATES["ONGOING"]
 
     def action_checkout(self):
-        self.state = "checked_out"
+        self.state = STAY_STATES["COMPLETED"]
 
     def action_cancel(self):
-        self.state = "cancelled"
+        self.state = STAY_STATES["CANCELLED"]
 
     def _set_default_uom_id(self):
         return self.env.ref("uom.product_uom_day")
@@ -299,7 +320,7 @@ class HotelBookingStayS(models.Model):
         for rec in self:
             rec.is_flexible_reservation = bool(rec.reservation_type_id.is_flexible)
 
-    # ----------- LOGIQUE COMMUNE -------------
+    # ----------- Calcul des dates en fonction du type de resa -------------
     def _compute_dates_logic(self, rec):
         """
         Logique partagée entre compute et onchange
@@ -361,23 +382,31 @@ class HotelBookingStayS(models.Model):
         for rec in self:
             self._compute_dates_logic(rec)
 
-    
-
-    @api.depends("room_type_id", "reservation_type_id", "booking_start_date", "booking_end_date")
+    @api.depends(
+        "room_type_id", "reservation_type_id", "booking_start_date", "booking_end_date"
+    )
     def _compute_room_price_total(self):
         for stay in self:
             stay.room_price_total = 0.0
 
             # Vérification des infos nécessaires
-            if not (stay.room_type_id and stay.reservation_type_id and stay.booking_start_date and stay.booking_end_date):
+            if not (
+                stay.room_type_id
+                and stay.reservation_type_id
+                and stay.booking_start_date
+                and stay.booking_end_date
+            ):
                 continue
 
             # Récupération de la règle tarifaire
-            pricing_rule = self.env["hotel.room.pricing"].search([
-                ("room_type_id", "=", stay.room_type_id.id),
-                ("reservation_type_id", "=", stay.reservation_type_id.id),
-                ("active", "=", True)
-            ], limit=1)
+            pricing_rule = self.env["hotel.room.pricing"].search(
+                [
+                    ("room_type_id", "=", stay.room_type_id.id),
+                    ("reservation_type_id", "=", stay.reservation_type_id.id),
+                    ("active", "=", True),
+                ],
+                limit=1,
+            )
 
             if not pricing_rule:
                 stay.room_price_total = 0.0
@@ -392,10 +421,180 @@ class HotelBookingStayS(models.Model):
 
             # Utilisation de la méthode compute_price pour centraliser la logique
             stay.room_price_total = pricing_rule.compute_price(
-                base_price=base_price,
-                duration_hours=duration_hours
+                base_price=base_price, duration_hours=duration_hours
             )
 
             # Si le mode n'est pas horaire, on multiplie par le nombre de jours
             if pricing_rule.pricing_mode != "hourly":
                 stay.room_price_total *= duration_days
+
+    
+    @api.model
+    def create_stay_from_ui(self, values):
+        """
+        Test basique de création depuis OWL
+        """
+        # Vérif minimum
+        if not values.get("room_type_id") or not values.get("booking_id"):
+            raise ValidationError(_("Il faut au moins un booking et un type de chambre."))
+
+        # Création du séjour
+        stay = self.create(values)
+
+        # Retourner un payload simple pour OWL
+        return {
+            "id": stay.id,
+            "booking_id": stay.booking_id.id if stay.booking_id else False,
+            "room_type": stay.room_type_id.name if stay.room_type_id else None,
+            "checkin": stay.checkin_date,
+            "checkout": stay.checkout_date,
+            "state": stay.state,
+        }
+        
+    
+    @api.model
+    def add_stay_to_booking(self, vals):
+        """
+        Ajoute un séjour (stay) à une réservation existante via RPC.
+        :param vals: dict contenant les champs nécessaires pour créer le stay
+                     Exemple minimal :
+                     {
+                        "booking_id": 12,
+                        "room_type_id": 5,
+                        "reservation_type_id": 3,
+                        "booking_start_date": "2025-08-30",
+                        "booking_end_date": "2025-08-31",
+                     }
+        :return: dict {success: bool, message: str, data: dict}
+        """
+        try:
+            # --- Vérification des champs obligatoires ---
+            required_fields = ["booking_id", "room_type_id", "reservation_type_id", "booking_start_date", "booking_end_date"]
+            for field in required_fields:
+                if field not in vals or not vals[field]:
+                    raise ValidationError(_("Le champ '%s' est obligatoire.") % field)
+
+            # --- Vérifier que la réservation existe ---
+            booking = self.env["room.booking"].browse(vals["booking_id"])
+            if not booking or not booking.exists():
+                raise ValidationError(_("La réservation (ID %s) est introuvable.") % vals["booking_id"])
+
+            # --- Vérifier que le type de chambre existe ---
+            room_type = self.env["hotel.room.type"].browse(vals["room_type_id"])
+            if not room_type or not room_type.exists():
+                raise ValidationError(_("Le type de chambre (ID %s) est introuvable.") % vals["room_type_id"])
+
+            # --- Vérifier que le type de réservation existe ---
+            resa_type = self.env["hotel.reservation.type"].browse(vals["reservation_type_id"])
+            if not resa_type or not resa_type.exists():
+                raise ValidationError(_("Le type de réservation (ID %s) est introuvable.") % vals["reservation_type_id"])
+
+            # --- (Optionnel) Logique métier additionnelle ---
+            # Exemple : interdire que la date de fin soit avant la date de début
+            if vals["booking_end_date"] < vals["booking_start_date"]:
+                raise ValidationError(_("La date de fin de réservation ne peut pas être avant la date de début."))
+
+            # --- Création du stay ---
+            stay = self.create(vals)
+
+            return {
+                "success": True,
+                "message": _("Séjour ajouté avec succès à la réservation."),
+                "data": {
+                    "stay_id": stay.id,
+                    "booking_id": booking.id,
+                    "state": stay.state,
+                    "checkin_date": stay.checkin_date,
+                    "checkout_date": stay.checkout_date,
+                },
+            }
+
+        except (ValidationError, UserError) as e:
+            return {
+                "success": False,
+                "message": str(e),
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": _("Erreur interne : %s") % str(e),
+            }
+            
+    
+    @api.model
+    def compute_checkin_checkout(self, vals):
+        """
+        Calcule les dates de check-in et check-out pour un séjour,
+        réutilise la logique interne `_compute_dates_logic`.
+        
+        :param vals: dict contenant les champs nécessaires :
+            {
+                "room_type_id": 5,
+                "reservation_type_id": 3,
+                "booking_start_date": "2025-08-30",
+                "booking_end_date": "2025-08-31"
+            }
+        :return: dict {success: bool, message: str, data: dict}
+        """
+        try:
+            # --- Vérification des champs obligatoires ---
+            required_fields = ["room_type_id", "reservation_type_id", "booking_start_date", "booking_end_date"]
+            for field in required_fields:
+                if field not in vals or not vals[field]:
+                    raise ValidationError(_("Le champ '%s' est obligatoire.") % field)
+
+            # --- Vérifier que le type de chambre existe ---
+            room_type = self.env["hotel.room.type"].browse(vals["room_type_id"])
+            if not room_type or not room_type.exists():
+                raise ValidationError(_("Le type de chambre (ID %s) est introuvable.") % vals["room_type_id"])
+
+            # --- Vérifier que le type de réservation existe ---
+            resa_type = self.env["hotel.reservation.type"].browse(vals["reservation_type_id"])
+            if not resa_type or not resa_type.exists():
+                raise ValidationError(_("Le type de réservation (ID %s) est introuvable.") % vals["reservation_type_id"])
+
+            # --- Vérifier que les dates sont cohérentes ---
+            start_date = fields.Date.from_string(vals["booking_start_date"])
+            end_date = fields.Date.from_string(vals["booking_end_date"])
+            if end_date < start_date:
+                raise ValidationError(_("La date de fin de réservation ne peut pas être avant la date de début."))
+
+            # --- Création d'un record temporaire ---
+            rec = self.new({
+                "booking_start_date": start_date,
+                "booking_end_date": end_date,
+                "reservation_type_id": resa_type.id,
+                "room_type_id": room_type.id,
+            })
+
+            # --- Appliquer la logique de calcul sur le record temporaire ---
+            self._compute_dates_logic(rec)
+
+            if not rec.checkin_date or not rec.checkout_date:
+                return {
+                    "success": False,
+                    "message": _("Impossible de calculer les dates de séjour (slot manquant ou type flexible)."),
+                    "data": {},
+                }
+
+            return {
+                "success": True,
+                "message": _("Dates calculées avec succès."),
+                "data": {
+                    "checkin_date": rec.checkin_date,
+                    "checkout_date": rec.checkout_date,
+                },
+            }
+
+        except (ValidationError, UserError) as e:
+            return {
+                "success": False,
+                "message": str(e),
+                "data": {},
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": _("Erreur interne : %s") % str(e),
+                "data": {},
+            }

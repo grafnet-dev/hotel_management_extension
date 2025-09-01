@@ -41,7 +41,7 @@ function createActions(state) {
         partner_id: 8,
         //date_order: bookingData.booking_date || new Date().toISOString(),
         date_order: formatDateForOdoo(new Date()),
-        pricelist_id: 1, // à gérer plus tard 
+        pricelist_id: 1, // à gérer plus tard
       };
       console.log("📤 [createBooking] Payload envoyé à Odoo :", payload);
       // Création Optimistic (UI réactive immédiatement)
@@ -66,7 +66,9 @@ function createActions(state) {
 
       try {
         //  Appel au backend (Odoo) via RPC
-        const response = await methodCall("room.booking", "create_booking", [payload]);
+        const response = await methodCall("room.booking", "create_booking", [
+          payload,
+        ]);
 
         if (response.success) {
           //  Synchronisation : remplacer le booking optimiste par le vrai
@@ -202,60 +204,103 @@ function createActions(state) {
 
     /***********************************Action Stays**************************************************/
     // Ajouter un séjour à une réservation, enrichir, calculer les totaux.
-    addStay(bookingId, stayData) {
+    addStay: async function (bookingId, stayData) {
       console.log("🟡 [addStay] bookingId reçu :", bookingId);
-      console.log("🟡 [addStay] Données du séjour reçues :", stayData);
-
-      const id = generateUniqueId();
-
-      const stay = {
-        id,
-        booking_id: bookingId,
-        room_id: Number(stayData.room_id),
-        occupant_id: null,
-        check_in: stayData.check_in,
-        check_out: stayData.check_out,
-        food_lines: [],
-        event_lines: [],
-        service_lines: [],
-        early_checkin_requested: false,
-        late_checkout_requested: false,
-        extra_night_required: false,
-        notes: "Pas de note",
-        status: STAY_STATUS.PENDING,
-      };
-
-      console.log("📋 [addStay] Séjour brut créé :", stay);
-
-      // Enrichissement
-      const enrichedStay = this.enrichStay(stay);
       console.log(
-        `📋 Stay ajouté et ✨ [addStay] Séjour enrichi : (status="${STAY_STATUS.PENDING}")`,
-        enrichedStay
+        "🟡 [addStay] Données du séjour reçues depuis le formulaire :",
+        stayData
       );
 
-      // Ajout dans state
-      state.reservations.stays.push(enrichedStay);
+      try {
+        //Construire le payload attendu par l'API
+        const payload = {
+          booking_id: 9,
+          room_type_id: 1,
+          reservation_type_id: Number(stayData.reservation_type_id), // Valeur par défaut temporaire
+          booking_start_date: formatDateForOdoo(stayData.booking_start_date),
+          booking_end_date: formatDateForOdoo(stayData.booking_end_date),
+          checkin_date: formatDateForOdoo(stayData.check_in),
+          checkout_date: formatDateForOdoo(stayData.check_out),
+        };
 
-      // Lier à la réservation correspondante
-      const booking = state.reservations.bookings.find(
-        (b) => b.id === bookingId
-      );
-      if (booking) {
-        booking.stay_ids.push(enrichedStay.id);
-        console.log(`🔗 [addStay] Séjour lié à la réservation ${bookingId}`);
-      } else {
-        console.error(
-          `❌ [addStay] Réservation non trouvée pour l'ID ${bookingId}`
+        console.log("📦 [addStay] Payload envoyé à l'API :", payload);
+
+        // Appel de l'API Odoo via RPC
+        const response = await methodCall(
+          "hotel.booking.stay", // modèle Odoo cible
+          "add_stay_to_booking", // méthode Odoo cible
+          [payload] // toujours un tableau pour les args
         );
+
+        console.log("📥 [addStay] Réponse brute de l'API :", response);
+
+        // Vérification de la réponse API
+        if (!response || !response.success) {
+          console.error(
+            "🚨 [addStay] Échec API :",
+            response?.message || "Erreur inconnue"
+          );
+          throw new Error(
+            response?.message || "Impossible d'ajouter le séjour"
+          );
+        }
+
+        const apiStay = response.data;
+        console.log(
+          "🆕 [addStay] Données du séjour créées côté Odoo :",
+          apiStay
+        );
+
+        // Créer un objet stay local basé sur la réponse API
+        const stay = {
+          id: apiStay.stay_id,
+          booking_id: apiStay.booking_id,
+          room_id: Number(stayData.room_id),
+          occupant_id: null,
+          check_in: apiStay.checkin_date,
+          check_out: apiStay.checkout_date,
+          food_lines: [],
+          event_lines: [],
+          service_lines: [],
+          early_checkin_requested: false,
+          late_checkout_requested: false,
+          extra_night_required: false,
+          notes: "Pas de note",
+          status: apiStay.state || "pending",
+        };
+
+        console.log("📋 [addStay] Séjour brut créé localement :", stay);
+
+        // Enrichir les données pour l'UI
+        const enrichedStay = this.enrichStay(stay);
+        console.log("✨ [addStay] Séjour enrichi :", enrichedStay);
+
+        // Ajouter au state
+        state.reservations.stays.push(enrichedStay);
+
+        // Lier le séjour à la réservation correspondante
+        const booking = state.reservations.bookings.find(
+          (b) => b.id === bookingId
+        );
+        if (booking) {
+          booking.stay_ids.push(enrichedStay.id);
+          console.log(`🔗 [addStay] Séjour lié à la réservation ${bookingId}`);
+        } else {
+          console.error(
+            `❌ [addStay] Réservation non trouvée pour l'ID ${bookingId}`
+          );
+        }
+
+        console.log(
+          `📂 [addStay] État actuel des séjours pour booking ${bookingId} :`,
+          state.reservations.stays
+        );
+
+        return enrichedStay.id;
+      } catch (error) {
+        console.error("🚨 [addStay] Erreur générale :", error);
+        throw error;
       }
-
-      console.log(
-        `📂 [addStay] État actuel des séjours :pour l'ID ${bookingId}`,
-        state.reservations.stays
-      );
-
-      return enrichedStay.id;
     },
 
     // Enrichissement de l'objet stays avec les infos pour l'affichage  room info, totaux etc .
@@ -306,14 +351,6 @@ function createActions(state) {
             stay.occupant_id
           );
         }
-
-        /*return {
-          ...stay,
-          room_details: null,
-          room_price_total: 0,
-          consumption_total: 0,
-          total_amount: 0,
-        };*/
       }
       const enriched = {
         ...stay,
@@ -793,6 +830,50 @@ function createActions(state) {
         `✅ [updatePoliceFormStatus] ${id} est maintenant "${newStatus}"`
       );
       return true;
+    },
+
+    /*********************************** Reservation Types ******************************************/
+    async fetchReservationTypes() {
+      console.log("📥 [fetchReservationTypes] Début appel RPC...");
+
+      try {
+        const response = await methodCall(
+          "hotel.reservation.type",
+          "get_reservation_types",
+          []
+        );
+
+        console.log("📦 [fetchReservationTypes] Réponse brute :", response);
+
+        if (!response.success) {
+          console.error(
+            "❌ [fetchReservationTypes] Erreur :",
+            response.message
+          );
+          throw new Error(response.message);
+        }
+
+        //Mapping au format attendu par le store/UI
+        const formatted = response.data.map((t) => ({
+          id: t.id,
+          name: t.name,
+          code: t.code,
+          description: t.description || "",
+          is_flexible: t.is_flexible,
+        }));
+
+        state.reservation_types.list = formatted;
+
+        console.log(
+          "✅ [fetchReservationTypes] Liste mise à jour :",
+          state.reservation_types.list
+        );
+
+        return formatted;
+      } catch (error) {
+        console.error("🚨 [fetchReservationTypes] Erreur RPC :", error);
+        throw error;
+      }
     },
   };
 }
