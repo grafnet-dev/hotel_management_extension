@@ -16,5 +16,7 @@ from . import hotel_pos_menu
 from . import hotel_pos_menu_line
 from . import product_template_extension
 from . import hotel_booking_stays
+from . import hotel_season
+from . import hotel_pricing_rule
 
 

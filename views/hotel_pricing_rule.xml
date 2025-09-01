@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hotel_pricing_rule_tree" model="ir.ui.view">
+        <field name="name">hotel.pricing.rule.list</field>
+        <field name="model">hotel.pricing.rule</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="room_type_id"/>
+                <field name="reservation_type_id"/>
+                <field name="season_id"/>
+                <field name="price"/>
+                <field name="currency_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hotel_pricing_rule_form" model="ir.ui.view">
+        <field name="name">hotel.pricing.rule.form</field>
+        <field name="model">hotel.pricing.rule</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="room_type_id"/>
+                            <field name="reservation_type_id"/>
+                            <field name="season_id"/>
+                        </group>
+                        <group>
+                            <field name="price"/>
+                            <field name="currency_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hotel_pricing_rule" model="ir.actions.act_window">
+        <field name="name">Pricing Rules</field>
+        <field name="res_model">hotel.pricing.rule</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_hotel_pricing_rule"
+              name="Pricing Rules"
+              parent="hotel_management_odoo.hotel_config_menu"
+              action="action_hotel_pricing_rule"/>
+</odoo>
