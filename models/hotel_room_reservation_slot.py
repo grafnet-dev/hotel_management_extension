@@ -55,8 +55,8 @@ class HotelRoomReservationSlot(models.Model):
                 }
             }
 
-    @api.constrains('checkin_time', 'checkout_time')
-    def _check_slot_validation(self):
-        for slot in self:
-            if slot.checkin_time >= slot.checkout_time:
-                raise ValidationError("L'heure d'arrivée doit être avant l'heure de départ.")
+    #@api.constrains('checkin_time', 'checkout_time')
+    #def _check_slot_validation(self):
+     #   for slot in self:
+      #      if slot.checkin_time >= slot.checkout_time:
+       #         raise ValidationError("L'heure d'arrivée doit être avant l'heure de départ.")
