@@ -18,7 +18,7 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['hotel_management_odoo'],
+     'depends': [ 'base', 'contacts','hotel_management_odoo'],
      
     'assets': {
         'web.assets_backend': [
@@ -41,6 +41,8 @@ Long description of module's purpose
         'views/hotel_police_views.xml',
         'views/views.xml',
         'views/templates.xml',  
+        'views/res_partner_view.xml',
+     
         
         
     ],

@@ -1,42 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="view_form_hotel_police_form" model="ir.ui.view">
         <field name="name">hotel.police.form.view.form</field>
         <field name="model">hotel.police.form</field>
         <field name="arch" type="xml">
-            <form string="Fiche de police - Enregistrement Client">
-                <group string="Identité du client">
-                    <field name="guest_name"/>
-                    <field name="gender"/>
-                    <field name="date_of_birth"/>
-                    <field name="place_of_birth"/>
-                    <field name="nationality"/>
+            <form string="Fiche de Police - Enregistrement Client">
+                
+                <!-- Alertes en haut -->
+                <div class="alert alert-danger" invisible="not document_expired">
+                    ⚠️ <strong>ATTENTION:</strong> Le document d'identité de ce client a expiré !
+                </div>
+                
+                <div class="alert alert-warning" invisible="not is_minor">
+                    ⚠️ <strong>ATTENTION:</strong> Client mineur (moins de 18 ans) !
+                </div>
+
+                <!-- Section Client -->
+                <group string="👤 Sélection du Client">
+                    <field name="use_existing_client" string="Client existant"/>
+                    
+                    <!-- Mode client existant -->
+                    <field name="partner_id" 
+                           string="Sélectionner un client"
+                           invisible="not use_existing_client"
+                           options="{'no_create': True}"
+                           placeholder="Tapez le nom du client..."/>
+                    
+                    <!-- Bouton création rapide client dans menu -->
+                    <button name="action_open_new_client_form" 
+                            string="➕ Ouvrir formulaire nouveau client"
+                            type="object"
+                            class="btn-link"
+                            invisible="not use_existing_client"/>
                 </group>
 
-                <group string="Pièce d'identité">
-                    <field name="id_type"/>
-                    <field name="id_number"/>
-                    <field name="id_issue_date"/>
-                    <field name="id_expiry_date"/>
-                    <field name="id_issue_place"/>
-                    <field name="id_document_file" filename="id_document_filename"/>
+                <!-- Informations Client (auto-remplies ou éditables) -->
+                <group string="📋 Identité du Client" col="2">
+                    <group>
+                        <field name="guest_name" 
+                               readonly="use_existing_client and partner_id"
+                               placeholder="Nom complet du client"/>
+                        <field name="gender" 
+                               readonly="use_existing_client and partner_id"/>
+                        <field name="date_of_birth" 
+                               readonly="use_existing_client and partner_id"/>
+                    </group>
+                    <group>
+                        <field name="place_of_birth" 
+                               readonly="use_existing_client and partner_id"/>
+                        <field name="nationality" 
+                               readonly="use_existing_client and partner_id"/>
+                    </group>
                 </group>
 
-                <group string="Informations sur le séjour">
-                    <field name="arrival_date"/>
-                    <field name="departure_date"/>
-                    <field name="room_number"/>
+                <!-- Pièce d'identité -->
+                <group string="🆔 Pièce d'Identité" col="2">
+                    <group>
+                        <field name="id_type" 
+                               readonly="use_existing_client and partner_id"/>
+                        <field name="id_number" 
+                               readonly="use_existing_client and partner_id"
+                               placeholder="Numéro de la pièce d'identité"/>
+                        <field name="id_issue_date" 
+                               readonly="use_existing_client and partner_id"/>
+                    </group>
+                    <group>
+                        <field name="id_expiry_date" 
+                               readonly="use_existing_client and partner_id"/>
+                        <field name="id_issue_place" 
+                               readonly="use_existing_client and partner_id"/>
+                        <field name="id_document_file" 
+                               filename="id_document_filename"/>
+                    </group>
                 </group>
 
-                <group string="Autres">
-                    <field name="notes"/>
+                <!-- Contact d'urgence (affiché depuis le client) -->
+                <group string="📞 Contact d'Urgence" 
+                       invisible="not emergency_contact_name and use_existing_client">
+                    <field name="emergency_contact_name" 
+                           readonly="use_existing_client and partner_id"/>
+                    <field name="emergency_contact_phone" 
+                           readonly="use_existing_client and partner_id"/>
                 </group>
+
+                <!-- Informations séjour -->
+                <group string="🏨 Informations sur le Séjour" col="2">
+                    <group>
+                        <field name="arrival_date"/>
+                        <field name="departure_date"/>
+                    </group>
+                    <group>
+                        <field name="room_number"/>
+                    </group>
+                </group>
+
+                <!-- Observations -->
+                <group string="📝 Observations">
+                    <field name="notes" nolabel="1" placeholder="Observations particulières sur le séjour..."/>
+                </group>
+
+                <!-- Champs invisibles pour les calculs -->
+                <field name="document_expired" invisible="1"/>
+                <field name="is_minor" invisible="1"/>
 
                 <footer>
+                    <!-- Bouton pour créer nouveau client si mode nouveau -->
+                    <button name="action_create_new_client"
+                            string="➕ Créer ce Client"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="use_existing_client or partner_id"/>
+                    
                     <button name="action_validate_police_form"
-                            string="Valider et passer au Check-In"
+                            string="✅ Valider et Check-In"
                             type="object"
                             class="btn-primary"/>
-                    <button string="Annuler"
+                    
+                    <button string="❌ Annuler"
                             special="cancel"
                             class="btn-secondary"/>
                 </footer>

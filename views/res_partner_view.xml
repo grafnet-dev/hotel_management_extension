@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ========== VUE FORMULAIRE ÉTENDUE ========== -->
+        <record id="view_partner_form_hotel" model="ir.ui.view">
+            <field name="name">res.partner.hotel.form</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Ajouter le champ is_hotel_client en haut -->
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="is_hotel_client" string="Client Hôtel"/>
+                </xpath>
+
+                <!-- Ajouter l'onglet Informations Hôtel -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="🏨 Informations Hôtel" invisible="not is_hotel_client">
+                        
+                        <!-- Section Identité -->
+                        <group string="📋 Document d'Identité" col="2">
+                            <group>
+                                <field name="document_type" required="is_hotel_client"/>
+                                <field name="document_number" required="is_hotel_client"/>
+                                <field name="document_issue_date"/>
+                                <field name="document_expiry_date"/>
+                            </group>
+                            <group>
+                                <field name="document_issue_place"/>
+                                <field name="issuing_authority"/>
+                                <button name="action_validate_document" 
+                                        string="Valider Document" 
+                                        type="object" 
+                                        class="btn-secondary"
+                                        invisible="not document_number"/>
+                            </group>
+                        </group>
+
+                        <!-- Alertes documents -->
+                        <div class="alert alert-danger" invisible="not document_expired">
+                            ⚠️ <strong>ATTENTION:</strong> Le document d'identité a expiré !
+                        </div>
+                        <div class="alert alert-warning" invisible="not document_expires_soon or document_expired">
+                            ⏰ Le document d'identité expire dans moins de 30 jours.
+                        </div>
+
+                        <!-- Section Informations Personnelles -->
+                        <group string="👤 Informations Personnelles" col="2">
+                            <group>
+                                <field name="birth_date"/>
+                                <field name="age" readonly="1"/>
+                                <field name="is_adult" readonly="1"/>
+                                <field name="profession"/>
+                            </group>
+                            <group>
+                                <field name="nationality_id"/>
+                                <field name="visit_purpose"/>
+                            </group>
+                        </group>
+
+                        <!-- Alerte âge -->
+                        <div class="alert alert-danger" invisible="is_adult">
+                            ⚠️ <strong>ATTENTION:</strong> Client mineur (moins de 18 ans) !
+                        </div>
+
+                        <!-- Section Contact d'Urgence -->
+                        <group string="📞 Contact d'Urgence" col="2">
+                            <group>
+                                <field name="emergency_contact_name"/>
+                                <field name="emergency_contact_phone"/>
+                            </group>
+                            <group>
+                                <field name="emergency_contact_relation"/>
+                            </group>
+                        </group>
+
+                        <!-- Section Autres Informations -->
+                        <group string="📝 Autres Informations">
+                            <field name="special_requests" placeholder="Allergies, préférences alimentaires, handicaps, demandes particulières..."/>
+                        </group>
+
+                        <!-- Statistiques (pour plus tard) -->
+                        <group string="📊 Statistiques Hôtel" invisible="not check_in_count">
+                            <field name="check_in_count" readonly="1"/>
+                        </group>
+
+                    </page>
+                </xpath>
+
+                <!-- Modifier l'onglet Ventes pour les clients hôtel -->
+                <xpath expr="//page[@name='sales_purchases']" position="attributes">
+                    <attribute name="invisible">is_hotel_client</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- ========== VUE LISTE ÉTENDUE ========== -->
+        <record id="view_partner_list_hotel" model="ir.ui.view">
+            <field name="name">res.partner.hotel.list</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="arch" type="xml">
+                
+                <!-- Ajouter colonnes spécifiques hôtel -->
+                <xpath expr="//field[@name='phone']" position="after">
+                    <field name="is_hotel_client" string="Client Hôtel"/>
+                    <field name="document_type" optional="hide"/>
+                    <field name="document_number" optional="hide"/>
+                    <field name="age" optional="hide"/>
+                </xpath>
+
+                <!-- Coloration selon statut -->
+                <xpath expr="//list" position="attributes">
+                    <attribute name="decoration-info">is_hotel_client</attribute>
+                    <attribute name="decoration-danger">document_expired</attribute>
+                    <attribute name="decoration-warning">document_expires_soon</attribute>
+                    <attribute name="decoration-muted">not is_adult</attribute>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- ========== VUE RECHERCHE ÉTENDUE ========== -->
+        <record id="view_partner_search_hotel" model="ir.ui.view">
+            <field name="name">res.partner.hotel.search</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                
+                <xpath expr="//filter[@name='supplier']" position="after">
+                    <separator/>
+                    <filter name="hotel_client" string="Clients Hôtel" domain="[('is_hotel_client','=',True)]"/>
+                    <filter name="document_expired" string="Documents Expirés" domain="[('document_expired','=',True)]"/>
+                    <filter name="document_expires_soon" string="Documents Expirent Bientôt" domain="[('document_expires_soon','=',True)]"/>
+                    <filter name="minors" string="Mineurs" domain="[('is_adult','=',False)]"/>
+                </xpath>
+
+                <xpath expr="//group" position="inside">
+                    <filter string="Type de Document" name="group_document_type" context="{'group_by': 'document_type'}"/>
+                    <filter string="Nationalité" name="group_nationality" context="{'group_by': 'nationality_id'}"/>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- ========== VUE FORMULAIRE SIMPLIFIÉE CHECK-IN ========== -->
+        <record id="view_partner_form_hotel_checkin" model="ir.ui.view">
+            <field name="name">res.partner.hotel.checkin.form</field>
+            <field name="model">res.partner</field>
+            <field name="arch" type="xml">
+                <form string="Nouveau Client Hôtel">
+                    <header>
+                        <button name="action_validate_document" string="Valider Document" type="object" class="btn-primary"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Nom Complet du Client" required="1"/>
+                            </h1>
+                        </div>
+
+                        <!-- Informations essentielles -->
+                        <group col="2">
+                            <group string="Contact">
+                                <field name="phone" required="1"/>
+                                <field name="email"/>
+                                <field name="street" placeholder="Adresse"/>
+                                <field name="city"/>
+                                <field name="country_id"/>
+                            </group>
+                            <group string="Identité">
+                                <field name="document_type" required="1"/>
+                                <field name="document_number" required="1"/>
+                                <field name="birth_date" required="1"/>
+                                <field name="age" readonly="1"/>
+                                <field name="nationality_id"/>
+                            </group>
+                        </group>
+
+                        <!-- Alertes -->
+                        <div class="alert alert-danger" invisible="is_adult">
+                            ⚠️ <strong>ATTENTION:</strong> Client mineur !
+                        </div>
+
+                        <group col="2">
+                            <group string="Séjour">
+                                <field name="visit_purpose"/>
+                                <field name="profession"/>
+                            </group>
+                            <group string="Contact d'Urgence">
+                                <field name="emergency_contact_name"/>
+                                <field name="emergency_contact_phone"/>
+                            </group>
+                        </group>
+
+                        <group string="Demandes Spéciales">
+                            <field name="special_requests" nolabel="1"/>
+                        </group>
+
+                        <!-- Champs cachés -->
+                        <field name="is_hotel_client" invisible="1"/>
+                        <field name="is_adult" invisible="1"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- ========== ACTIONS ========== -->
+        
+        <!-- Action: Tous les clients hôtel -->
+        <record id="action_hotel_clients" model="ir.actions.act_window">
+            <field name="name">Clients Hôtel</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form,kanban</field>
+            <field name="domain">[('is_hotel_client','=',True)]</field>
+            <field name="context">{'default_is_hotel_client': True, 'default_customer_rank': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Créer votre premier client hôtel !
+                </p>
+                <p>
+                    Ici vous pouvez gérer tous vos clients hôtel avec leurs informations d'identité,
+                    contacts d'urgence et préférences.
+                </p>
+            </field>
+        </record>
+
+        <!-- Action: Nouveau client (Check-in rapide) -->
+        <record id="action_hotel_client_checkin" model="ir.actions.act_window">
+            <field name="name">Nouveau Client (Check-in)</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_partner_form_hotel_checkin"/>
+            <field name="target">new</field>
+            <field name="context">{'default_is_hotel_client': True, 'default_customer_rank': 1}</field>
+        </record>
+
+        <!-- Action: Documents expirés -->
+        <record id="action_hotel_clients_expired_docs" model="ir.actions.act_window">
+            <field name="name">Documents Expirés</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_hotel_client','=',True), ('document_expired','=',True)]</field>
+        </record>
+
+        <!-- ========== MENUS ========== -->
+        
+        <!-- Menu principal: Clients Hôtel -->
+        <menuitem id="menu_hotel_clients_main"
+                  name="🏨 Clients Hôtel"
+                  parent="contacts.menu_contacts"
+                  action="action_hotel_clients"
+                  sequence="15"/>
+
+        <!-- Sous-menu: Check-in rapide -->
+        <menuitem id="menu_hotel_client_checkin"
+                  name="➕ Nouveau Client"
+                  parent="menu_hotel_clients_main"
+                  action="action_hotel_client_checkin"
+                  sequence="10"/>
+
+        <!-- Sous-menu: Documents expirés -->
+        <menuitem id="menu_hotel_clients_expired"
+                  name="⚠️ Documents Expirés"
+                  parent="menu_hotel_clients_main"
+                  action="action_hotel_clients_expired_docs"
+                  sequence="20"/>
+
+    </data>
+</odoo>
