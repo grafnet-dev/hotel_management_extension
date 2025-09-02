@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        
+        <!-- Extension de la vue liste des séjours -->
+        <record id="hotel_booking_stay_list_view_inherit_police" model="ir.ui.view">
+            <field name="name">hotel.booking.stay.list.inherit.police</field>
+            <field name="model">hotel.booking.stay</field>
+            <field name="inherit_id" ref="hotel_booking_stay_list_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="action_print_police_forms" 
+                            type="object" 
+                            string="Imprimer Fiches de Police" 
+                            class="btn-primary"
+                            icon="fa-print"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Extension de la vue formulaire des séjours -->
+        <record id="hotel_booking_stay_form_view_inherit_police" model="ir.ui.view">
+            <field name="name">hotel.booking.stay.form.inherit.police</field>
+            <field name="model">hotel.booking.stay</field>
+            <field name="inherit_id" ref="hotel_booking_stay_form_view"/>
+            <field name="arch" type="xml">
+                <!-- Ajout des boutons dans le header -->
+                <xpath expr="//header" position="inside">
+                    <!-- Boutons Police -->
+                    <button name="action_create_police_form" 
+                            type="object"
+                            string="Créer Fiche Police"
+                            class="btn-info"
+                            attrs="{'invisible': [('state', 'not in', ['pending', 'ongoing'])]}"/>
+                    
+                    <button name="action_view_police_forms" 
+                            type="object"
+                            string="Voir Fiches Police"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('police_form_count', '=', 0)]}"/>
+                    
+                    <!-- Boutons Facturation -->
+                    <button name="action_create_invoice" 
+                            type="object"
+                            string="Créer Facture"
+                            class="btn-success"
+                            attrs="{'invisible': [('invoice_status', 'in', ['no', 'invoiced'])]}"/>
+                    
+                    <button name="action_view_invoices" 
+                            type="object"
+                            string="Voir Factures"
+                            class="btn-info"
+                            attrs="{'invisible': [('invoice_count', '=', 0)]}"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

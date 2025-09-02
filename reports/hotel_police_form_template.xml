@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        
+        <template id="report_police_form_template">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="doc">
+                    <!-- CSS intégré avec couleurs Or & Bleu Pétrole -->
+                    <style>
+                        body { font-family: 'Georgia', serif; color: #2c5530; }
+                        .header-gold { background: linear-gradient(135deg, #d4af37 0%, #f4e18a 50%, #d4af37 100%); }
+                        .section-blue { background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%); }
+                        .accent-gold { color: #d4af37; }
+                        .accent-blue { color: #1e3a5f; }
+                        .border-gold { border: 2px solid #d4af37; }
+                        .border-blue { border: 2px solid #1e3a5f; }
+                        .elegant-shadow { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+                        
+                        /* Masquer les boutons à l'impression */
+                        @media print {
+                            .no-print { display: none !important; }
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        }
+                        
+                        .luxury-card {
+                            border-radius: 8px;
+                            overflow: hidden;
+                            margin-bottom: 20px;
+                            box-shadow: 0 4px 15px rgba(30, 58, 95, 0.1);
+                        }
+                        
+                        .signature-box {
+                            border: 2px solid #d4af37;
+                            border-radius: 5px;
+                            min-height: 100px;
+                            padding: 15px;
+                            background: linear-gradient(45deg, #faf8f0 0%, #f5f0e8 100%);
+                        }
+                    </style>
+
+                    <div style="max-width: 850px; margin: 0 auto; padding: 20px; background: #fafafa;">
+                            
+                        <!-- Boutons d'action (masqués à l'impression) -->
+                        <div class="no-print" style="text-align: center; margin-bottom: 25px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <button onclick="window.print()" style="background: linear-gradient(135deg, #d4af37 0%, #f4e18a 100%); color: #1e3a5f; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-weight: bold; margin: 0 10px; box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);">
+                                🖨️ Imprimer cette fiche
+                            </button>
+                            <button onclick="window.close()" style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%); color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-weight: bold; margin: 0 10px; box-shadow: 0 3px 10px rgba(30, 58, 95, 0.3);">
+                                ❌ Fermer
+                            </button>
+                        </div>
+
+                        <!-- En-tête luxueux avec dégradé or -->
+                        <div class="luxury-card" style="background: linear-gradient(135deg, #d4af37 0%, #f4e18a 50%, #d4af37 100%); color: #1e3a5f;">
+                            <table width="100%" style="border-collapse: collapse; padding: 25px;">
+                                <tr>
+                                    <td width="25%" style="text-align: center; vertical-align: middle;">
+                                        <!-- Logo élégant -->
+                                        <div style="width: 200px; height: 200px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 5px 15px rgba(30, 58, 95, 0.3);">
+                                            <div style="">
+                                                <t t-set="logo_base64" t-value="doc.get_hotel_logo_base64()"/>
+                                    <img t-if="logo_base64" t-att-src="logo_base64" 
+     style="height: 80px; width: auto; border: none; padding: 0; border-radius: 50%;"
+     alt="Logo Hôtel"/>
+
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td width="75%" style="text-align: center; padding-left: 20px;">
+                                        <h1 style="margin: 0; font-size: 28px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">FICHE DE POLICE HOTELIERE</h1>
+                                        <h3 style="margin: 8px 0; font-size: 18px; opacity: 0.9;">Enregistrement Officiel des Voyageurs</h3>
+                                        <p style="margin: 5px 0; font-style: italic; font-size: 14px; opacity: 0.8;">Relacs Zone - Cotonou, Benin</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Informations de réservation -->
+                        <div class="luxury-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 5px solid #d4af37;">
+                            <div style="padding: 20px;">
+                                <table width="100%">
+                                    <tr>
+                                        <td width="50%" style="padding: 10px;">
+                                            <strong style="color: #1e3a5f; font-size: 16px;">📋 N° de Reservation :</strong><br/>
+                                            <span style="color: #d4af37; font-weight: 600; font-size: 18px;" t-esc="doc.stay_id.booking_id.name if doc.stay_id and doc.stay_id.booking_id else 'Non specifie'"/>
+                                        </td>
+                                        <td width="50%" style="padding: 10px;">
+                                            <strong style="color: #1e3a5f; font-size: 16px;">🏨 Chambre Attribuee :</strong><br/>
+                                            <span style="color: #d4af37; font-weight: 600; font-size: 18px;" t-esc="doc.room_id.name if doc.room_id else 'Non attribuee'"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 1: Identité (Bleu pétrole) -->
+                        <div class="luxury-card">
+                            <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%); color: white; padding: 15px; font-weight: bold; font-size: 18px;">
+                                👤 1. IDENTITE DE L'OCCUPANT
+                            </div>
+                            <div style="padding: 25px; background: white;">
+                                <table width="100%" style="border-collapse: collapse;">
+                                    <tr>
+                                        <td width="33%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Nom de Famille :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.last_name or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                        <td width="33%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Prenom :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.first_name or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                        <td width="34%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Sexe :</strong><br/>
+                                            <div style="padding: 8px; margin-top: 8px; background: #e8f4f8; border-radius: 15px; text-align: center; border: 1px solid #2c5aa0;">
+                                                <span style="font-weight: 600; color: #1e3a5f;">
+                                                    <span t-if="doc.gender == 'male'">Masculin</span>
+                                                    <span t-if="doc.gender == 'female'">Feminin</span>
+                                                    <span t-if="not doc.gender">Non specifie</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Date de Naissance :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.date_of_birth or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                        <td colspan="2" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Lieu de Naissance :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.place_of_birth or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Nationalite :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.nationality.name if doc.nationality else 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                        <td colspan="2" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Adresse Complete :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span style="font-weight: 600; color: #2c5530;">
+                                                    <t t-esc="doc.street or ''"/> 
+                                                    <t t-if="doc.zip">- <t t-esc="doc.zip"/></t>
+                                                    <t t-if="doc.city"> <t t-esc="doc.city"/></t>
+                                                    <t t-if="doc.country_id">- <t t-esc="doc.country_id.name"/></t>
+                                                    <t t-if="not doc.street and not doc.zip and not doc.city and not doc.country_id">Non renseigne</t>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 2: Pièce d'identité (Or) -->
+                        <div class="luxury-card">
+                            <div style="background: linear-gradient(135deg, #d4af37 0%, #f4e18a 100%); color: #1e3a5f; padding: 15px; font-weight: bold; font-size: 18px;">
+                                🆔 2. PIECE D'IDENTITE OFFICIELLE
+                            </div>
+                            <div style="padding: 25px; background: white;">
+                                <table width="100%" style="border-collapse: collapse;">
+                                    <tr>
+                                        <td width="50%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Type de Document :</strong><br/>
+                                            <div style="padding: 10px; margin-top: 8px; background: #fff8e1; border-radius: 8px; border: 1px solid #d4af37;">
+                                                <span style="font-weight: 600; color: #1e3a5f;">
+                                                    <span t-if="doc.id_type == 'passport'">🛂 Passeport (Etranger)</span>
+                                                    <span t-if="doc.id_type == 'benin_id'">🆔 Carte Nationale (Benin)</span>
+                                                    <span t-if="doc.id_type == 'benin_driver_license'">🚗 Permis de Conduire (Benin)</span>
+                                                    <span t-if="doc.id_type == 'other'">📄 Autre Piece</span>
+                                                    <span t-if="not doc.id_type">❓ Non Specifie</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td width="50%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Numero du Document :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.id_number or 'Non renseigne'" style="font-weight: 600; color: #2c5530; font-family: monospace;"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Date de Delivrance :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.id_issue_date or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Date d'Expiration :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.id_expiry_date or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">Lieu de Delivrance :</strong><br/>
+                                            <div style="border-bottom: 2px solid #d4af37; padding: 8px; margin-top: 8px; background: #faf8f0; border-radius: 3px;">
+                                                <span t-esc="doc.id_issue_place or 'Non renseigne'" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Section 3: Séjour (Bleu/Or mix) -->
+                        <div class="luxury-card">
+                            <div style="background: linear-gradient(45deg, #1e3a5f 0%, #d4af37 50%, #1e3a5f 100%); color: white; padding: 15px; font-weight: bold; font-size: 18px;">
+                                🏨 3. INFORMATIONS DE SEJOUR
+                            </div>
+                            <div style="padding: 25px; background: white;">
+                                <table width="100%" style="border-collapse: collapse;">
+                                    <tr>
+                                        <td width="50%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">🕐 Arrivee Prevue :</strong><br/>
+                                            <div style="border: 1px solid #2c5aa0; padding: 8px; margin-top: 8px; background: #e8f4f8; border-radius: 3px;">
+                                                <span t-field="doc.arrival_date_time" style="font-weight: 600; color: #1e3a5f;"/>
+                                            </div>
+                                        </td>
+                                        <td width="50%" style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #d4af37; font-size: 14px;">✅ Arrivee Reelle :</strong><br/>
+                                            <div style="border: 1px solid #d4af37; padding: 8px; margin-top: 8px; background: #fff8e1; border-radius: 3px;">
+                                                <span t-field="doc.actual_arrival_date_time" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">🕐 Depart Prevu :</strong><br/>
+                                            <div style="border: 1px solid #2c5aa0; padding: 8px; margin-top: 8px; background: #e8f4f8; border-radius: 3px;">
+                                                <span t-field="doc.departure_date_time" style="font-weight: 600; color: #1e3a5f;"/>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #d4af37; font-size: 14px;">✅ Depart Reel :</strong><br/>
+                                            <div style="border: 1px solid #d4af37; padding: 8px; margin-top: 8px; background: #fff8e1; border-radius: 3px;">
+                                                <span t-field="doc.actual_departure_date_time" style="font-weight: 600; color: #2c5530;"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">👥 Nombre de Personnes :</strong><br/>
+                                            <div style="text-align: center; padding: 12px; margin-top: 8px; background: linear-gradient(45deg, #e8f4f8, #fff8e1); border-radius: 20px; border: 2px solid #2c5aa0;">
+                                                <span t-esc="doc.number_of_guests or '1'" style="font-weight: bold; font-size: 18px; color: #1e3a5f;"/>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 15px; vertical-align: top;">
+                                            <strong style="color: #1e3a5f; font-size: 14px;">🎯 Motif du Sejour :</strong><br/>
+                                            <div style="padding: 8px; margin-top: 8px; background: #f0f8ff; border-radius: 8px; border: 1px solid #2c5aa0;">
+                                                <span style="font-weight: 600; color: #1e3a5f;">
+                                                    <span t-if="doc.stay_purpose == 'business'">💼 Affaires</span>
+                                                    <span t-if="doc.stay_purpose == 'tourism'">🏖️ Tourisme</span>
+                                                    <span t-if="doc.stay_purpose == 'other'">📋 Autre</span>
+                                                    <span t-if="not doc.stay_purpose">❓ Non Specifie</span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Section Observations (si présente) -->
+                        <t t-if="doc.notes">
+                        <div class="luxury-card">
+                            <div style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #1e3a5f; padding: 15px; font-weight: bold; font-size: 18px;">
+                                📝 4. OBSERVATIONS PARTICULIERES
+                            </div>
+                            <div style="padding: 20px; background: white;">
+                                <div style="background: #fffbf0; padding: 15px; border-left: 4px solid #f39c12; border-radius: 5px;">
+                                    <span t-esc="doc.notes" style="font-style: italic; color: #2c5530; line-height: 1.6;"/>
+                                </div>
+                            </div>
+                        </div>
+                        </t>
+                        
+                        <!-- Section Signatures -->
+                        <div style="margin-top: 40px;">
+                            <table width="100%" style="border-collapse: collapse;">
+                                <tr>
+                                    <td width="50%" style="padding: 20px; text-align: center; vertical-align: top;">
+                                        <div style="border-top: 3px solid #d4af37; padding-top: 15px;">
+                                            <strong style="color: #1e3a5f; font-size: 16px;">SIGNATURE DU CLIENT</strong>
+                                        </div>
+                                        <div class="signature-box" style="margin: 15px 0;">
+                                            <div t-if="doc.signature" style="text-align: center;">
+                                                <img t-att-src="image_data_uri(doc.signature)" style="max-height: 80px; max-width: 180px;"/>
+                                            </div>
+                                            <div t-if="not doc.signature" style="text-align: center; color: #666; font-style: italic; line-height: 80px;">
+                                                Signature en Attente
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 15px;">
+                                            <strong style="color: #1e3a5f;">Date :</strong><br/>
+                                            <span t-esc="doc.signature_date or '____________________'" style="border-bottom: 2px solid #d4af37; display: inline-block; width: 180px; padding: 5px; margin-top: 5px; text-align: center;"/>
+                                        </div>
+                                    </td>
+                                    <td width="50%" style="padding: 20px; text-align: center; vertical-align: top;">
+                                        <div style="border-top: 3px solid #1e3a5f; padding-top: 15px;">
+                                            <strong style="color: #1e3a5f; font-size: 16px;">CACHET ET SIGNATURE HOTEL</strong>
+                                        </div>
+                                        <div style="border: 2px solid #1e3a5f; border-radius: 5px; min-height: 100px; margin: 15px 0; padding: 15px; background: linear-gradient(45deg, #e8f4f8 0%, #f0f8ff 100%);">
+                                            <div style="text-align: center; color: #1e3a5f; font-style: italic; line-height: 70px;">
+                                                Espace Reserve a l'Etablissement
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 15px;">
+                                            <strong style="color: #1e3a5f;">Date :</strong><br/>
+                                            <span style="border-bottom: 2px solid #1e3a5f; display: inline-block; width: 180px; padding: 5px; margin-top: 5px; text-align: center;">____________________</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Pied de page légal élégant -->
+                        <div style="text-align: center; margin-top: 50px; padding: 25px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border-top: 3px solid #d4af37;">
+                            <p style="margin: 0; font-size: 12px; color: #1e3a5f; font-weight: 600;">
+                                📜 Document Officiel Obligatoire - Conforme a la Reglementation en Vigueur
+                            </p>
+                            <p style="margin: 8px 0 0 0; font-size: 11px; color: #666; font-style: italic;">
+                                Fiche generee le <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y a %H:%M')"/> - A conserver 6 mois minimum
+                            </p>
+                        </div>
+                        
+                    </div>
+                </t>
+            </t>
+        </template>
+
+    </data>
+</odoo>

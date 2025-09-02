@@ -361,7 +361,7 @@
         </field>
     </record>
 
-    <!-- Menu Item -->
+
     <menuitem
         id="menu_hotel_booking_stay"
         name="Séjours de Réservation"

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        
+        <!-- DÉFINIR L'ACTION DE RAPPORT EN PREMIER -->
+     <record id="action_report_hotel_police_form" model="ir.actions.report">
+    <field name="name">Fiche de Police (PDF)</field>
+    <field name="model">hotel.police.form</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">hotel_management_extension.report_police_form_template</field>
+    <field name="binding_model_id" ref="model_hotel_police_form"/>
+    <field name="binding_type">report</field>
+    <field name="print_report_name">'Fiche_Police_%s.pdf' % ((object.last_name or '') + '_' + (object.first_name or ''))</field>
+</record>
+
+
+        <!-- ACTION HTML (aperçu navigateur) -->
+        <record id="action_report_hotel_police_form_html" model="ir.actions.report">
+            <field name="name">Aperçu Fiche Police</field>
+            <field name="model">hotel.police.form</field>
+            <field name="report_type">qweb-html</field>
+            <field name="report_name">hotel_management_extension.report_police_form_template</field>
+            <field name="report_file">hotel_management_extension.report_police_form_html</field>
+            <!-- Désactiver le téléchargement automatique -->
+            <field name="attachment_use">False</field>
+        </record>
+
+        <!-- VUE DE RECHERCHE MANQUANTE - AJOUTEZ CECI -->
+        <record id="view_hotel_police_form_search" model="ir.ui.view">
+            <field name="name">hotel.police.form.search</field>
+            <field name="model">hotel.police.form</field>
+            <field name="arch" type="xml">
+                <search string="Rechercher Fiches de Police">
+                    <field name="first_name"/>
+                    <field name="last_name"/>
+                    <field name="id_number"/>
+                    <field name="room_id"/>
+                    <field name="nationality"/>
+                    
+                    <filter string="Arrivées du jour" 
+                            name="today_arrivals"
+                            domain="[('arrival_date_time', '>=', context_today().strftime('%Y-%m-%d 00:00:00')),
+                                    ('arrival_date_time', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                    
+                    <filter string="Départs du jour" 
+                            name="today_departures"
+                            domain="[('departure_date_time', '>=', context_today().strftime('%Y-%m-%d 00:00:00')),
+                                    ('departure_date_time', '&lt;', (context_today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
+                    
+                    <filter string="En séjour actuellement" 
+                            name="current_guests"
+                            domain="[('actual_arrival_date_time', '!=', False),
+                                    ('actual_departure_date_time', '=', False)]"/>
+                    
+                    <filter string="Avec signature" 
+                            name="signed"
+                            domain="[('signature_date', '!=', False)]"/>
+                </search>
+            </field>
+        </record>
+        
+        <!-- Vue Liste des Fiches de Police -->
+        <record id="view_hotel_police_form_list" model="ir.ui.view">
+            <field name="name">hotel.police.form.list</field>
+            <field name="model">hotel.police.form</field>
+            <field name="arch" type="xml">
+                <list string="Fiches de Police" multi_edit="1" sample="1">
+                    <header>
+                        <button name="%(action_report_hotel_police_form)d" 
+                                type="action" 
+                                string="Imprimer PDF" 
+                                class="btn-primary"
+                                icon="fa-download"/>
+                                
+                        <button name="%(action_report_hotel_police_form_html)d" 
+                                type="action" 
+                                string="Aperçu HTML" 
+                                class="btn-info"
+                                icon="fa-eye"/>
+                    </header>
+                    
+                    <field name="stay_id"/>
+                    <field name="first_name"/>
+                    <field name="last_name"/>
+                    <field name="nationality"/>
+                    <field name="id_type"/>
+                    <field name="id_number"/>
+                    <field name="room_id"/>
+                    <field name="arrival_date_time"/>
+                    <field name="departure_date_time"/>
+                    <field name="actual_arrival_date_time"/>
+                    <field name="signature_date"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Vue Formulaire complète -->
+        <record id="view_form_hotel_police_form" model="ir.ui.view">
+            <field name="name">hotel.police.form.view.form</field>
+            <field name="model">hotel.police.form</field>
+            <field name="arch" type="xml">
+                <form string="Fiche de police - Enregistrement Client">
+                    <header>
+                        <button name="%(action_report_hotel_police_form)d" 
+                                type="action" 
+                                string="Télécharger PDF" 
+                                class="btn-secondary"
+                                icon="fa-download"/>
+
+                        <button name="%(action_report_hotel_police_form_html)d" 
+                                type="action" 
+                                string="Aperçu HTML" 
+                                class="btn-info"
+                                icon="fa-eye"/>
+                    </header>
+                    <!-- Informations occupant -->
+                    <group string="Identité de l'occupant">
+                        <field name="first_name"/>
+                        <field name="last_name"/>
+                        <field name="gender"/>
+                        <field name="date_of_birth"/>
+                        <field name="place_of_birth"/>
+                        <field name="nationality"/>
+                        <field name="street"/>
+                        <field name="zip"/>
+                        <field name="city"/>
+                        <field name="country_id"/>
+                    </group>
+
+                    <!-- Pièce d'identité -->
+                    <group string="Pièce d'identité">
+                        <field name="id_type" />
+                        <field name="id_number" />
+                        <field name="id_issue_date" />
+                        <field name="id_expiry_date" />
+                        <field name="id_issue_place" />
+                        <field name="id_document_file" filename="id_document_filename" />
+                    </group>
+
+                    <!-- Informations sur le séjour -->
+                    <group string="Séjour">
+                        <field name="arrival_date_time" readonly="1"/>
+                        <field name="departure_date_time" readonly="1"/>
+                        <field name="actual_arrival_date_time"/>
+                        <field name="actual_departure_date_time"/>
+                        <field name="number_of_guests"/>
+                        <field name="room_id"/>
+                    </group>
+
+                    <!-- Informations complémentaires -->
+                    <group string="Compléments">
+                        <field name="stay_purpose"/>
+                        <field name="arrival_transport"/>
+                        <field name="signature"/>
+                        <field name="signature_date"/>
+                    </group>
+
+                    <!-- Observations -->
+                    <group string="Observations">
+                        <field name="notes"/>
+                    </group>
+
+                    <!-- Footer -->
+                    <footer>
+                        <button name="action_validate_police_form"
+                            string="Valider et passer au Check-In"
+                            type="object"
+                            class="btn-primary" />
+                        <button string="Annuler"
+                            special="cancel"
+                            class="btn-secondary" />
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action pour la vue liste -->
+        <record id="action_hotel_police_form" model="ir.actions.act_window">
+            <field name="name">Fiches de Police</field>
+            <field name="res_model">hotel.police.form</field>
+            <field name="view_mode">list,form</field>
+            <field name="view_id" ref="view_hotel_police_form_list"/>
+            <field name="search_view_id" ref="view_hotel_police_form_search"/>
+            <field name="context">{}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Créer une nouvelle fiche de police
+                </p>
+                <p>
+                    Les fiches de police sont des documents obligatoires pour l'enregistrement des clients de l'hôtel.
+                </p>
+            </field>
+        </record>
+
+        
+
+    </data>
+</odoo>

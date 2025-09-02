@@ -1,5 +1,7 @@
 from odoo import models, fields, api
 from datetime import date
+import os
+import base64
 
 
 class HotelPoliceForm(models.Model):
@@ -17,10 +19,7 @@ class HotelPoliceForm(models.Model):
     first_name = fields.Char("Prénom", required=True)
     last_name = fields.Char("Nom", required=True)
     gender = fields.Selection(
-        [
-            ("male", "Homme"),
-            ("female", "Femme"),
-        ],
+        [("male", "Homme"), ("female", "Femme")],
         string="Sexe",
     )
     date_of_birth = fields.Date("Date de naissance")
@@ -75,12 +74,7 @@ class HotelPoliceForm(models.Model):
         string="Motif du séjour",
     )
     arrival_transport = fields.Selection(
-        [
-            ("plane", "Avion"),
-            ("train", "Train"),
-            ("car", "Voiture"),
-            ("other", "Autre"),
-        ],
+        [("plane", "Avion"), ("train", "Train"), ("car", "Voiture"), ("other", "Autre")],
         string="Moyen de transport",
     )
     signature = fields.Binary("Signature")
@@ -89,21 +83,47 @@ class HotelPoliceForm(models.Model):
     # Observations
     notes = fields.Text("Observations")
 
+    # -------------------------
+    # Dates
+    # -------------------------
+
+    def get_hotel_logo_base64(self):
+        """
+        Convertit le logo en base64 pour l'affichage PDF
+        """
+        try:
+            logo_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                'static', 'src', 'img', 'ogo3.png'
+            )
+            
+            print("🔍 Chemin du logo:", logo_path)  # Debug
+            print("🔍 Fichier existe:", os.path.exists(logo_path))  # Debug
+            
+            if os.path.exists(logo_path):
+                with open(logo_path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode()
+                    print("✅ Logo converti en base64 avec succès")  # Debug
+                    return f"data:image/png;base64,{encoded_string}"
+            else:
+                print("❌ Fichier logo non trouvé")  # Debug
+        except Exception as e:
+            print("❌ Erreur conversion logo:", str(e))  # Debug
+        return False
+
     def _apply_dates_from_stay(self, rec):
         rec.arrival_date_time = rec.stay_id.checkin_date if rec.stay_id else False
         rec.departure_date_time = rec.stay_id.checkout_date if rec.stay_id else False
-        
+
     @api.depends("stay_id.checkin_date", "stay_id.checkout_date")
     def _compute_dates(self):
         for record in self:
-            print(">> COMPUTE dates for", record.stay_id, record.stay_id.checkin_date, record.stay_id.checkout_date)
             self._apply_dates_from_stay(record)
-    
+
     @api.onchange("stay_id")
     def _onchange_stay_id(self):
         for record in self:
             self._apply_dates_from_stay(record)
-
 
     def _default_arrival_date(self):
         stay = self.env.context.get("default_stay_id")
@@ -111,7 +131,7 @@ class HotelPoliceForm(models.Model):
             stay_rec = self.env["hotel.booking.stay"].browse(stay)
             return stay_rec.checkin_date
         return False
-    
+
     def _default_departure_date(self):
         stay = self.env.context.get("default_stay_id")
         if stay:
@@ -119,10 +139,17 @@ class HotelPoliceForm(models.Model):
             return stay_rec.checkout_date
         return False
 
-
+    # -------------------------
+    # Actions
+    # -------------------------
     def action_validate_police_form(self):
         """Valide le formulaire de police et passe au check-in"""
         if self.stay_id:
-            # Appelle la méthode de check-in réelle après validation
             self.stay_id.action_start()
         return {"type": "ir.actions.act_window_close"}
+
+    def print_police_forms(self):
+        """Imprime une ou plusieurs fiches depuis la vue liste"""
+        return self.env.ref(
+            "hotel_management_extension.action_report_hotel_police_form"
+        ).report_action(self)

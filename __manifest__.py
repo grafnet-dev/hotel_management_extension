@@ -13,7 +13,7 @@
     "category": "Uncategorized",
     "version": "0.1",
     # any module necessary for this one to work correctly
-    "depends": ["hotel_management_odoo", "base", "web", "website"],
+    "depends": ["hotel_management_odoo", "base", "web", "website", "account"],
     "assets": {
         "web.assets_backend": [
             "hotel_management_extension/static/src/styles/room_list.css",
@@ -45,19 +45,23 @@
     # always loaded
     "data": [
         "security/ir.model.access.csv",
+        'reports/hotel_police_form_template.xml',
         "views/hotel_room_type_views.xml",
         "views/hotel_room_views.xml",
         "views/hotel_reservation_type.xml",
         "views/hotel_room_reservation_slot_views.xml",
         "views/room_booking_views.xml",
         'views/room_timeline_views.xml',
-        "views/hotel_police_views.xml",
+        
         "views/product_template_views.xml",
         "views/hotel_booking_stays.xml",
-        "views/hotel_ui_menu.xml",  # menu + action UI juste pour le test
+        "views/hotel_ui_menu.xml",  
         "views/reception_standalone_app_template.xml",
         "views/views.xml",
         "views/templates.xml",
+        'views/hotel_police_form_views.xml',
+        'views/hotel_police_form_menu.xml',
+      
     ],
     # only loaded in demonstration mode
     "demo": [
