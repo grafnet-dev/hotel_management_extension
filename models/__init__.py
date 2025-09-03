@@ -18,5 +18,7 @@ from . import product_template_extension
 from . import hotel_booking_stays
 from . import hotel_season
 from . import hotel_pricing_rule
+from . import hotel_pricing_service
+
 
 

@@ -19,6 +19,8 @@
                 <field name="checkout_date" string="Départ" />
                 <field name="uom_qty" string="Durée (jours)" />
                 <field name="reservation_type_id" string="Type" />
+                <field name="room_price_total" string="Prix Chambre" />
+                <field name="pricing_rule_id" string="Règle Tarifaire" />
                 <field name="price_total" string="Montant Total" sum="Total" />
                 <field name="currency_id" invisible="1" />
                 <field name="state" string="État" widget="badge"
@@ -250,9 +252,14 @@
                                 </group>
                                 <group name="room_pricing" string="Tarification Chambre">
                                     <field name="room_price_total" string="Total Chambre"
+                                        readonly="1" />
+                                    <field name="pricing_rule_id" string="Règle Appliquée"
+                                        readonly="1" />
+                                    <field name="pricing_adjustments" string="Ajustements"
                                         readonly="1"
-                                        invisible="room_price_total == 0" />
+                                        widget="text" placeholder="Aucun ajustement" />
                                 </group>
+
                             </group>
 
                             <separator string="Résumé Financier" />

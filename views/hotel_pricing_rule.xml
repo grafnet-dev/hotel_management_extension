@@ -8,6 +8,7 @@
                 <field name="room_type_id"/>
                 <field name="reservation_type_id"/>
                 <field name="season_id"/>
+                <field name="unit"/>
                 <field name="price"/>
                 <field name="currency_id"/>
                 <field name="active"/>
@@ -28,6 +29,7 @@
                             <field name="season_id"/>
                         </group>
                         <group>
+                            <field name="unit"/> 
                             <field name="price"/>
                             <field name="currency_id"/>
                             <field name="active"/>

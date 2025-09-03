@@ -1,3 +1,5 @@
+import json
+import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError  
 from datetime import datetime, timedelta, time
@@ -9,7 +11,7 @@ def float_to_time(float_hour):
     minutes = int(round((float_hour - hours) * 60))
     return time(hour=hours, minute=minutes)
 
-
+_logger = logging.getLogger(__name__)
 class HotelBookingStayS(models.Model):
     _name = "hotel.booking.stay"
     _description = "Séjour individuel de chaque reservation (booking)"
@@ -175,6 +177,18 @@ class HotelBookingStayS(models.Model):
         related="booking_id.pricelist_id.currency_id",
         help="The currency used",
     )
+    pricing_rule_id = fields.Many2one(
+        "hotel.pricing.rule",
+        string="Règle tarifaire appliquée",
+        readonly=True,
+        copy=False,
+    )
+    
+    pricing_adjustments = fields.Text(
+        string="Ajustements appliqués",
+        readonly=True,
+        help="Stocke en JSON les détails des ajustements (supplément extra guest, etc.)",
+    )
 
     room_price_total = fields.Monetary(
         string="Prix chambre",
@@ -189,6 +203,7 @@ class HotelBookingStayS(models.Model):
         help="Total Price excluding Tax",
         store=True,
     )
+    
 
     price_tax = fields.Float(
         string="Total Tax",
@@ -382,51 +397,75 @@ class HotelBookingStayS(models.Model):
         for rec in self:
             self._compute_dates_logic(rec)
 
-    @api.depends(
-        "room_type_id", "reservation_type_id", "booking_start_date", "booking_end_date"
-    )
+    @api.depends("room_type_id", "reservation_type_id", "checkin_date", "checkout_date", "occupant_ids")
     def _compute_room_price_total(self):
-        for stay in self:
-            stay.room_price_total = 0.0
+        """
+        Calcule le prix chambre en appelant le service tarifaire.
+        LOGS détaillés à chaque étape pour diagnostiquer les entrées et la sortie.
+        """
+        for rec in self:
+            # Reset par défaut pour éviter des données fantômes
+            rec.room_price_total = 0.0
+            rec.pricing_rule_id = False
+            rec.pricing_adjustments = False
 
-            # Vérification des infos nécessaires
-            if not (
-                stay.room_type_id
-                and stay.reservation_type_id
-                and stay.booking_start_date
-                and stay.booking_end_date
-            ):
+            # Contexte diagnostic (idempotent, json-serializable)
+            ctx = {
+                "stay_id": rec.id or None,
+                "booking_id": rec.booking_id.id if rec.booking_id else None,
+                "room_type_id": rec.room_type_id.id if rec.room_type_id else None,
+                "reservation_type_id": rec.reservation_type_id.id if rec.reservation_type_id else None,
+                "checkin_date": rec.checkin_date and rec.checkin_date.isoformat(),
+                "checkout_date": rec.checkout_date and rec.checkout_date.isoformat(),
+                "nb_persons": len(rec.occupant_ids) or 1,
+                "user_tz": self.env.user.tz,
+            }
+
+            # Entrées minimales requises
+            if not (rec.room_type_id and rec.reservation_type_id and rec.checkin_date and rec.checkout_date):
+                _logger.debug("[PRICING][SKIP] Inputs incomplets pour stay=%s | ctx=%s", rec.id or "new", json.dumps(ctx, ensure_ascii=False))
                 continue
 
-            # Récupération de la règle tarifaire
-            pricing_rule = self.env["hotel.room.pricing"].search(
-                [
-                    ("room_type_id", "=", stay.room_type_id.id),
-                    ("reservation_type_id", "=", stay.reservation_type_id.id),
-                    ("active", "=", True),
-                ],
-                limit=1,
-            )
+            # Avertir si datetimes naïfs (sans tz) — utile en dev
+            if isinstance(rec.checkin_date, datetime) and rec.checkin_date.tzinfo is None:
+                _logger.debug("[PRICING][WARN] checkin_date sans timezone pour stay=%s (%s)", rec.id, rec.checkin_date)
+            if isinstance(rec.checkout_date, datetime) and rec.checkout_date.tzinfo is None:
+                _logger.debug("[PRICING][WARN] checkout_date sans timezone pour stay=%s (%s)", rec.id, rec.checkout_date)
 
-            if not pricing_rule:
-                stay.room_price_total = 0.0
-                continue
+            try:
+                _logger.info("[PRICING][CALL] Compute price START stay=%s | ctx=%s", rec.id, json.dumps(ctx, ensure_ascii=False))
+                result = self.env["hotel.pricing.service"].compute_price(
+                    room_type_id=rec.room_type_id.id,
+                    reservation_type_id=rec.reservation_type_id.id,
+                    checkin_date=rec.checkin_date,
+                    checkout_date=rec.checkout_date,
+                    nb_persons= 1,
+                )
+                # Sanity check résultat
+                if not isinstance(result, dict):
+                    _logger.error("[PRICING][ERR] Résultat non dict pour stay=%s | result=%s", rec.id, result)
+                    continue
 
-            # Calcul de la durée en heures
-            duration_days = (stay.booking_end_date - stay.booking_start_date).days or 1
-            duration_hours = duration_days * 24
+                # Logs résultat détaillé
+                _logger.info(
+                    "[PRICING][OK] stay=%s | price_total=%s | applied_rule_id=%s | adjustments=%s",
+                    rec.id,
+                    result.get("price_total"),
+                    result.get("applied_rule_id"),
+                    json.dumps(result.get("adjustments", []), ensure_ascii=False),
+                )
 
-            # Prix de base = prix standard du type de chambre (si défini)
-            base_price = stay.room_type_id.base_price or 0.0
+                # Ecriture champs
+                rec.room_price_total = float(result.get("price_total", 0.0) or 0.0)
+                rec.pricing_rule_id = result.get("applied_rule_id") or False
+                # Stockage JSON lisible (pratique pour debug en UI)
+                rec.pricing_adjustments = json.dumps(result.get("adjustments", []), ensure_ascii=False, indent=2)
 
-            # Utilisation de la méthode compute_price pour centraliser la logique
-            stay.room_price_total = pricing_rule.compute_price(
-                base_price=base_price, duration_hours=duration_hours
-            )
-
-            # Si le mode n'est pas horaire, on multiplie par le nombre de jours
-            if pricing_rule.pricing_mode != "hourly":
-                stay.room_price_total *= duration_days
+            except Exception as e:
+                # Trace complète
+                _logger.exception("[PRICING][EXC] Erreur compute_price pour stay=%s | ctx=%s | err=%s",
+                                  rec.id, json.dumps(ctx, ensure_ascii=False), e)
+                # On laisse room_price_total à 0.0; pas de raise pour ne pas bloquer l'UI
 
     
     @api.model

@@ -1,5 +1,6 @@
 from odoo import models, fields, api
 
+
 class HotelPricingRule(models.Model):
     _name = "hotel.pricing.rule"
     _description = "Hotel Pricing Rule"
@@ -21,10 +22,18 @@ class HotelPricingRule(models.Model):
         help="If empty, this rule applies as a default (no season restriction).",
     )
     price = fields.Float(
-        string="Base Price",
-        required=True,
-        help="Price applied for this combination."
+        string="Base Price", required=True, help="Price applied for this combination."
     )
+    unit = fields.Selection(
+        [
+            ("night", "Par nuit"),
+            ("hour", "Par heure"),
+            ("slot", "Forfait / slot"),
+        ],
+        default="night",
+        required=True,
+    )
+
     currency_id = fields.Many2one(
         "res.currency",
         string="Currency",
