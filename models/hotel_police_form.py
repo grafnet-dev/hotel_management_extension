@@ -90,13 +90,13 @@ class HotelPoliceForm(models.Model):
     notes = fields.Text("Observations")
 
     def _apply_dates_from_stay(self, rec):
-        rec.arrival_date_time = rec.stay_id.checkin_date if rec.stay_id else False
-        rec.departure_date_time = rec.stay_id.checkout_date if rec.stay_id else False
+        rec.arrival_date_time = rec.stay_id.planned_checkin_date if rec.stay_id else False
+        rec.departure_date_time = rec.stay_id.planned_checkout_date if rec.stay_id else False
         
-    @api.depends("stay_id.checkin_date", "stay_id.checkout_date")
+    @api.depends("stay_id.planned_checkin_date", "stay_id.planned_checkout_date")
     def _compute_dates(self):
         for record in self:
-            print(">> COMPUTE dates for", record.stay_id, record.stay_id.checkin_date, record.stay_id.checkout_date)
+            print(">> COMPUTE dates for", record.stay_id, record.stay_id.planned_checkin_date, record.stay_id.planned_checkout_date)
             self._apply_dates_from_stay(record)
     
     @api.onchange("stay_id")
@@ -109,14 +109,14 @@ class HotelPoliceForm(models.Model):
         stay = self.env.context.get("default_stay_id")
         if stay:
             stay_rec = self.env["hotel.booking.stay"].browse(stay)
-            return stay_rec.checkin_date
+            return stay_rec.planned_checkin_date
         return False
     
     def _default_departure_date(self):
         stay = self.env.context.get("default_stay_id")
         if stay:
             stay_rec = self.env["hotel.booking.stay"].browse(stay)
-            return stay_rec.checkout_date
+            return stay_rec.planned_checkout_date
         return False
 
 
