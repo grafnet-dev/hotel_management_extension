@@ -13,3 +13,4 @@ access_hotel_room_type_image_all,access_hotel_room_type_image_all,model_hotel_ro
 access_hotel_booking_stay_all,access_hotel_booking_stay_all,model_hotel_booking_stay,,1,1,1,1
 access_hotel_pricing_rule_all,access_hotel_pricing_rule_all,model_hotel_pricing_rule,,1,1,1,1
 access_hotel_season_all,access_hotel_season_all,model_hotel_season,,1,1,1,1
+access_hotel_eclc_policy_all,access_hotel_eclc_policy_all,model_hotel_eclc_policy,,1,1,1,1

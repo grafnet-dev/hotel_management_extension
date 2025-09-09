@@ -101,6 +101,31 @@
                                 </field>
                             </page>
 
+                            <page string="Politiques Early/Late">
+                                <field name="policy_ids" context="{'default_room_type_id': id}">
+                                    <list string="Politiques Early/Late" editable="bottom">
+                                        <field name="reservation_mode" />
+                                        <field name="rule_type" />
+                                        <field name="start_hour" widget="float_time" />
+                                        <field name="end_hour" widget="float_time" />
+                                        <field name="surcharge_percent" />
+                                        <field name="is_full_night" />
+                                    </list>
+                                    <form string="Règle Early/Late">
+                                        <group>
+                                            <field name="reservation_mode" />
+                                            <field name="rule_type" />
+                                            <field name="start_hour" widget="float_time" />
+                                            <field name="end_hour" widget="float_time" />
+                                            <field name="surcharge_percent" />
+                                            <field name="is_full_night" />
+                                            <field name="notes" />
+                                        </group>
+                                    </form>
+                                </field>
+                            </page>
+
+
                             <page string="Tarifications">
                                 <field name="room_pricing_ids"
                                     context="{'default_room_type_id': id}">
@@ -114,7 +139,8 @@
                                             options="{'currency_field': 'currency_id'}"
                                             invisible="pricing_mode == 'percentage'" />
 
-                                        <field name="price_value"  string="Pourcentage" widget="percentage"
+                                        <field name="price_value" string="Pourcentage"
+                                            widget="percentage"
                                             options="{'currency_field': 'currency_id'}"
                                             invisible="pricing_mode != 'percentage'" />
 

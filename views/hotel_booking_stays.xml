@@ -15,8 +15,16 @@
                 <field name="booking_id" string="N° Réservation" />
                 <field name="room_type_id" string="Type de Chambre" />
                 <field name="occupant_names" string="Occupants" />
-                <field name="checkin_date" string="Arrivée" />
-                <field name="checkout_date" string="Départ" />
+                <field name="planned_checkin_date" string="Arrivée Prévue" />
+                <field name="planned_checkout_date" string="Départ Prévu" />
+                <field name="actual_checkin_date" string="Arrivée Effective"
+                    invisible="not early_checkin_requested" />
+                <field name="actual_checkout_date" string="Départ Effectif"
+                    invisible="not late_checkout_requested" />
+                <field name="request_type" string="Type Demande" />
+                <field name="difference_hours" string="Écart (h)" readonly="1" />
+
+
                 <field name="uom_qty" string="Durée (jours)" />
                 <field name="reservation_type_id" string="Type" />
                 <field name="room_price_total" string="Prix Chambre" />
@@ -27,6 +35,11 @@
                     decoration-info="state=='pending'"
                     decoration-success="state=='ongoing'"
                     decoration-muted="state in ('completed','cancelled')" />
+
+                <field name="extra_night_required" string="Nuit Extra" widget="boolean_toggle" />
+                <!--field
+                name="applied_pricing_code" string="Code Tarif Horaire" /-->
+
 
             </list>
         </field>
@@ -71,15 +84,6 @@
                         </h2>
                     </div>
 
-                    <!-- Alertes importantes en haut -->
-                    <div class="alert alert-warning o_form_sheet_bg" role="alert"
-                        invisible="not was_requalified_flexible">
-                        <strong>⚠️ Requalification Automatique:</strong>
-                        <field name="requalification_reason" readonly="1" />
-                        <br />
-                        <small>Une nuit supplémentaire pourrait être nécessaire selon les horaires
-                            demandés.</small>
-                    </div>
 
                     <!-- Informations principales  -->
                     <group>
@@ -111,47 +115,58 @@
                                         required="not is_flexible_reservation" />
                                 </group>
 
-                                <group name="actual_dates" string="Check-in / Check-out Effectifs">
-                                    <field name="checkin_date" string="Arrivée Effective"
-                                        readonly="not is_flexible_reservation"
-                                        required="is_flexible_reservation" />
-                                    <field name="checkout_date" string="Départ Effectif"
-                                        readonly="not is_flexible_reservation"
-                                        required="is_flexible_reservation" />
-                                    <separator />
-                                    <field name="uom_qty" string="Durée" readonly="1" />
-                                    <field name="uom_id" string="Unité" readonly="1" />
+                                <group name="dates_group" string="Dates Réservation">
+                                    <field name="planned_checkin_date" string="Arrivée Prévue"
+                                        readonly="1" />
+                                    <field name="planned_checkout_date" string="Départ Prévu"
+                                        readonly="1" />
+
+                                    <separator string="✔ Effectifs"
+                                        invisible="not (early_checkin_requested or late_checkout_requested)" />
+                                    <field name="actual_checkin_date" string="Arrivée Effective"
+                                        invisible="not early_checkin_requested" readonly="1" />
+                                    <field name="actual_checkout_date" string="Départ Effectif"
+                                        invisible="not late_checkout_requested" readonly="1" />
                                 </group>
+
                             </group>
 
                             <separator string="⏰ Options Horaires Spéciales" />
-                            <group>
-                                <group name="early_options" string="Early Check-in">
-                                    <field name="early_checkin_requested" string="Demandé" />
-                                    <field name="early_checkin_hour" string="Heure Souhaitée"
-                                        invisible="not early_checkin_requested"
-                                        widget="float_time" />
-                                    <field name="early_checkin_time_display" string="Heure Complète"
-                                        invisible="not early_checkin_requested"
-                                        widget="datetime" />
+                            <!-- EC/LC-->
+
+                            <group string="⏰ Demandes Spéciales Early / Late" name="ec_lc_group"
+                                colspan="2">
+                                <group>
+                                    <field name="early_checkin_requested" string="Early Check-in ?" />
+                                    <field name="requested_checkin_datetime"
+                                        string="Heure Arrivée Demandée"
+                                        invisible="not early_checkin_requested" />
+
+                                    <field name="late_checkout_requested" string="Late Check-out ?" />
+                                    <field name="requested_checkout_datetime"
+                                        string="Heure Départ Demandée"
+                                        invisible="not late_checkout_requested" />
                                 </group>
 
-                                <group name="late_options" string="Late Check-out">
-                                    <field name="late_checkout_requested" string="Demandé" />
-                                    <field name="late_checkout_hour" string="Heure Souhaitée"
-                                        invisible="not late_checkout_requested"
-                                        widget="float_time" />
-                                    <field name="late_checkout_time_display" string="Heure Complète"
-                                        invisible="not late_checkout_requested"
-                                        widget="datetime" />
+                                <group>
+                                    <field name="difference_hours" string="Écart demandé (heures)"
+                                        readonly="1" />
+                                    <field name="extra_night_required"
+                                        string="Nuit Supplémentaire ?"
+                                        widget="boolean_toggle" readonly="1" />
+                                </group>
+
+                                <group string="📝 Décision &amp; Tarification EC/LC">
+                                    <field name="eclc_status" widget="badge" />
+                                    <field name="eclc_pricing_mode" readonly="1" />
                                 </group>
                             </group>
 
+
                             <!-- Champs techniques cachés -->
                             <group invisible="1">
-                                <field name="was_requalified_flexible" />
-                                <field name="extra_night_required" />
-                                <field name="is_manual_flexible" />
+
+
                                 <field name="is_flexible_reservation" />
                             </group>
                         </page>
@@ -255,6 +270,7 @@
                                         readonly="1" />
                                     <field name="pricing_rule_id" string="Règle Appliquée"
                                         readonly="1" />
+                                    <field name="eclc_pricing_mode" string="Mode EC/LC" readonly="1" />
                                     <field name="pricing_adjustments" string="Ajustements"
                                         readonly="1"
                                         widget="text" placeholder="Aucun ajustement" />
@@ -294,8 +310,11 @@
                 <field name="occupant_ids" string="Occupants" />
                 <field name="occupant_names" string="Noms des Occupants" />
                 <field name="reservation_type_id" string="Type de Réservation" />
-                <field name="checkin_date" string="Date d'Arrivée" />
-                <field name="checkout_date" string="Date de Départ" />
+                <field name="planned_checkin_date" string="Date d'Arrivée" />
+                <field name="planned_checkout_date" string="Date de Départ" />
+                <field name="actual_checkin_date" string="Arrivée Effective" />
+                <field name="actual_checkout_date" string="Départ Effectif" />
+
 
                 <!-- Filtres par période -->
                 <separator />
@@ -314,10 +333,14 @@
                     domain="[('early_checkin_requested', '=', True)]" />
                 <filter string="🕐 Late Check-out" name="late_checkout"
                     domain="[('late_checkout_requested', '=', True)]" />
-                <filter string="🔄 Requalifiés" name="requalified"
-                    domain="[('was_requalified_flexible', '=', True)]" />
+
                 <filter string="🌙 Nuit Extra" name="extra_night"
                     domain="[('extra_night_required', '=', True)]" />
+
+                <filter string="🌙 Nuit Supplémentaire" name="extra_night"
+                    domain="[('extra_night_required', '=', True)]" />
+                <!-- <filter string="💰 Demi-Journée" name="half_day"
+                    domain="[('applied_pricing_code', '=', 'HALF_DAY')]" />-->
 
                 <!-- Filtres par état -->
                 <separator />
