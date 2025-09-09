@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue formulaire simplifiée pour l'aperçu -->
+    <record id="hotel_police_form_preview_view" model="ir.ui.view">
+        <field name="name">hotel.police.form.preview</field>
+        <field name="model">hotel.police.form</field>
+        <field name="arch" type="xml">
+            <form string="Aperçu Fiche de Police" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_print_police_form" 
+                            string="Imprimer" 
+                            type="object" 
+                            class="btn-primary"
+                            icon="fa-print"/>
+                </header>
+                <sheet>
+                    <!-- Utilisation du template QWeb dans la vue formulaire -->
+                    <div class="oe_form_sheet">
+                        <t t-call="hotel_management.police_form_preview_template">
+                            <t t-set="o" t-value="object"/>
+                        </t>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour ouvrir l'aperçu -->
+    <record id="action_police_form_preview" model="ir.actions.act_window">
+        <field name="name">Aperçu Fiche de Police</field>
+        <field name="res_model">hotel.police.form</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="hotel_police_form_preview_view"/>
+        <field name="target">new</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- Bouton dans la vue formulaire des séjours -->
+    <record id="hotel_booking_stay_form_inherit_police" model="ir.ui.view">
+        <field name="name">hotel.booking.stay.form.inherit.police</field>
+        <field name="model">hotel.booking.stay</field>
+        <field name="inherit_id" ref="hotel_management.hotel_booking_stay_form_view"/> <!-- Remplacez par votre vue réelle -->
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_view_police_form_preview" 
+                        string="Voir Fiche de Police" 
+                        type="object" 
+                        class="btn-secondary"
+                        icon="fa-eye"
+                        attrs="{'invisible': [('state', '!=', 'ongoing')]}"/>
+            </header>
+        </field>
+    </record>
+</odoo>
