@@ -168,14 +168,24 @@ class HotelBookingStayS(models.Model):
         string="Statut EC/LC",
     )
 
-    eclc_pricing_mode = fields.Selection(
-        [
-            ("early_fee", "Early check-in payant"),
-            ("late_fee", "Late check-out payant"),
-            ("extra_night", "Nuit supplémentaire"),
-            ("invalid_request", "Requête invalide"),
-        ],
-        string="Mode tarifaire EC/LC",
+    EC_LC_SELECTION = [
+        ("early_fee", "Early check-in payant"),
+        ("late_fee", "Late check-out payant"),
+        ("extra_night", "Nuit supplémentaire"),
+        ("invalid_request", "Requête invalide"),
+    ]
+    
+    early_pricing_mode = fields.Selection(
+        EC_LC_SELECTION,
+        string="Mode tarifaire EC",
+        compute="_compute_actual_checkin_checkout",
+        store=True,
+        )
+
+
+    late_pricing_mode = fields.Selection(
+        EC_LC_SELECTION,
+        string="Mode tarifaire LC",
         compute="_compute_actual_checkin_checkout",
         store=True,
     )
@@ -259,6 +269,11 @@ class HotelBookingStayS(models.Model):
         string="Ajustements appliqués",
         readonly=True,
         help="Stocke en JSON les détails des ajustements (supplément extra guest, etc.)",
+    )
+    pricing_supplements = fields.Text(
+        string="Supplements (JSON)",
+        readonly=True,
+        help="Suppléments appliqués (early/late fees, extras...) en JSON.",
     )
 
     room_price_total = fields.Monetary(
@@ -694,12 +709,11 @@ class HotelBookingStayS(models.Model):
         "planned_checkout_date",
         "occupant_ids",
     )
+
     def _compute_room_price_total(self):
         """
         Calcule le prix chambre en appelant le service tarifaire.
-        Si une demande EC/LC est présente pendant la réservation,
-        on évalue d'abord ECLC pour récupérer un pricing_mode,
-        puis on le transmet au moteur de pricing.
+        Gère les suppléments Early Check-in / Late Check-out en parallèle.
         """
         for rec in self:
             # Reset par défaut
@@ -707,6 +721,7 @@ class HotelBookingStayS(models.Model):
             rec.pricing_rule_id = False
             rec.pricing_adjustments = False
             rec.pricing_price_base = 0.0
+            rec.pricing_supplements = False  # <-- nouveau champ (JSON)
 
             ctx = {
                 "stay_id": rec.id or None,
@@ -736,52 +751,32 @@ class HotelBookingStayS(models.Model):
                 )
                 continue
 
-            #  si une demande EC/LC est déjà saisie pendant la résa,
-            # on récupère un pricing_mode AVANT d'appeler le moteur pricing.
-            pricing_mode = None
-            requested_datetime = None
-            if rec.request_type and rec.room_type_id:
-                engine = self.env["hotel.eclc.engine"]
+            # =========================================================
+            # 1) Collecter les modes ECLC et datetimes associés
+            # =========================================================
+            pricing_modes = []
+            requested_map = {}
 
-                if rec.request_type == "early":
-                    requested_datetime = (
-                        rec.requested_checkin_datetime or rec.planned_checkin_date
-                    )
-                    planned_datetime = rec.planned_checkin_date
-                elif rec.request_type == "late":
-                    requested_datetime = (
-                        rec.requested_checkout_datetime or rec.planned_checkout_date
-                    )
-                    planned_datetime = rec.planned_checkout_date
-                else:
-                    requested_datetime = None
-                    planned_datetime = None
+            if rec.early_pricing_mode:
+                pricing_modes.append(rec.early_pricing_mode)
+                if rec.requested_checkin_datetime:
+                    requested_map["early_fee"] = rec.requested_checkin_datetime
 
-                if requested_datetime and planned_datetime:
-                    _logger.info("🔎 [ECLC][INLINE] Évaluation pendant pricing initial")
-                    eclc_result = engine.evaluate_request(
-                        request_type=rec.request_type,
-                        requested_datetime=requested_datetime,
-                        planned_datetime=planned_datetime,
-                        room_type_id=rec.room_type_id.id,
-                    )
-                    pricing_mode = eclc_result.get("pricing_mode")
-                    _logger.info(
-                        "[ECLC][INLINE][OK] stay=%s | request_type=%s | requested=%s | planned=%s | mode=%s",
-                        rec.id or "new",
-                        rec.request_type,
-                        requested_datetime,
-                        planned_datetime,
-                        pricing_mode,
-                    )
-                else:
-                    _logger.debug(
-                        "[ECLC][INLINE][SKIP] Dates manquantes pour stay=%s (request_type=%s)",
-                        rec.id or "new",
-                        rec.request_type,
-                    )
-            # ======== fin ajout ECLC inline
+            if rec.late_pricing_mode:
+                pricing_modes.append(rec.late_pricing_mode)
+                if rec.requested_checkout_datetime:
+                    requested_map["late_fee"] = rec.requested_checkout_datetime
 
+            _logger.info(
+                "[PRICING][INPUT] stay=%s | modes=%s | requested_map=%s",
+                rec.id or "new",
+                pricing_modes,
+                {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in requested_map.items()},
+            )
+
+            # =========================================================
+            # 2) Appel au moteur tarifaire
+            # =========================================================
             try:
                 result = self.env["hotel.pricing.service"].compute_price(
                     room_type_id=rec.room_type_id.id,
@@ -789,8 +784,8 @@ class HotelBookingStayS(models.Model):
                     planned_checkin_date=rec.planned_checkin_date,
                     planned_checkout_date=rec.planned_checkout_date,
                     nb_persons=len(rec.occupant_ids) or 1,
-                    pricing_mode=pricing_mode,
-                    requested_datetime=requested_datetime,
+                    pricing_mode=pricing_modes,
+                    requested_datetime=requested_map,
                 )
 
                 _logger.info(
@@ -807,6 +802,9 @@ class HotelBookingStayS(models.Model):
                     )
                     continue
 
+                # =========================================================
+                # 3) Affecter les résultats
+                # =========================================================
                 base_data = result.get("base", {})
                 rec.pricing_price_base = float(base_data.get("amount", 0.0))
                 rec.room_price_total = float(result.get("total", 0.0))
@@ -814,14 +812,18 @@ class HotelBookingStayS(models.Model):
                 rec.pricing_adjustments = json.dumps(
                     result.get("adjustments", []), ensure_ascii=False, indent=2
                 )
+                rec.pricing_supplements = json.dumps(
+                    result.get("supplements", []), ensure_ascii=False, indent=2
+                )
 
                 _logger.info(
-                    "[PRICING][OK] stay=%s | base=%s | total=%s | rule_id=%s | adjustments=%s",
+                    "[PRICING][OK] stay=%s | base=%s | total=%s | rule_id=%s | adjustments=%s | supplements=%s",
                     rec.id,
                     rec.pricing_price_base,
                     rec.room_price_total,
                     rec.pricing_rule_id,
                     rec.pricing_adjustments,
+                    rec.pricing_supplements,
                 )
 
             except Exception as e:
@@ -832,6 +834,7 @@ class HotelBookingStayS(models.Model):
                     e,
                 )
                 # On laisse room_price_total à 0.0; pas de raise pour ne pas bloquer l'UI
+
 
     # ---------- Gestion des EC LC ----------
 
@@ -846,6 +849,11 @@ class HotelBookingStayS(models.Model):
             else:
                 rec.request_type = False
 
+    @api.depends("early_pricing_mode", "late_pricing_mode")
+    def _compute_derive_eclc_pricing_mode(self):
+        for rec in self:
+        # Priorité : early > late ; si aucun, False
+            rec.eclc_pricing_mode = rec.early_pricing_mode or rec.late_pricing_mode or False
     @api.model
     def create(self, vals):
         """S'assurer que actual = planned par défaut à la création"""
@@ -872,14 +880,25 @@ class HotelBookingStayS(models.Model):
     "requested_checkout_datetime",
     "early_checkin_requested",
     "late_checkout_requested",
-)
+    )
     def _compute_actual_checkin_checkout(self):
+        
+        """
+        Appelle le moteur ECLC pour *chacune* des demandes (early et late) et stocke
+        le pricing_mode correspondant dans early_pricing_mode / late_pricing_mode.
+        Attention : n'écrase plus un mode par l'autre.
+        """
         engine = self.env["hotel.eclc.engine"]
 
         for rec in self:
             # Par défaut : actual = planned
             rec.actual_checkin_date = rec.planned_checkin_date
             rec.actual_checkout_date = rec.planned_checkout_date
+            
+            # Réinitialiser les champs de mode (important pour compute + store)
+            rec.early_pricing_mode = False
+            rec.late_pricing_mode = False
+            rec.extra_night_required = False
             _logger.info(
                 "[ACTUAL INIT] stay=%s planned_in=%s planned_out=%s",
                 rec.id,
@@ -902,7 +921,11 @@ class HotelBookingStayS(models.Model):
                     room_type_id=rec.room_type_id.id,
                 )
                 _logger.info("[EARLY RESULT] %s", result)
-                rec.eclc_pricing_mode = result.get("pricing_mode")
+                
+                
+                # Stocker dans le champ dédié
+                rec.early_pricing_mode = result.get("pricing_mode") or False
+
                 if result.get("status") == "accepted":
                     rec.actual_checkin_date = rec.requested_checkin_datetime
                 elif result.get("status") == "extra_night":
@@ -923,17 +946,22 @@ class HotelBookingStayS(models.Model):
                     room_type_id=rec.room_type_id.id,
                 )
                 _logger.info("[LATE RESULT] %s", result)
-                rec.eclc_pricing_mode = result.get("pricing_mode")
+                
+                
+                rec.late_pricing_mode = result.get("pricing_mode") or False
+
                 if result.get("status") == "accepted":
                     rec.actual_checkout_date = rec.requested_checkout_datetime
                 elif result.get("status") == "extra_night":
                     rec.extra_night_required = True
 
             _logger.info(
-                "[ACTUAL FINAL] stay=%s actual_in=%s actual_out=%s",
+                "[ACTUAL FINAL] stay=%s actual_in=%s actual_out=%s early_mode=%s late_mode=%s",
                 rec.id,
                 rec.actual_checkin_date,
                 rec.actual_checkout_date,
+                rec.early_pricing_mode,
+                rec.late_pricing_mode,
             )
 
 

@@ -171,7 +171,7 @@
 
                                 <group string="📝 Décision &amp; Tarification EC/LC">
                                     <field name="eclc_status" widget="badge" />
-                                    <field name="eclc_pricing_mode" readonly="1" />
+                                    
                                 </group>
                             </group>
 
@@ -283,7 +283,7 @@
                                         readonly="1" />
                                     <field name="pricing_rule_id" string="Règle Appliquée"
                                         readonly="1" />
-                                    <field name="eclc_pricing_mode" string="Mode EC/LC" readonly="1" />
+                                    
                                     <field name="pricing_adjustments" string="Ajustements"
                                         readonly="1"
                                         widget="text" placeholder="Aucun ajustement" />

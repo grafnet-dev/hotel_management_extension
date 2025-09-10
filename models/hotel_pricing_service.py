@@ -1,6 +1,6 @@
 from ..logging_config import eclc_logger as _logger
 from datetime import timedelta
-from odoo import api, models
+from odoo import api, models, fields
 
 
 
@@ -28,7 +28,30 @@ class HotelPricingService(models.AbstractModel):
             "currency": "XOF",
             "total": 0.0
         }
+        
+        compute_price étendu pour accepter :
+        - pricing_mode: str | list[str] | dict
+        - requested_datetime: datetime | dict(mode->datetime)
+
+
+        Si pricing_mode est une liste, on itère dessus et on cumule les suppléments.
         """
+         # --- SANITIZER : uniformiser requested_datetime ---
+        try:
+            if isinstance(requested_datetime, dict):
+                # ex: {'early_fee': '2025-09-11T09:00:00'}
+                key = next(iter(requested_datetime))
+                requested_datetime = requested_datetime.get(key)
+
+            if isinstance(requested_datetime, str):
+                requested_datetime = fields.Datetime.from_string(requested_datetime)
+
+        except Exception as e:
+            _logger.error("[PRICING/SVC] Erreur parsing requested_datetime=%s | %s",
+                          requested_datetime, str(e))
+            requested_datetime = False
+        
+        
         # --- CONTEXTE DE DEBUG  LOG IN -> --- 
         ctx = {
             "room_type_id": room_type_id,
@@ -39,6 +62,15 @@ class HotelPricingService(models.AbstractModel):
             "pricing_mode": pricing_mode,
             "requested_datetime": requested_datetime and requested_datetime.isoformat(),
         }
+        
+        # Normaliser requested_datetime pour le log
+        if isinstance(requested_datetime, dict):
+            ctx["requested_datetime"] = {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in requested_datetime.items()}
+        elif requested_datetime and hasattr(requested_datetime, "isoformat"):
+            ctx["requested_datetime"] = requested_datetime.isoformat()
+        else:
+            ctx["requested_datetime"] = requested_datetime
+            
         _logger.info("🔎 [PRICING] Début du calcul tarifaire")
         _logger.info("➡️  Paramètres reçus: %s", ctx)
 
@@ -146,46 +178,86 @@ class HotelPricingService(models.AbstractModel):
         # =========================================================
         supplements = []
 
-        try:
-            if pricing_mode == "early_fee":
-                supplements.append({
+       # Normaliser pricing_mode en liste
+        modes = []
+        if pricing_mode is None:
+            modes = []
+        elif isinstance(pricing_mode, list):
+            modes = pricing_mode
+        elif isinstance(pricing_mode, str):
+            modes = [pricing_mode]
+        elif isinstance(pricing_mode, dict):
+        # si on a un dict mode -> datetime, prendre les clés
+            modes = list(pricing_mode.keys())
+        else:
+        # fallback
+            try:
+                modes = list(pricing_mode)
+            except Exception:
+                modes = [str(pricing_mode)]
+
+
+        # Normaliser requested_datetime (on accepte dict ou single datetime)
+        requested_map = {}
+        if isinstance(requested_datetime, dict):
+            requested_map = requested_datetime
+        elif requested_datetime and hasattr(requested_datetime, "isoformat"):
+        # pas de mapping, appliquer la même dt à tous si nécessaire
+            requested_map = {m: requested_datetime for m in modes}
+            
+            
+        # itérer sur les modes (dédupliquer pour éviter double charge accidentelle)
+        for mode in list(dict.fromkeys(modes)):
+            try:
+                if mode == "early_fee":
+                    amount = getattr(rule.room_type_id, "early_checkin_fee", 15000.0)
+                    req_dt = requested_map.get("early_fee")
+                    supplements.append({
                     "type": "early_checkin",
                     "label": "Supplément Early check-in",
-                    "amount": 15000.0,   # TODO: à paramétrer dans room_type ou règle
-                    "currency": "XOF",
-                    "requested_datetime": requested_datetime and requested_datetime.isoformat(),
-                })
-                _logger.info("Ajout du supplément Early check-in (15000 XOF) pour le mode %s", pricing_mode)
+                    "amount": float(amount or 0.0),
+                    "currency": rule.currency_id.name if rule.currency_id else "XOF",
+                    "requested_datetime": (req_dt.isoformat() if hasattr(req_dt, "isoformat") else req_dt),
+                    })
+                    _logger.info("Ajout du supplément Early check-in (%.2f) pour le mode %s", amount, mode)
 
-            elif pricing_mode == "late_fee":
-                supplements.append({
+
+                elif mode == "late_fee":
+                    amount = getattr(rule.room_type_id, "late_checkout_fee", 15000.0)
+                    req_dt = requested_map.get("late_fee")
+                    supplements.append({
                     "type": "late_checkout",
                     "label": "Supplément Late check-out",
-                    "amount": 15000.0,   # TODO: à paramétrer dans room_type ou règle
-                    "currency": "XOF",
-                    "requested_datetime": requested_datetime and requested_datetime.isoformat(),
-                })
-                _logger.info("Ajout du supplément Late check-out (15000 XOF) pour le mode %s", pricing_mode)
+                    "amount": float(amount or 0.0),
+                    "currency": rule.currency_id.name if rule.currency_id else "XOF",
+                    "requested_datetime": (req_dt.isoformat() if hasattr(req_dt, "isoformat") else req_dt),
+                    })
+                    _logger.info("Ajout du supplément Late check-out (%.2f) pour le mode %s", amount, mode)
 
-            elif pricing_mode == "extra_night":
-                # Ici on simule une "nuit supplémentaire" en recalculant une nuit
-                extra_amount = 50000.0   # TODO: à remplacer par le vrai prix (rule.price ou autre)
-                supplements.append({
+
+                elif mode == "extra_night":
+                # On tente d'utiliser le prix unitaire de la règle (comportement plus cohérent)
+                    if rule.unit == "night" and rule.price:
+                        extra_amount = float(rule.price)
+                    else:
+                        extra_amount = getattr(rule.room_type_id, "extra_night_amount", 50000.0)
+
+
+                    supplements.append({
                     "type": "extra_night",
                     "label": "Nuit supplémentaire",
-                    "amount": extra_amount,
-                    "currency": "XOF",
-                })
-                _logger.info("Ajout du supplément Nuit supplémentaire (%.2f XOF) pour le mode %s", extra_amount, pricing_mode)
+                    "amount": float(extra_amount),
+                    "currency": rule.currency_id.name if rule.currency_id else "XOF",
+                    })
+                    _logger.info("Ajout du supplément Nuit supplémentaire (%.2f) pour le mode %s", extra_amount, mode)
 
-            else:
-                _logger.warning("Mode de tarification inconnu : %s (aucun supplément ajouté)", pricing_mode)
 
-        except Exception as e:
-            _logger.error("Erreur lors de l'ajout du supplément pour le mode %s : %s", pricing_mode, str(e))
-            # Optionnel : lever à nouveau l'erreur si tu veux stopper le process
-            # raise
+                else:
+                    _logger.warning("Mode de tarification inconnu : %s (aucun supplément ajouté)", mode)
 
+
+            except Exception as e:
+                _logger.error("Erreur lors de l'ajout du supplément pour le mode %s : %s", mode, str(e))
         # =========================================================
         # 5) CALCUL FINAL DU TOTAL
         # =========================================================
@@ -205,8 +277,8 @@ class HotelPricingService(models.AbstractModel):
             total += sup.get("amount", 0.0)
             
         _logger.info("💰 Total calculé: base=%s + adj=%s + sup=%s = %s",
-                     price_base, sum(a["amount"] for a in adjustments),
-                     sum(s["amount"] for s in supplements), total)
+                        price_base, sum(a.get("amount", 0.0) for a in adjustments),
+                        sum(s.get("amount", 0.0) for s in supplements), total)
 
 
         # =========================================================
