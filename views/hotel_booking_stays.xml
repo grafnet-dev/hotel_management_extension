@@ -63,6 +63,19 @@
                         string="Check-out"
                         invisible="state != 'ongoing'" />
 
+                    <button name="action_open_police_form" type="object"
+                        string="📝 Fiche de police" />
+
+                    <button name="action_print_police_form"
+                        type="object"
+                        string="📝 Imprimer Fiche de police" />
+
+                    <button name="action_preview_police_form"
+                        type="object"
+                        string="Voir Fiche Police"
+                        class="btn-secondary" />
+
+
                     <button name="action_cancel" type="object"
                         string="Annuler"
                         invisible="not (state in ['pending','ongoing'])"
