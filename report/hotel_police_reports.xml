@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Rapport PDF -->
+    <record id="action_report_hotel_police_form" model="ir.actions.report">
+        <field name="name">Fiche de Police (PDF)</field>
+        <field name="model">hotel.police.form</field>  <!-- Modèle correct -->
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">hotel_management_extension.report_hotel_police_form</field>
+        <field name="report_file">hotel_management_extension.report_hotel_police_form</field>
+        <field name="print_report_name">'Fiche_Police_' + (object.last_name or 'Client')</field>
+        <field name="binding_model_id" ref="model_hotel_police_form"/>  <!-- Référence correcte -->
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Rapport HTML (aperçu) -->
+    <record id="action_report_hotel_police_form_html" model="ir.actions.report">
+        <field name="name">Fiche de Police (Aperçu)</field>
+        <field name="model">hotel.police.form</field>  <!-- Modèle correct -->
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">hotel_management_extension.report_hotel_police_form</field>
+        <field name="report_file">hotel_management_extension.report_hotel_police_form</field>
+        <field name="binding_model_id" ref="model_hotel_police_form"/>  <!-- Référence correcte -->
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

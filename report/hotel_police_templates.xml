@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_hotel_police_form">
+        <t t-call="web.html_container">
+            <!-- On ne met PAS t-call="web.external_layout" pour éviter le logo / My Company -->
+            <div class="page">
+
+                <!-- HEADER personnalisé -->
+                <div class="header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                    <!-- Logo à gauche -->
+                    <div style="flex:1; text-align:left;">
+                        <img src="/hotel_management_extension/static/src/img/ogo3.png"
+                             style="max-height:80px;" />
+                    </div>
+
+                    <!-- Titre centré -->
+                    <div style="flex:2; text-align:center;">
+                        <h2 style="margin:0;">Fiche de Police</h2>
+                    </div>
+
+                    <!-- Vide à droite -->
+                    <div style="flex:1;"></div>
+                </div>
+
+                <!-- STYLES -->
+                <style>
+                    .section {
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        padding: 10px 15px;
+                        margin-bottom: 15px;
+                        background-color: #f9f9f9;
+                    }
+                    .section h3 {
+                        background-color: #004080;
+                        color: white;
+                        padding: 6px 10px;
+                        margin: -10px -15px 10px -15px;
+                        border-radius: 6px 6px 0 0;
+                        font-size: 14px;
+                        text-transform: uppercase;
+                    }
+                    .field-label {
+                        font-weight: bold;
+                        color: #333;
+                        width: 30%;
+                        display: inline-block;
+                    }
+                    .field-value {
+                        color: #555;
+                        display: inline-block;
+                    }
+                    .signature-box {
+                        margin-top: 30px;
+                        border-top: 1px dashed #aaa;
+                        padding-top: 20px;
+                    }
+                </style>
+
+                <!-- CONTENU -->
+                <t t-foreach="docs" t-as="form">
+
+                    <!-- Informations personnelles -->
+                    <div class="section">
+                        <h3>Informations personnelles</h3>
+                        <p>
+                            <span class="field-label">Nom :</span>
+                            <span class="field-value" t-field="form.last_name" />
+                        </p>
+                        <p>
+                            <span class="field-label">Prénom :</span>
+                            <span class="field-value" t-field="form.first_name" />
+                        </p>
+                        <p>
+                            <span class="field-label">Date de naissance :</span>
+                            <span class="field-value" t-field="form.date_of_birth" /> &#160;&#160;
+                            <span class="field-label">Lieu :</span>
+                            <span class="field-value" t-field="form.place_of_birth" />
+                        </p>
+                        <p>
+                            <span class="field-label">Nationalité :</span>
+                            <span class="field-value" t-field="form.nationality" />
+                        </p>
+                        <p>
+                            <span class="field-label">Adresse :</span>
+                            <span class="field-value">
+                                <span t-field="form.street" /> &#160;
+                                <span t-field="form.zip" /> &#160;
+                                <span t-field="form.city" /> &#160;
+                                <span t-field="form.country_id" />
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Identité -->
+                    <div class="section">
+                        <h3>Pièce d'identité</h3>
+                        <p>
+                            <span class="field-label">Type :</span>
+                            <span class="field-value" t-field="form.id_type" />
+                        </p>
+                        <p>
+                            <span class="field-label">Numéro :</span>
+                            <span class="field-value" t-field="form.id_number" />
+                        </p>
+                        <p>
+                            <span class="field-label">Délivrée le :</span>
+                            <span class="field-value" t-field="form.id_issue_date" /> &#160;&#160;
+                            <span class="field-label">à :</span>
+                            <span class="field-value" t-field="form.id_issue_place" />
+                        </p>
+                        <p>
+                            <span class="field-label">Expire le :</span>
+                            <span class="field-value" t-field="form.id_expiry_date" />
+                        </p>
+                    </div>
+
+                    <!-- Séjour -->
+                    <div class="section">
+                        <h3>Séjour</h3>
+                        <p>
+                            <span class="field-label">Chambre :</span>
+                            <span class="field-value" t-field="form.room_id" />
+                        </p>
+                        <p>
+                            <span class="field-label">Arrivée prévue :</span>
+                            <span class="field-value" t-field="form.arrival_date_time" /> &#160;&#160;
+                            <span class="field-label">Départ prévu :</span>
+                            <span class="field-value" t-field="form.departure_date_time" />
+                        </p>
+                        <p>
+                            <span class="field-label">Nombre de personnes :</span>
+                            <span class="field-value" t-field="form.number_of_guests" />
+                        </p>
+                        <p>
+                            <span class="field-label">Motif :</span>
+                            <span class="field-value" t-field="form.stay_purpose" /> &#160;&#160;
+                            <span class="field-label">Transport :</span>
+                            <span class="field-value" t-field="form.arrival_transport" />
+                        </p>
+                    </div>
+
+                    <!-- Observations -->
+                    <div class="section">
+                        <h3>Observations</h3>
+                        <p t-field="form.notes" />
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="signature-box">
+                        <p>
+                            <strong>Date :</strong>
+                            <span t-field="form.signature_date" />
+                        </p>
+                        <p><strong>Signature :</strong></p>
+                        <div style="height:60px;"></div>
+                    </div>
+
+                </t>
+            </div>
+        </t>
+    </template>
+</odoo>
