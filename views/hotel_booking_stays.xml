@@ -279,37 +279,7 @@
                         </page>
 
 
-                        <page string="💰 Prix &amp; Facturation" name="pricing">
-                            <group>
-                                <group name="currency_info" string="Devise">
-                                    <field name="currency_id"
-                                        options="{'no_create': True, 'no_create_edit': True}" />
-                                </group>
-                                <group name="room_pricing" string="Tarification Chambre">
-                                    <field name="room_price_total" string="Total Chambre"
-                                        readonly="1" />
-                                    <field name="pricing_rule_id" string="Règle Appliquée"
-                                        readonly="1" />
-
-                                    <field name="pricing_adjustments" string="Ajustements"
-                                        readonly="1"
-                                        widget="text" placeholder="Aucun ajustement" />
-                                </group>
-
-                            </group>
-
-                            <separator string="Résumé Financier" />
-                            <group>
-                                <group></group> <!-- Spacer -->
-                                <group name="financial_summary" string="Totaux">
-                                    <field name="price_subtotal" string="Sous-total HT" readonly="1" />
-                                    <field name="price_tax" string="Taxes" readonly="1" />
-                                    <field name="price_total" string="Total TTC" readonly="1"
-                                        class="oe_subtotal_footer_separator"
-                                        style="font-weight: bold; font-size: 1.2em;" />
-                                </group>
-                            </group>
-                        </page>
+                        
                     </notebook>
 
 
