@@ -58,6 +58,8 @@
         "views/hotel_pricing_rule.xml",
         "report/hotel_police_templates.xml",
         "report/hotel_police_reports.xml",
+        "report/hotel_stays_report.xml",
+        "report/report_hotel_invoice.xml",
         "views/hotel_ui_menu.xml",  # menu + action UI juste pour le test
         "views/reception_standalone_app_template.xml",
         "views/views.xml",

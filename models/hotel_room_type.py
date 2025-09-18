@@ -7,6 +7,8 @@ class HotelRoomType(models.Model):
     _description = "Hotel Room Type"
     _order = "sequence, name"
 
+  
+
     # Informations de base
     room_ids = fields.Many2one(
         "hotel.room", string="chambre", required=True, ondelete="cascade"

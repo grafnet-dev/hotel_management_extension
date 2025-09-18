@@ -60,6 +60,7 @@
                                 <field name="flooring_type" />
                                 <field name="view_type" />
                             </group>
+                           
                         </group>
 
                         <group name="policies">
@@ -157,6 +158,7 @@
                                             <field name="currency_id" />
                                             <field name="active" />
                                         </group>
+
                                     </form>
                                 </field>
                             </page>

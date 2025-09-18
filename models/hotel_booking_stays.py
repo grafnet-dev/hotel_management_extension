@@ -1,11 +1,15 @@
 import json
 
 # import logging
+import logging
+
+_logger = logging.getLogger(__name__)
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 from datetime import datetime, timedelta, time
 from ..constants.booking_stays_state import STAY_STATES
 from ..logging_config import eclc_logger as _logger
+from ..logging_booking import booking_logger as _logger_booking
 
 
 def float_to_time(float_hour):
@@ -18,7 +22,12 @@ class HotelBookingStayS(models.Model):
     _name = "hotel.booking.stay"
     _description = "Séjour individuel de chaque reservation (booking)"
     # _rec_name = 'room_id' -> ici à faire de recherche et comprendre son utilité
-
+    product_id = fields.Many2one(
+        "product.product",
+        string="Produit de facturation",
+        domain=[("type", "=", "service")],
+        help="Produit Odoo utilisé pour générer les lignes de facture de ce type de chambre.",
+    )
     # Infos occupants
     occupant_ids = fields.Many2many(
         "res.partner",
@@ -55,13 +64,6 @@ class HotelBookingStayS(models.Model):
         "hotel.reservation.type",
         string="Type de réservation",
         help="Type de réservation sélectionné pour cette chambre",
-    )
-    original_reservation_type_id = fields.Many2one(
-        "hotel.reservation.type",
-        string="Type d'origine",
-        help="Type de réservation sélectionné initialement avant requalification flexible.",
-        readonly=True,
-        copy=False,
     )
     # Dates & Horaires
     # # Jours choisis par le user
@@ -105,7 +107,8 @@ class HotelBookingStayS(models.Model):
     )
     ##champs ajoutés pour la gestion dyanmque de la vue dans le xml
     is_flexible_reservation = fields.Boolean(
-        compute="_compute_is_flexible_reservation", store=False
+        related="reservation_type_id.is_flexible",
+        store=True,
     )
 
     # Gestion du early check-in et late check-out
@@ -174,14 +177,13 @@ class HotelBookingStayS(models.Model):
         ("extra_night", "Nuit supplémentaire"),
         ("invalid_request", "Requête invalide"),
     ]
-    
+
     early_pricing_mode = fields.Selection(
         EC_LC_SELECTION,
         string="Mode tarifaire EC",
         compute="_compute_actual_checkin_checkout",
         store=True,
-        )
-
+    )
 
     late_pricing_mode = fields.Selection(
         EC_LC_SELECTION,
@@ -195,18 +197,6 @@ class HotelBookingStayS(models.Model):
     )
     late_checkout_price = fields.Float(
         string="Prix Late Checkout", default=0.0, readonly=True
-    )
-    # Durée & Unité
-    uom_qty = fields.Float(
-        string="Duration",
-        help="The quantity converted into the UoM used by " "the product",
-        readonly=True,
-    )
-    uom_id = fields.Many2one(
-        "uom.uom",
-        string="Unit of Measure",
-        help="This will set the unit of measure used",
-        readonly=True,
     )
 
     # consommations du séjour
@@ -251,6 +241,20 @@ class HotelBookingStayS(models.Model):
     )
 
     # Prix & Facturation -> à définir les champs nécessaires plus tard et logique de calcul
+    ## Durée & Unité
+    uom_qty = fields.Float(
+        string="Duration",
+        help="The quantity converted into the UoM used by " "the product",
+        readonly=True,
+    )
+
+    uom_id = fields.Many2one(
+        "uom.uom",
+        string="Unit of Measure",
+        help="This will set the unit of measure used",
+        readonly=True,
+    )
+
     currency_id = fields.Many2one(
         string="Currency",
         related="booking_id.pricelist_id.currency_id",
@@ -263,7 +267,24 @@ class HotelBookingStayS(models.Model):
         copy=False,
     )
 
-    pricing_price_base = fields.Float(string="Prix de base", readonly=True)
+    pricing_price_base = fields.Float(
+        string="Prix de base , Prix de la chambre sans ec/lc ", readonly=True
+    )
+
+    pricing_unit = fields.Char(
+        string="Unité de tarification", readonly=True
+    )  # night, hour, slot
+    pricing_unit_price = fields.Float(
+        string="Prix unitaire", readonly=True
+    )  # prix unitaire
+    pricing_quantity = fields.Float(string="Quantité", readonly=True)  # nombre d’unités
+
+    room_price_total = fields.Monetary(
+        string="Prix chambre+ec/lc",
+        compute="_compute_room_price_total",
+        store=True,
+        currency_field="currency_id",
+    )
 
     pricing_adjustments = fields.Text(
         string="Ajustements appliqués",
@@ -274,13 +295,6 @@ class HotelBookingStayS(models.Model):
         string="Supplements (JSON)",
         readonly=True,
         help="Suppléments appliqués (early/late fees, extras...) en JSON.",
-    )
-
-    room_price_total = fields.Monetary(
-        string="Prix chambre",
-        compute="_compute_room_price_total",
-        store=True,
-        currency_field="currency_id",
     )
 
     price_subtotal = fields.Float(
@@ -301,6 +315,17 @@ class HotelBookingStayS(models.Model):
         compute="_compute_price_subtotal",
         help="Total Price including Tax",
         store=True,
+    )
+    
+    invoice_ids = fields.One2many(
+    "account.move",
+    "stay_id",
+    string="Factures",
+)
+    financial_summary_details = fields.Text(
+        string="Résumé financier (JSON)",
+        readonly=True,
+        help="Détails financiers du séjour (base, ajustements, suppléments, remises, taxes, total)",
     )
 
     state = fields.Selection(
@@ -403,86 +428,16 @@ class HotelBookingStayS(models.Model):
         # Étape 1 : Passage en COMPLETED
         self.state = STAY_STATES["COMPLETED"]
         _logger.info("✅ [CHECKOUT] Stay=%s marqué COMPLETED", self.id)
-
-        # Étape 2 : Calcul du prix avec le service
-        pricing = self.env["hotel.pricing.service"].compute_price(
-            room_type_id=self.room_type_id.id,
-            reservation_type_id=self.reservation_type_id.id,  # ✅ correction
-            planned_checkin_date=self.planned_checkin_date,
-            planned_checkout_date=self.planned_checkout_date,
-            # nb_persons=self.nb_persons or 1,  # ✅ correction (on prend nb_persons sur stay)
-        )
-        _logger.info("💰 [CHECKOUT] Résultat pricing=%s", pricing)
-
-        if not pricing or pricing.get("total", 0.0) <= 0:
-            raise UserError(
-                "Impossible de générer une facture : total nul ou pricing invalide."
-            )
-
-        # Étape 3 : Préparer les lignes de facture
-        line_vals = []
-
-        # Prix de base
-        if pricing.get("base"):
-            base = pricing["base"]
-            line_vals.append(
-                (
-                    0,
-                    0,
-                    {
-                        "name": f"Séjour ({base['quantity']} {base['unit']}(s))",
-                        "quantity": base["quantity"],
-                        "price_unit": base["unit_price"],
-                    },
-                )
-            )
-
-        # Ajustements
-        for adj in pricing.get("adjustments", []):
-            line_vals.append(
-                (
-                    0,
-                    0,
-                    {
-                        "name": adj["label"],
-                        "quantity": 1,
-                        "price_unit": adj["amount"],
-                    },
-                )
-            )
-
-        # Suppléments
-        for sup in pricing.get("supplements", []):
-            line_vals.append(
-                (
-                    0,
-                    0,
-                    {
-                        "name": sup["label"],
-                        "quantity": 1,
-                        "price_unit": sup["amount"],
-                    },
-                )
-            )
-
-        # Étape 4 : Création de la facture
-        invoice = self.env["account.move"].create(
-            {
-                "move_type": "out_invoice",
-                "partner_id": self.booking_id.partner_id.id,  # on garde booking pour le client
-                "invoice_date": fields.Date.today(),
-                "invoice_origin": f"Stay {self.id}",
-                "invoice_line_ids": line_vals,
-            }
+        _logger.info(
+            "[CHECKOUT] stay=%s | summary_before_report=%s",
+            self.id,
+            self.financial_summary_details,
         )
 
-        _logger.info("🧾 [CHECKOUT] Facture créée : %s", invoice.id)
-
-        # Étape 5 : Ouvrir directement le PDF facture standard
-        try:
-            return self.env.ref("account.account_invoices").report_action(invoice)
-        except ValueError:
-            raise UserError("Le rapport de facture standard n’est pas disponible.")
+        # Étape 2 : Générer la facture PDF
+        return self.env.ref(
+            "hotel_management_extension.action_report_hotel_stay_invoice"
+        ).report_action(self)
 
     def action_cancel(self):
         self.state = STAY_STATES["CANCELLED"]
@@ -490,7 +445,7 @@ class HotelBookingStayS(models.Model):
     def _set_default_uom_id(self):
         return self.env.ref("uom.product_uom_day")
 
-    # Onchange = confort utilisateur
+    # Onchange = confort utilisateur ajutstement de date
     @api.onchange("planned_checkin_date", "planned_checkout_date")
     def _onchange_checkin_date(self):
         if (
@@ -508,7 +463,7 @@ class HotelBookingStayS(models.Model):
                 }
             }
 
-    # calcul automatique (methode à adapter plus tard)
+    # calcul automatique de la durée (methode à adapter plus tard)
     @api.depends("planned_checkin_date", "planned_checkout_date")
     def _compute_duration(self):
         for rec in self:
@@ -563,11 +518,6 @@ class HotelBookingStayS(models.Model):
                     )
                 )
 
-    @api.depends("reservation_type_id")
-    def _compute_is_flexible_reservation(self):
-        for rec in self:
-            rec.is_flexible_reservation = bool(rec.reservation_type_id.is_flexible)
-
     # ----------- Calcul des dates en fonction du type de resa -------------
     def _compute_dates_logic(self, rec):
         """
@@ -575,6 +525,9 @@ class HotelBookingStayS(models.Model):
         Recalcule automatiquement planned_checkin_date et planned_checkout_date en fonction du type de réservation.
 
         """
+        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
+
+        _logger_booking.debug("➡️ _compute_dates_logic appelé pour stay %s", rec.id)
         rec.planned_checkin_date = False
         rec.planned_checkout_date = False
 
@@ -583,9 +536,16 @@ class HotelBookingStayS(models.Model):
             or not rec.booking_end_date
             or not rec.reservation_type_id
         ):
+            _logger_booking.debug(
+                "❌ Données insuffisantes : start=%s end=%s type=%s",
+                rec.booking_start_date,
+                rec.booking_end_date,
+                rec.reservation_type_id,
+            )
             return
 
         if rec.reservation_type_id.is_flexible:
+            _logger_booking.debug("ℹ️ Réservation flexible, pas de calcul auto.")
             # Flexible = l'utilisateur saisit directement
             return
 
@@ -598,6 +558,11 @@ class HotelBookingStayS(models.Model):
         )
 
         if not slot:
+            _logger_booking.warning(
+                "⚠️ Aucun slot trouvé pour room_type=%s, resa_type=%s",
+                rec.room_type_id.id,
+                rec.reservation_type_id.id,
+            )
             return
 
         rec.planned_checkin_date = datetime.combine(
@@ -607,6 +572,12 @@ class HotelBookingStayS(models.Model):
             rec.booking_end_date, float_to_time(slot.checkout_time)
         )
 
+        _logger_booking.debug(
+            "✅ Dates calculées: checkin=%s checkout=%s",
+            rec.planned_checkin_date,
+            rec.planned_checkout_date,
+        )
+
         # Cas classique : checkout <= checkin -> +1 jour
         if (
             rec.reservation_type_id.code == "classic"
@@ -614,12 +585,22 @@ class HotelBookingStayS(models.Model):
         ):
             rec.planned_checkout_date += timedelta(days=1)
 
+            _logger_booking.debug(
+                "↪️ Correction appliquée (+1 jour) -> checkout=%s",
+                rec.planned_checkout_date,
+            )
+
+        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
+
     ### ----------- PERSISTANCE -------------
     @api.depends(
         "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
     )
     def _compute_checkin_checkout(self):
         for rec in self:
+            _logger_booking.debug(
+                "🟢 _compute_checkin_checkout déclenché pour stay %s", rec.id
+            )
             self._compute_dates_logic(rec)
 
     # ##----------- UX : CALCUL INSTANTANÉ DANS LE FORMULAIRE -------------
@@ -628,10 +609,10 @@ class HotelBookingStayS(models.Model):
     )
     def _onchange_dates_and_type(self):
         for rec in self:
+            _logger_booking.debug(
+                "🟠 _onchange_dates_and_type déclenché pour stay %s", rec.id
+            )
             self._compute_dates_logic(rec)
-
-    from ..logging_config import eclc_logger as _logger
-
 
     @api.onchange("early_checkin_requested", "late_checkout_requested")
     def _onchange_eclc_requested(self):
@@ -709,7 +690,6 @@ class HotelBookingStayS(models.Model):
         "planned_checkout_date",
         "occupant_ids",
     )
-
     def _compute_room_price_total(self):
         """
         Calcule le prix chambre en appelant le service tarifaire.
@@ -719,9 +699,12 @@ class HotelBookingStayS(models.Model):
             # Reset par défaut
             rec.room_price_total = 0.0
             rec.pricing_rule_id = False
+            rec.pricing_unit = False
+            rec.pricing_unit_price = 0.0
+            rec.pricing_quantity = 0.0
             rec.pricing_adjustments = False
             rec.pricing_price_base = 0.0
-            rec.pricing_supplements = False  # <-- nouveau champ (JSON)
+            rec.pricing_supplements = False
 
             ctx = {
                 "stay_id": rec.id or None,
@@ -738,16 +721,21 @@ class HotelBookingStayS(models.Model):
                 "user_tz": self.env.user.tz,
             }
 
+            _logger_booking.info(
+                "📌 [STAY/INIT] Début calcul prix chambre | ctx=%s", ctx
+            )
+
             if not (
                 rec.room_type_id
                 and rec.reservation_type_id
                 and rec.planned_checkin_date
                 and rec.planned_checkout_date
             ):
-                _logger.debug(
+                _logger_booking.debug(
                     "[PRICING][SKIP] Inputs incomplets pour stay=%s | ctx=%s",
                     rec.id or "new",
                     json.dumps(ctx, ensure_ascii=False),
+                    ctx,
                 )
                 continue
 
@@ -771,13 +759,19 @@ class HotelBookingStayS(models.Model):
                 "[PRICING][INPUT] stay=%s | modes=%s | requested_map=%s",
                 rec.id or "new",
                 pricing_modes,
-                {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in requested_map.items()},
+                {
+                    k: (v.isoformat() if hasattr(v, "isoformat") else v)
+                    for k, v in requested_map.items()
+                },
             )
 
             # =========================================================
             # 2) Appel au moteur tarifaire
             # =========================================================
             try:
+                _logger_booking.info(
+                    "➡️ [STAY/CALL] Appel moteur tarifaire pour stay=%s", rec.id
+                )
                 result = self.env["hotel.pricing.service"].compute_price(
                     room_type_id=rec.room_type_id.id,
                     reservation_type_id=rec.reservation_type_id.id,
@@ -788,7 +782,7 @@ class HotelBookingStayS(models.Model):
                     requested_datetime=requested_map,
                 )
 
-                _logger.info(
+                _logger_booking.info(
                     "[PRICING][RAW] stay=%s | result=%s",
                     rec.id or "new",
                     json.dumps(result, ensure_ascii=False, indent=2, default=str),
@@ -809,6 +803,9 @@ class HotelBookingStayS(models.Model):
                 rec.pricing_price_base = float(base_data.get("amount", 0.0))
                 rec.room_price_total = float(result.get("total", 0.0))
                 rec.pricing_rule_id = base_data.get("rule_id") or False
+                rec.pricing_unit = base_data.get("unit") or False
+                rec.pricing_unit_price = float(base_data.get("unit_price", 0.0))
+                rec.pricing_quantity = float(base_data.get("quantity", 0.0))
                 rec.pricing_adjustments = json.dumps(
                     result.get("adjustments", []), ensure_ascii=False, indent=2
                 )
@@ -816,14 +813,36 @@ class HotelBookingStayS(models.Model):
                     result.get("supplements", []), ensure_ascii=False, indent=2
                 )
 
+                rec.financial_summary_details = json.dumps(
+                    result, ensure_ascii=False, indent=2, default=str
+                )
+
                 _logger.info(
-                    "[PRICING][OK] stay=%s | base=%s | total=%s | rule_id=%s | adjustments=%s | supplements=%s",
+                    "[CHECK FINANCIAL] stay=%s | financial_summary_details=%s",
+                    rec.id,
+                    rec.financial_summary_details,
+                )
+                _logger.info(
+                    "[PRICING][OK] stay=%s | base=%s | total=%s | rule_id=%s | adjustments=%s | supplements=%s,| summary=%s",
                     rec.id,
                     rec.pricing_price_base,
                     rec.room_price_total,
                     rec.pricing_rule_id,
+                    rec.pricing_unit,
+                    rec.pricing_unit_price,
+                    rec.pricing_quantity,
                     rec.pricing_adjustments,
                     rec.pricing_supplements,
+                    rec.financial_summary_details,
+                )
+                _logger_booking.info(
+                    "✅ [STAY/OK] stay=%s | base=%s | total=%s | rule_id=%s | unit=%s | qty=%s",
+                    rec.id,
+                    rec.pricing_price_base,
+                    rec.room_price_total,
+                    rec.pricing_rule_id,
+                    rec.pricing_unit,
+                    rec.pricing_quantity,
                 )
 
             except Exception as e:
@@ -833,8 +852,195 @@ class HotelBookingStayS(models.Model):
                     json.dumps(ctx, ensure_ascii=False),
                     e,
                 )
-                # On laisse room_price_total à 0.0; pas de raise pour ne pas bloquer l'UI
+                _logger_booking.exception(
+                    "🔥 [STAY/EXC] Erreur compute_price pour stay=%s | ctx=%s | err=%s",
+                    rec.id,
+                    ctx,
+                    e,
+                )
 
+    def _prepare_invoice_line(self):
+        """Prépare les valeurs d'une ligne de facture à partir du séjour"""
+        self.ensure_one()
+
+        if not self.product_id:
+            raise UserError(
+                _("Aucun produit défini pour ce séjour (stay %s)") % self.display_name
+            )
+
+        return {
+            "product_id": self.product_id.id,
+            "name": "%s (%s → %s)"
+            % (
+                self.product_id.display_name,
+                self.planned_checkin_date.strftime("%d/%m/%Y"),
+                self.planned_checkout_date.strftime("%d/%m/%Y"),
+            ),
+            "quantity": 1,  # tu peux remplacer par rec.pricing_quantity si besoin
+            "price_unit": self.pricing_price_base,  # prix calculé total
+            "tax_ids": [(6, 0, self.product_id.taxes_id.ids)],
+            "currency_id": self.currency_id.id,
+        }
+
+    def action_create_invoice(self):
+        """Crée la facture pour ce séjour"""
+        for stay in self:
+            if not stay.booking_id:
+                raise UserError(_("Impossible de facturer un séjour sans réservation"))
+
+            # 1) Chercher ou créer une facture brouillon
+            move = self.env["account.move"].search(
+                [
+                    ("stay_id", "=", self.id),
+                    ("move_type", "=", "out_invoice"),
+                    ("state", "=", "draft"),
+                ],
+                limit=1,
+            )
+            if not move:
+                move = self.env["account.move"].create(
+                    {
+                        "move_type": "out_invoice",
+                        "partner_id": stay.booking_id.partner_id.id,
+                        "stay_id": self.id,
+                        "currency_id": stay.currency_id.id,
+                    }
+                )
+
+            # 2) Ajouter la ligne de facture
+            self.env["account.move.line"].create(
+                dict(stay._prepare_invoice_line(), move_id=move.id)
+            )
+
+        return True
+
+    """@api.depends(
+        "pricing_price_base", "pricing_adjustments", "pricing_supplements"
+    )
+    def _compute_stay_financial_summary(self):
+        for rec in self:
+            # init
+            subtotal = 0.0
+            tax = 0.0  # pour l'instant
+            details = {}
+
+            # --- Base ---
+            base_amount = rec.pricing_price_base or 0.0
+            subtotal += base_amount
+            details["base"] = {
+                "label": "Prix de base",
+                "amount": base_amount,
+            }
+
+            # --- Ajustements ---
+            adjustments_list = []
+            try:
+                adjustments = json.loads(rec.pricing_adjustments or "[]")
+                for adj in adjustments:
+                    amt = adj.get("amount", 0.0)
+                    subtotal += amt
+                    adjustments_list.append({
+                        "label": adj.get("label", "Ajustement"),
+                        "amount": amt,
+                    })
+            except Exception:
+                adjustments_list = []
+            details["adjustments"] = adjustments_list
+
+            # --- Suppléments ---
+            supplements_list = []
+            try:
+                supplements = json.loads(rec.pricing_supplements or "[]")
+                for sup in supplements:
+                    amt = sup.get("amount", 0.0)
+                    subtotal += amt
+                    supplements_list.append({
+                        "label": sup.get("label", "Supplément"),
+                        "amount": amt,
+                    })
+            except Exception:
+                supplements_list = []
+            details["supplements"] = supplements_list
+
+            # --- Remises (vide pour l'instant) ---
+            details["discounts"] = []
+
+            # --- Totaux ---
+            total = subtotal + tax
+            details["subtotal"] = subtotal
+            details["tax"] = tax
+            details["total"] = total
+
+            # --- Assignation ---
+            rec.price_subtotal = subtotal
+            rec.price_tax = tax
+            rec.price_total = total
+            rec.financial_summary_details = json.dumps(details, ensure_ascii=False, indent=2)"""
+
+    def get_financial_summary(self):
+        """
+        Retourne un tableau exploitable pour l'impression (facture, récapitulatif, etc.)
+        """
+        self.ensure_one()
+        if not self.financial_summary_details:
+            return []
+
+        summary = json.loads(self.financial_summary_details)
+
+        lines = []
+
+        # Prix de base
+        if summary.get("base"):
+            base = summary["base"]
+            lines.append(
+                {
+                    "label": f"Chambre ({base.get('quantity')} x {base.get('unit')})",
+                    "amount": base.get("amount", 0.0),
+                }
+            )
+
+        # Ajustements
+        for adj in summary.get("adjustments", []):
+            lines.append(
+                {
+                    "label": adj.get("label", "Ajustement"),
+                    "amount": adj.get("amount", 0.0),
+                }
+            )
+
+        # Suppléments
+        for sup in summary.get("supplements", []):
+            lines.append(
+                {
+                    "label": sup.get("label", "Supplément"),
+                    "amount": sup.get("amount", 0.0),
+                }
+            )
+
+        # Remises
+        for disc in summary.get("discounts", []):
+            lines.append(
+                {
+                    "label": disc.get("label", "Remise"),
+                    "amount": -disc.get("amount", 0.0),
+                }
+            )
+
+        # Total
+        lines.append(
+            {
+                "label": "TOTAL",
+                "amount": summary.get("total", 0.0),
+            }
+        )
+
+        _logger.info(
+            "[REPORT] stay=%s | financial_summary_details=%s",
+            self.id,
+            self.financial_summary_details,
+        )
+
+        return lines
 
     # ---------- Gestion des EC LC ----------
 
@@ -852,8 +1058,11 @@ class HotelBookingStayS(models.Model):
     @api.depends("early_pricing_mode", "late_pricing_mode")
     def _compute_derive_eclc_pricing_mode(self):
         for rec in self:
-        # Priorité : early > late ; si aucun, False
-            rec.eclc_pricing_mode = rec.early_pricing_mode or rec.late_pricing_mode or False
+            # Priorité : early > late ; si aucun, False
+            rec.eclc_pricing_mode = (
+                rec.early_pricing_mode or rec.late_pricing_mode or False
+            )
+
     @api.model
     def create(self, vals):
         """S'assurer que actual = planned par défaut à la création"""
@@ -874,15 +1083,14 @@ class HotelBookingStayS(models.Model):
         return super().write(vals)
 
     @api.depends(
-    "planned_checkin_date",
-    "planned_checkout_date",
-    "requested_checkin_datetime",
-    "requested_checkout_datetime",
-    "early_checkin_requested",
-    "late_checkout_requested",
+        "planned_checkin_date",
+        "planned_checkout_date",
+        "requested_checkin_datetime",
+        "requested_checkout_datetime",
+        "early_checkin_requested",
+        "late_checkout_requested",
     )
     def _compute_actual_checkin_checkout(self):
-        
         """
         Appelle le moteur ECLC pour *chacune* des demandes (early et late) et stocke
         le pricing_mode correspondant dans early_pricing_mode / late_pricing_mode.
@@ -894,7 +1102,7 @@ class HotelBookingStayS(models.Model):
             # Par défaut : actual = planned
             rec.actual_checkin_date = rec.planned_checkin_date
             rec.actual_checkout_date = rec.planned_checkout_date
-            
+
             # Réinitialiser les champs de mode (important pour compute + store)
             rec.early_pricing_mode = False
             rec.late_pricing_mode = False
@@ -921,8 +1129,7 @@ class HotelBookingStayS(models.Model):
                     room_type_id=rec.room_type_id.id,
                 )
                 _logger.info("[EARLY RESULT] %s", result)
-                
-                
+
                 # Stocker dans le champ dédié
                 rec.early_pricing_mode = result.get("pricing_mode") or False
 
@@ -946,8 +1153,7 @@ class HotelBookingStayS(models.Model):
                     room_type_id=rec.room_type_id.id,
                 )
                 _logger.info("[LATE RESULT] %s", result)
-                
-                
+
                 rec.late_pricing_mode = result.get("pricing_mode") or False
 
                 if result.get("status") == "accepted":
@@ -964,13 +1170,12 @@ class HotelBookingStayS(models.Model):
                 rec.late_pricing_mode,
             )
 
-
     @api.depends(
-    "requested_checkin_datetime",
-    "requested_checkout_datetime",
-    "planned_checkin_date",
-    "planned_checkout_date",
-)
+        "requested_checkin_datetime",
+        "requested_checkout_datetime",
+        "planned_checkin_date",
+        "planned_checkout_date",
+    )
     def _compute_difference_hours(self):
         for rec in self:
             rec.early_difference_hours = 0.0
@@ -986,7 +1191,9 @@ class HotelBookingStayS(models.Model):
                 ).total_seconds() / 3600.0
                 rec.early_difference_hours = max(diff, 0.0)
                 _logger.info(
-                    "[DIFF EARLY] stay=%s diff=%.2fH", rec.id, rec.early_difference_hours
+                    "[DIFF EARLY] stay=%s diff=%.2fH",
+                    rec.id,
+                    rec.early_difference_hours,
                 )
 
             if (
@@ -1100,6 +1307,34 @@ class HotelBookingStayS(models.Model):
         """
         for rec in self:
             rec.apply_eclc_pricing()
+
+    # Invoice
+
+    def action_preview_invoice(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.report",
+            "report_name": "hotel_management_extension.report_hotel_stay_invoice",  # ✅ correction
+            "report_type": "qweb-html",
+            "data": {"ids": [self.id]},
+            "context": {
+                "active_ids": [self.id],
+                "active_model": "hotel.booking.stay",
+            },
+        }
+
+    def action_print_invoice(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.report",
+            "report_name": "hotel_management_extension.report_hotel_stay_invoice",  # ✅ correction
+            "report_type": "qweb-pdf",
+            "data": {"ids": [self.id]},
+            "context": {
+                "active_ids": [self.id],
+                "active_model": "hotel.booking.stay",
+            },
+        }
 
     @api.model
     def create_stay_from_ui(self, values):

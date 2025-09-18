@@ -17,7 +17,7 @@ dist/
 build/
 
 # Node / JS (standalone app)
-node_modules/
+static/src/reception_standalone_app/node_modules/
 package-lock.json
 *.lock
 *.cache

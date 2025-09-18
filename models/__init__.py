@@ -21,6 +21,6 @@ from . import hotel_pricing_rule
 from . import hotel_pricing_service
 from . import hotel_ec_lc_policy
 from . import hotel_eclc_engine
-
+from . import account_move_extension
 
 

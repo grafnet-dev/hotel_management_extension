@@ -5,13 +5,13 @@
         <field name="model">hotel.pricing.rule</field>
         <field name="arch" type="xml">
             <list>
-                <field name="room_type_id"/>
-                <field name="reservation_type_id"/>
-                <field name="season_id"/>
-                <field name="unit"/>
-                <field name="price"/>
-                <field name="currency_id"/>
-                <field name="active"/>
+                <field name="room_type_id" />
+                <field name="reservation_type_id" />
+                <field name="season_id" />
+                <field name="unit" />
+                <field name="price" invisible="is_flexible == True"/>
+                <field name="currency_id" />
+                <field name="active" />
             </list>
         </field>
     </record>
@@ -24,17 +24,35 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="room_type_id"/>
-                            <field name="reservation_type_id"/>
-                            <field name="season_id"/>
+                            <field name="room_type_id" />
+                            <field name="reservation_type_id" />
+                            <field name="season_id" />
                         </group>
                         <group>
-                            <field name="unit"/> 
-                            <field name="price"/>
-                            <field name="currency_id"/>
-                            <field name="active"/>
+                            <field name="unit" />
+                            <field name="currency_id" />
+                            <field name="active" />
                         </group>
                     </group>
+
+                    <!-- Prix direct si non flexible -->
+                    <group invisible="is_flexible == True">
+                        <field name="price" />
+                    </group>
+
+                    <!-- Onglet lignes si flexible -->
+                    <notebook invisible="is_flexible == False">
+                        <page string="Pricing Lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="min_duration" />
+                                    <field name="max_duration" />
+                                    <field name="price" />
+                                    <field name="currency_id" invisible="1" />
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
@@ -47,7 +65,7 @@
     </record>
 
     <menuitem id="menu_hotel_pricing_rule"
-              name="Pricing Rules"
-              parent="hotel_management_odoo.hotel_config_menu"
-              action="action_hotel_pricing_rule"/>
+        name="Règles tariffaire"
+        parent="hotel_management_odoo.hotel_config_menu"
+        action="action_hotel_pricing_rule" />
 </odoo>

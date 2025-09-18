@@ -11,6 +11,13 @@ class RoomBooking(models.Model):
         string="Séjours",
         help="Séjours individuels liés à cette réservation"
     )
+    
+    pricelist_id = fields.Many2one(
+        comodel_name='product.pricelist',
+        string="Pricelist",
+        required=False,
+
+    )
     state_new = fields.Selection(
         selection=[
             (BOOKING_STATES["DRAFT"], "Brouillon"),

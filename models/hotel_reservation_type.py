@@ -57,3 +57,8 @@ class HotelReservationType(models.Model):
                 "success": False,
                 "message": _("Erreur inattendue : %s") % str(e),
             }
+            
+            
+            
+            
+            
