@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Déclaration du rapport -->
+    <record id="action_report_hotel_stay_invoice" model="ir.actions.report">
+        <field name="name">Facture de Séjour</field>
+        <field name="model">hotel.booking.stay</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">hotel_management_extension.report_hotel_stay_invoice</field>
+        <field name="report_file">hotel_management_extension.report_hotel_stay_invoice</field>
+        <field name="binding_model_id" ref="model_hotel_booking_stay"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Facture_Sejour_%s' % (object.booking_id.name or object.id)</field>
+    </record>
+
+    <!-- Action serveur pour impression depuis la vue liste -->
+    <record id="action_print_hotel_invoices" model="ir.actions.server">
+        <field name="name">Imprimer Factures Séjours</field>
+        <field name="model_id" ref="model_hotel_booking_stay"/>
+        <field name="binding_model_id" ref="model_hotel_booking_stay"/>
+        <field name="binding_type">action</field>
+        <field name="state">code</field>
+        <field name="code">
+
+        </field>
+    </record>
+</odoo>

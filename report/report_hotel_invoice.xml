@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Template QWeb pour la facture hôtel moderne -->
+    <template id="report_hotel_stay_invoice_document">
+        <t t-call="web.html_container">
+            <t t-set="doc" t-value="doc.with_context(lang=doc.booking_id.partner_id.lang)"/>
+            
+            <div class="page" style="font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 0;">
+                
+                <!-- CONTAINER PRINCIPAL -->
+                <div style="max-width: 900px; margin: 0 auto; background: white; min-height: 100vh; position: relative; overflow: hidden;">
+                    
+                    <!-- PATTERN DÉCORATIF -->
+                    <div style="position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: linear-gradient(45deg, rgba(103,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%); border-radius: 50%; transform: translate(100px, -100px);"></div>
+                    
+                    <!-- HEADER -->
+                    <div style="position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 40px 50px 30px; background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%); backdrop-filter: blur(10px);">
+                        <!-- Logo -->
+                        <div style="flex: 1;">
+                            <img src="/hotel_management_extension/static/src/img/ogo3.png" 
+                                 style="max-height: 70px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));" />
+                        </div>
+                        
+                        <!-- Titre -->
+                        <div style="flex: 2; text-align: center;">
+                            <h1 style="margin: 0; font-size: 2.8rem; font-weight: 700; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -0.02em;">
+                                FACTURE
+                            </h1>
+                            <p style="margin: 8px 0 0; color: #64748b; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.5px;">
+                                SÉJOUR HÔTELIER
+                            </p>
+                        </div>
+                        
+                        <!-- Info facture -->
+                        <div style="flex: 1; text-align: right;">
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 16px; color: white; box-shadow: 0 10px 25px rgba(102,126,234,0.3);">
+                                <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 4px;">DATE</div>
+                                <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;" t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')"/>
+                                <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 4px;">N° RÉSERVATION</div>
+                                <div style="font-size: 1rem; font-weight: 700;" t-field="doc.booking_id.name"/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CONTENU PRINCIPAL -->
+                    <div style="padding: 0 50px 50px; position: relative; z-index: 5;">
+                        
+                        <!-- CARTES CLIENT & SÉJOUR -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+                            
+                            <!-- CARTE CLIENT -->
+                            <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid rgba(102,126,234,0.1); position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #ef4444, #f97316);"></div>
+                                
+                                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #ef4444, #f97316); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                        <span style="color: white; font-size: 1.2rem;">👤</span>
+                                    </div>
+                                    <h3 style="margin: 0; color: #1e293b; font-size: 1.3rem; font-weight: 700;">CLIENT</h3>
+                                </div>
+                                
+                                <div style="space-y: 12px;">
+                                    <div style="font-size: 1.2rem; font-weight: 700; color: #1e293b; margin-bottom: 12px;" t-field="doc.booking_id.partner_id.name"/>
+                                    <div style="color: #64748b; margin-bottom: 8px; line-height: 1.5;">
+                                        <span t-field="doc.booking_id.partner_id.street"/> <span t-field="doc.booking_id.partner_id.street2"/>
+                                    </div>
+                                    <div style="color: #64748b; margin-bottom: 12px;">
+                                        <span t-field="doc.booking_id.partner_id.zip"/> <span t-field="doc.booking_id.partner_id.city"/>
+                                    </div>
+                                    <div t-if="doc.booking_id.partner_id.phone" style="display: flex; align-items: center; margin-bottom: 8px;">
+                                        <span style="margin-right: 8px;">📱</span>
+                                        <span style="color: #059669; font-weight: 600;" t-field="doc.booking_id.partner_id.phone"/>
+                                    </div>
+                                    <div t-if="doc.booking_id.partner_id.email" style="display: flex; align-items: center;">
+                                        <span style="margin-right: 8px;">✉️</span>
+                                        <span style="color: #0ea5e9; font-weight: 600;" t-field="doc.booking_id.partner_id.email"/>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- CARTE SÉJOUR -->
+                            <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid rgba(102,126,234,0.1); position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #059669, #0ea5e9);"></div>
+                                
+                                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #059669, #0ea5e9); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                        <span style="color: white; font-size: 1.2rem;">🏨</span>
+                                    </div>
+                                    <h3 style="margin: 0; color: #1e293b; font-size: 1.3rem; font-weight: 700;">SÉJOUR</h3>
+                                </div>
+                                
+                                <div style="space-y: 12px;">
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 4px;">Chambre</div>
+                                        <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 8px; font-weight: 700; color: #1e293b;">
+                                            <span t-field="doc.room_id.name"/> • <span t-field="doc.room_type_id.name"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 4px;">Type</div>
+                                        <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #059669; padding: 8px 12px; border-radius: 8px; font-weight: 700;" t-field="doc.reservation_type_id.name"/>
+                                    </div>
+                                    
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                                        <div>
+                                            <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 4px;">Arrivée</div>
+                                            <div style="font-weight: 600; color: #1e293b;" t-field="doc.planned_checkin_date" t-options='{"widget": "datetime", "format": "dd/MM HH:mm"}'/>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 4px;">Départ</div>
+                                            <div style="font-weight: 600; color: #1e293b;" t-field="doc.planned_checkout_date" t-options='{"widget": "datetime", "format": "dd/MM HH:mm"}'/>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 4px;">Occupants</div>
+                                        <div style="background: #fef3c7; color: #d97706; padding: 8px 12px; border-radius: 8px; font-weight: 600;" t-field="doc.occupant_names"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TABLEAU FINANCIER -->
+                        <div style="background: white; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 30px;">
+                            
+                            <!-- Header tableau -->
+                            <div style="background: linear-gradient(135deg, #1e293b, #334155); padding: 25px 30px; color: white;">
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 45px; height: 45px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                                        <span style="font-size: 1.3rem;">💰</span>
+                                    </div>
+                                    <h3 style="margin: 0; font-size: 1.4rem; font-weight: 700;">DÉTAIL FINANCIER</h3>
+                                </div>
+                            </div>
+                            
+                            <!-- Lignes du tableau -->
+                            <div>
+                                <t t-set="financial_lines" t-value="doc.get_financial_summary()"/>
+                                <t t-foreach="financial_lines" t-as="line">
+                                    <div t-if="line['label'] != 'TOTAL'" style="display: flex; justify-content: space-between; align-items: center; padding: 18px 30px; border-bottom: 1px solid #f1f5f9; transition: all 0.3s ease;">
+                                        <div style="color: #1e293b; font-weight: 600; font-size: 1rem;" t-esc="line['label']"/>
+                                        <div style="font-weight: 700; color: #059669; font-size: 1.1rem;">
+                                            <span t-esc="'{:,.2f}'.format(line['amount'])"/> <span t-field="doc.currency_id.symbol"/>
+                                        </div>
+                                    </div>
+                                </t>
+                                
+                                <!-- TOTAL -->
+                                <t t-set="total_line" t-value="[l for l in financial_lines if l['label'] == 'TOTAL']"/>
+                                <t t-if="total_line">
+                                    <div style="background: linear-gradient(135deg, #059669, #0ea5e9); padding: 25px 30px; color: white;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div style="font-size: 1.3rem; font-weight: 700;">TOTAL À PAYER</div>
+                                            <div style="font-size: 2rem; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                                <span t-esc="'{:,.2f}'.format(total_line[0]['amount'])"/> <span t-field="doc.currency_id.symbol"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                        
+                        <!-- SERVICES ADDITIONNELS -->
+                        <t t-if="doc.need_food or doc.need_service or doc.need_fleet or doc.need_event">
+                            <div style="background: white; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); padding: 30px; margin-bottom: 30px;">
+                                <h3 style="margin: 0 0 20px; color: #1e293b; font-size: 1.3rem; font-weight: 700; display: flex; align-items: center;">
+                                    <span style="margin-right: 10px;">🎯</span> SERVICES COMPLÉMENTAIRES
+                                </h3>
+                                
+                                <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                                    <div t-if="doc.need_food" style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; padding: 12px 20px; border-radius: 25px; font-weight: 700; box-shadow: 0 4px 15px rgba(249,115,22,0.3);">
+                                        🍽️ Restauration
+                                    </div>
+                                    <div t-if="doc.need_service" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; padding: 12px 20px; border-radius: 25px; font-weight: 700; box-shadow: 0 4px 15px rgba(14,165,233,0.3);">
+                                        🛎️ Services
+                                    </div>
+                                    <div t-if="doc.need_fleet" style="background: linear-gradient(135deg, #059669, #047857); color: white; padding: 12px 20px; border-radius: 25px; font-weight: 700; box-shadow: 0 4px 15px rgba(5,150,105,0.3);">
+                                        🚗 Transport
+                                    </div>
+                                    <div t-if="doc.need_event" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 12px 20px; border-radius: 25px; font-weight: 700; box-shadow: 0 4px 15px rgba(220,38,38,0.3);">
+                                        🎉 Événements
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                        
+                        <!-- FOOTER MODERNE -->
+                        <div style="text-align: center; margin-top: 50px; padding: 40px 30px; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 20px; position: relative; overflow: hidden;">
+                            
+                            <!-- Pattern décoratif footer -->
+                            <div style="position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(102,126,234,0.05) 0%, transparent 70%);"></div>
+                            <div style="position: absolute; bottom: -50%; left: -20%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(118,75,162,0.05) 0%, transparent 70%);"></div>
+                            
+                            <div style="position: relative; z-index: 10;">
+                                <h3 style="margin: 0 0 15px; color: #1e293b; font-size: 1.5rem; font-weight: 700;">
+                                    Merci pour votre confiance
+                                </h3>
+                                <p style="margin: 0 0 25px; color: #64748b; font-size: 1.1rem; line-height: 1.6; max-width: 600px; margin-left: auto; margin-right: auto;">
+                                    Nous espérons que votre séjour a été mémorable.<br/>
+                                    Au plaisir de vous accueillir à nouveau.
+                                </p>
+                                
+                                <div style="display: inline-block; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                                    <span style="color: #64748b; font-size: 0.9rem;">Facture générée le </span>
+                                    <span style="color: #667eea; font-weight: 700;" t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y à %H:%M')"/>
+                                </div>
+                                
+                                <!-- Contact -->
+                                <div style="color: #64748b; font-size: 0.95rem; line-height: 1.4;">
+                                    <span style="font-weight: 600;" t-field="doc.booking_id.company_id.phone"/> • 
+                                    <span style="font-weight: 600;" t-field="doc.booking_id.company_id.email"/> • 
+                                    <span style="font-weight: 600;" t-field="doc.booking_id.company_id.website"/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Template principal -->
+    <template id="report_hotel_stay_invoice">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="hotel_management_extension.report_hotel_stay_invoice_document" t-lang="doc.booking_id.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+</odoo>
