@@ -1,4 +1,4 @@
-# logging_booking.py
+
 import logging
 import os
 

@@ -1,13 +1,12 @@
 from odoo import models, fields, api
 from datetime import timedelta
+from odoo.exceptions import ValidationError, UserError
 
 
 class HotelRoomType(models.Model):
     _name = "hotel.room.type"
     _description = "Hotel Room Type"
     _order = "sequence, name"
-
-  
 
     # Informations de base
     room_ids = fields.Many2one(
@@ -224,3 +223,67 @@ class HotelRoomType(models.Model):
         )
 
         return all_rooms - occupied_rooms
+
+
+    @api.model
+    def api_get_room_types(self, filters=None):
+        """
+        Retourne la liste des types de chambres disponibles,
+        avec gestion d'erreurs et format uniforme.
+
+        :param filters: dict optionnel pour filtrer (ex: {"active": True})
+        :return: dict {success: bool, message: str, data: list}
+        """
+        try:
+            domain = []
+            if filters and isinstance(filters, dict):
+                for field, value in filters.items():
+                    if field not in self._fields:
+                        raise ValidationError(_("Filtre invalide : champ '%s' inconnu.") % field)
+                    domain.append((field, "=", value))
+
+            room_types = self.search(domain)
+
+            if not room_types:
+                return {
+                    "success": True,
+                    "message": _("Aucun type de chambre trouvé."),
+                    "data": [],
+                }
+
+            data = []
+            for rt in room_types:
+                data.append({
+                    "id": rt.id,
+                    "name": rt.name,
+                    "code": rt.code if hasattr(rt, "code") else None,
+                    "capacity": rt.capacity,
+                    "base_price": rt.base_price,
+                    "active": rt.active,
+                    "bed_type": rt.bed_type,
+                    "surface_area": rt.surface_area,
+                    "max_occupancy": rt.max_occupancy,
+                    "view_type": rt.view_type,
+                    "is_smoking_allowed": rt.is_smoking_allowed,
+                    "is_pets_allowed": rt.is_pets_allowed,
+                    "room_count": rt.room_count,
+                })
+
+            return {
+                "success": True,
+                "message": _("Liste des types de chambres récupérée avec succès."),
+                "data": data,
+            }
+
+        except (ValidationError, UserError) as e:
+            return {
+                "success": False,
+                "message": str(e),
+                "data": [],
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": _("Erreur interne : %s") % str(e),
+                "data": [],
+            }
