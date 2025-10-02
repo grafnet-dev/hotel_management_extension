@@ -1,5 +1,4 @@
 import json
-
 # import logging
 import logging
 
@@ -10,6 +9,9 @@ from datetime import datetime, timedelta, time
 from ..constants.booking_stays_state import STAY_STATES
 from ..logging_config import eclc_logger as _logger
 from ..logging_booking import booking_logger as _logger_booking
+from ..utils.logger_utils import setup_logger
+
+early_late_logger = setup_logger("hotel.early_late", "early_late.log")
 
 
 def float_to_time(float_hour):
@@ -338,6 +340,23 @@ class HotelBookingStayS(models.Model):
         string="État",
         default=STAY_STATES["PENDING"],
         tracking=True,
+    )
+    
+    availability_status = fields.Selection(
+        [
+            ("unknown", "Unknown"),
+            ("available", "Available"),
+            ("unavailable", "Unavailable"),
+            ("not_checked", "Not Checked"),
+        ],
+        string="Availability Status",
+        default="unknown",
+        readonly=False,
+    )
+
+    availability_message = fields.Char(
+        string="Availability Message",
+        readonly=False,
     )
 
     # ouvrir un modal pour la fiche de police
@@ -1082,93 +1101,168 @@ class HotelBookingStayS(models.Model):
                 vals.setdefault("actual_checkout_date", vals["planned_checkout_date"])
         return super().write(vals)
 
+   
+    
+   
     @api.depends(
-        "planned_checkin_date",
-        "planned_checkout_date",
-        "requested_checkin_datetime",
-        "requested_checkout_datetime",
-        "early_checkin_requested",
-        "late_checkout_requested",
-    )
+    "planned_checkin_date",
+    "planned_checkout_date",
+    "requested_checkin_datetime",
+    "requested_checkout_datetime",
+    "early_checkin_requested",
+    "late_checkout_requested",
+)
     def _compute_actual_checkin_checkout(self):
-        """
-        Appelle le moteur ECLC pour *chacune* des demandes (early et late) et stocke
-        le pricing_mode correspondant dans early_pricing_mode / late_pricing_mode.
-        Attention : n'écrase plus un mode par l'autre.
-        """
-        engine = self.env["hotel.eclc.engine"]
-
         for rec in self:
-            # Par défaut : actual = planned
-            rec.actual_checkin_date = rec.planned_checkin_date
-            rec.actual_checkout_date = rec.planned_checkout_date
-
-            # Réinitialiser les champs de mode (important pour compute + store)
-            rec.early_pricing_mode = False
-            rec.late_pricing_mode = False
-            rec.extra_night_required = False
-            _logger.info(
-                "[ACTUAL INIT] stay=%s planned_in=%s planned_out=%s",
+            early_late_logger.info(
+                "[COMPUTE] stay=%s planned_in=%s planned_out=%s early_req=%s late_req=%s",
                 rec.id,
                 rec.planned_checkin_date,
                 rec.planned_checkout_date,
+                rec.early_checkin_requested,
+                rec.late_checkout_requested,
             )
 
-            # --- Early Check-in ---
+            rec.actual_checkin_date = rec.planned_checkin_date
+            rec.actual_checkout_date = rec.planned_checkout_date
+            rec.early_pricing_mode = False
+            rec.late_pricing_mode = False
+            rec.extra_night_required = False
+            rec.availability_status = "unknown"
+            rec.availability_message = ""
+
+            # --- Early ---
             if rec.early_checkin_requested and rec.requested_checkin_datetime:
-                _logger.info(
-                    "[EARLY REQUEST] stay=%s requested=%s planned=%s",
-                    rec.id,
-                    rec.requested_checkin_datetime,
-                    rec.planned_checkin_date,
-                )
-                result = engine.evaluate_request(
+                early_late_logger.info("[EARLY] Checking request stay=%s requested=%s",
+                                    rec.id, rec.requested_checkin_datetime)
+                verdict = rec._evaluate_stay_request(
+                    rec,
                     request_type="early",
                     requested_datetime=rec.requested_checkin_datetime,
                     planned_datetime=rec.planned_checkin_date,
-                    room_type_id=rec.room_type_id.id,
                 )
-                _logger.info("[EARLY RESULT] %s", result)
+                early_late_logger.info("[EARLY VERDICT] %s", verdict)
 
-                # Stocker dans le champ dédié
-                rec.early_pricing_mode = result.get("pricing_mode") or False
+                rec.early_pricing_mode = verdict.get("pricing_mode") or False
+                if verdict["status"] in ("accepted", "extra_night"):
+                    rec.actual_checkin_date = verdict["actual_in"]
+                    rec.actual_checkout_date = verdict["actual_out"]
+                    rec.extra_night_required = (verdict["status"] == "extra_night")
 
-                if result.get("status") == "accepted":
-                    rec.actual_checkin_date = rec.requested_checkin_datetime
-                elif result.get("status") == "extra_night":
-                    rec.extra_night_required = True
+                rec.availability_status = verdict.get("availability_status", "unknown")
+                rec.availability_message = verdict.get("message", "")
 
-            # --- Late Check-out ---
+            # --- Late ---
             if rec.late_checkout_requested and rec.requested_checkout_datetime:
-                _logger.info(
-                    "[LATE REQUEST] stay=%s requested=%s planned=%s",
-                    rec.id,
-                    rec.requested_checkout_datetime,
-                    rec.planned_checkout_date,
-                )
-                result = engine.evaluate_request(
+                early_late_logger.info("[LATE] Checking request stay=%s requested=%s",
+                                    rec.id, rec.requested_checkout_datetime)
+                verdict = rec._evaluate_stay_request(
+                    rec,
                     request_type="late",
                     requested_datetime=rec.requested_checkout_datetime,
                     planned_datetime=rec.planned_checkout_date,
-                    room_type_id=rec.room_type_id.id,
                 )
-                _logger.info("[LATE RESULT] %s", result)
+                early_late_logger.info("[LATE VERDICT] %s", verdict)
 
-                rec.late_pricing_mode = result.get("pricing_mode") or False
+                rec.late_pricing_mode = verdict.get("pricing_mode") or False
+                if verdict["status"] in ("accepted", "extra_night"):
+                    rec.actual_checkin_date = verdict["actual_in"]
+                    rec.actual_checkout_date = verdict["actual_out"]
+                    rec.extra_night_required = (verdict["status"] == "extra_night")
 
-                if result.get("status") == "accepted":
-                    rec.actual_checkout_date = rec.requested_checkout_datetime
-                elif result.get("status") == "extra_night":
-                    rec.extra_night_required = True
+                rec.availability_status = verdict.get("availability_status", "unknown")
+                rec.availability_message = verdict.get("message", "")
 
-            _logger.info(
-                "[ACTUAL FINAL] stay=%s actual_in=%s actual_out=%s early_mode=%s late_mode=%s",
+            early_late_logger.info(
+                "[FINAL] stay=%s actual_in=%s actual_out=%s early_mode=%s late_mode=%s extra_night=%s avail=%s msg=%s",
                 rec.id,
                 rec.actual_checkin_date,
                 rec.actual_checkout_date,
                 rec.early_pricing_mode,
                 rec.late_pricing_mode,
-            )
+                rec.extra_night_required,
+                rec.availability_status,
+                rec.availability_message,
+            )     
+    # ----------------------------
+    # Fonction utilitaire combinée
+    # ----------------------------
+    def _evaluate_stay_request(self, rec, request_type, requested_datetime, planned_datetime):
+        early_late_logger.info(
+            "[EVAL] stay=%s type=%s requested=%s planned=%s",
+            rec.id, request_type, requested_datetime, planned_datetime
+        )
+
+        engine_eclc = self.env["hotel.eclc.engine"]
+        engine_avail = self.env["hotel.availability.engine"]
+
+        # --- Étape 1 : ECLC ---
+        result_eclc = engine_eclc.evaluate_request(
+            request_type=request_type,
+            requested_datetime=requested_datetime,
+            planned_datetime=planned_datetime,
+            room_type_id=rec.room_type_id.id,
+        )
+        early_late_logger.info("[EVAL][ECLC] %s", result_eclc)
+
+        status_eclc = result_eclc.get("status")
+        pricing_mode = result_eclc.get("pricing_mode")
+
+        if status_eclc == "refused":
+            early_late_logger.warning("[EVAL] Refusé par ECLC stay=%s", rec.id)
+            return {
+                "status": "refused",
+                "actual_in": rec.planned_checkin_date,
+                "actual_out": rec.planned_checkout_date,
+                "pricing_mode": False,
+                "availability_status": "not_checked",
+                "message": "❌ Refusé par ECLC",
+            }
+
+        # --- Étape 2 : Dates proposées ---
+        proposed_in = rec.planned_checkin_date
+        proposed_out = rec.planned_checkout_date
+        if request_type == "early" and status_eclc == "accepted":
+            proposed_in = requested_datetime
+        elif request_type == "late" and status_eclc == "accepted":
+            proposed_out = requested_datetime
+        elif status_eclc == "extra_night":
+            from datetime import timedelta
+            proposed_out = requested_datetime if request_type == "late" else rec.planned_checkout_date + timedelta(days=1)
+
+        early_late_logger.info(
+            "[EVAL] stay=%s proposed_in=%s proposed_out=%s", rec.id, proposed_in, proposed_out
+        )
+
+        # --- Étape 3 : Disponibilité ---
+        result_avail = engine_avail.check_availability(
+            room_type_id=rec.room_type_id.id,
+            start=proposed_in,
+            end=proposed_out,
+        )
+        early_late_logger.info("[EVAL][AVAIL] %s", result_avail)
+
+        if result_avail["status"] == "available":
+            verdict = {
+                "status": status_eclc,
+                "actual_in": proposed_in,
+                "actual_out": proposed_out,
+                "pricing_mode": pricing_mode,
+                "availability_status": "available",
+                "message": f"✅ {status_eclc} + dispo : {result_avail['message']}",
+            }
+        else:
+            verdict = {
+                "status": "refused",
+                "actual_in": rec.planned_checkin_date,
+                "actual_out": rec.planned_checkout_date,
+                "pricing_mode": False,
+                "availability_status": "unavailable",
+                "message": f"❌ {status_eclc} mais indispo : {result_avail['message']}",
+            }
+
+        early_late_logger.info("[EVAL][FINAL] stay=%s verdict=%s", rec.id, verdict)
+        return verdict
 
     @api.depends(
         "requested_checkin_datetime",
