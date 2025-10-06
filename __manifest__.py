@@ -60,12 +60,12 @@
         "report/hotel_police_reports.xml",
         "report/hotel_stays_report.xml",
         "report/report_hotel_invoice.xml",
-        "views/hotel_ui_menu.xml",  # menu + action UI juste pour le test
+        "views/hotel_ui_menu.xml",  
         "views/reception_standalone_app_template.xml",
         "views/views.xml",
         "views/templates.xml",
+      
     ],
-    # only loaded in demonstration mode
     "demo": [
         "demo/demo.xml",
     ],

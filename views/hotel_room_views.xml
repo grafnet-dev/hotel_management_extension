@@ -130,7 +130,8 @@
                                    options="{'no_create': False, 'no_open': False}"
                                    required="1"
                                    readonly="id"/>
-                            <field name="floor_id" options="{'no_create': False}"/>
+                            <field name="floor_id" options="{'no_create': False}" string="Étage"/>
+
                             <field name="capacity" string="Capacité" readonly="1"/>
                         </group>
                         
@@ -165,19 +166,20 @@
                             
                         </page>-->
                         <!-- Onglet Maintenance -->
-                        <page string="🛠️ Maintenance" name="maintenance">
-                            <group>
-                                <group string="État de Maintenance">
-                                    <field name="is_in_maintenance" 
-                                           readonly="status != 'maintenance'"/>
-                                    <field name="last_maintenance_date"/>
-                                    <field name="next_maintenance_date"/>
-                                </group>
-                                <group string="Notes">
-                                    <field name="maintenance_notes" nolabel="1"/>
-                                </group>
-                            </group>
-                        </page>
+                     <page string="🛠️ Maintenance (Entretien)" name="maintenance">
+    <group>
+        <group string="État de Maintenance (State of Maintenance)">
+            <field name="is_in_maintenance" 
+                   readonly="status != 'maintenance'"/>
+            <field name="last_maintenance_date" string="Dernière date d’entretien "/>
+            <field name="next_maintenance_date" string="Prochaine date d’entretien "/>
+        </group>
+        <group string="Notes (Remarks)">
+            <field name="maintenance_notes" nolabel="1"/>
+        </group>
+    </group>
+</page>
+
 
                         <!-- Onglet Caractéristiques 
                         <page string="🛏️ Caractéristiques" name="characteristics">
