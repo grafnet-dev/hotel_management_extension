@@ -354,7 +354,7 @@ class HotelPricingService(models.AbstractModel):
         for mode in list(dict.fromkeys(modes)):
             try:
                 if mode == "early_fee":
-                    amount = getattr(rule.room_type_id, "early_checkin_fee", 15000.0)
+                    amount = getattr(rule.room_type_id, "early_checkin_fee", 5000.0)
                     req_dt = requested_map.get("early_fee")
                     supplements.append(
                         {
@@ -378,7 +378,7 @@ class HotelPricingService(models.AbstractModel):
                     )
 
                 elif mode == "late_fee":
-                    amount = getattr(rule.room_type_id, "late_checkout_fee", 15000.0)
+                    amount = getattr(rule.room_type_id, "late_checkout_fee", 5000.0)
                     req_dt = requested_map.get("late_fee")
                     supplements.append(
                         {
@@ -407,7 +407,7 @@ class HotelPricingService(models.AbstractModel):
                         extra_amount = float(rule.price)
                     else:
                         extra_amount = getattr(
-                            rule.room_type_id, "extra_night_amount", 50000.0
+                            rule.room_type_id, "extra_night_amount", 20000.0
                         )
 
                     supplements.append(

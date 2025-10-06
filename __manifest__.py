@@ -28,6 +28,9 @@
             "hotel_management_extension/static/src/xml/time_clock_template.xml",
             "hotel_management_extension/static/src/js/time_float_widget.js",
             "hotel_management_extension/static/src/xml/time_float_template.xml",
+            "hotel_management_extension/static/src/RoomPlanning/js/planning_room.js",
+            "hotel_management_extension/static/src/RoomPlanning/xml/planning_room.xml",
+            "hotel_management_extension/static/src/RoomPlanning/css/planning_room.css",
         ],
         "hotel_management_extension.assets_reception_standalone_app": [
             # Assets de base d'Odoo
@@ -61,6 +64,7 @@
         "report/hotel_stays_report.xml",
         "report/report_hotel_invoice.xml",
         "views/hotel_ui_menu.xml",  # menu + action UI juste pour le test
+        "views/room_planning_menu.xml",
         "views/reception_standalone_app_template.xml",
         "views/views.xml",
         "views/templates.xml",

@@ -319,6 +319,15 @@ class HotelBookingStayS(models.Model):
         store=True,
     )
     
+    early_checkin_fee = fields.Float(
+        string="Montant Arrivée Tôt", readonly=True
+    )
+    late_checkout_fee = fields.Float(
+        string="Montant Départ Tardif ", readonly=True
+    )   
+    
+    
+
     invoice_ids = fields.One2many(
     "account.move",
     "stay_id",
@@ -724,6 +733,8 @@ class HotelBookingStayS(models.Model):
             rec.pricing_adjustments = False
             rec.pricing_price_base = 0.0
             rec.pricing_supplements = False
+            rec.early_checkin_fee = 0.0
+            rec.late_checkout_fee = 0.0
 
             ctx = {
                 "stay_id": rec.id or None,
@@ -831,6 +842,26 @@ class HotelBookingStayS(models.Model):
                 rec.pricing_supplements = json.dumps(
                     result.get("supplements", []), ensure_ascii=False, indent=2
                 )
+                
+                # Extraire les suppléments Early/Late
+                for sup in result.get("supplements", []):
+                    if sup.get("type") == "early_checkin":
+                        rec.early_checkin_fee = float(sup.get("amount", 0.0))
+                        early_late_logger.info(
+                            "[COMPUTE][EC] stay=%s | montant=%s | details=%s",
+                            rec.id,
+                            rec.early_checkin_fee,
+                            sup,
+                        )
+                    elif sup.get("type") == "late_checkout":
+                        rec.late_checkout_fee = float(sup.get("amount", 0.0))
+                        early_late_logger.info(
+                            "[COMPUTE][LC] stay=%s | montant=%s | details=%s",
+                            rec.id,
+                            rec.late_checkout_fee,
+                            sup,
+                        )
+
 
                 rec.financial_summary_details = json.dumps(
                     result, ensure_ascii=False, indent=2, default=str
@@ -841,7 +872,7 @@ class HotelBookingStayS(models.Model):
                     rec.id,
                     rec.financial_summary_details,
                 )
-                _logger.info(
+                early_late_logger.info(
                     "[PRICING][OK] stay=%s | base=%s | total=%s | rule_id=%s | adjustments=%s | supplements=%s,| summary=%s",
                     rec.id,
                     rec.pricing_price_base,
@@ -853,6 +884,8 @@ class HotelBookingStayS(models.Model):
                     rec.pricing_adjustments,
                     rec.pricing_supplements,
                     rec.financial_summary_details,
+                    rec.early_checkin_fee ,
+                    rec.late_checkout_fee,
                 )
                 _logger_booking.info(
                     "✅ [STAY/OK] stay=%s | base=%s | total=%s | rule_id=%s | unit=%s | qty=%s",
@@ -900,6 +933,18 @@ class HotelBookingStayS(models.Model):
             "tax_ids": [(6, 0, self.product_id.taxes_id.ids)],
             "currency_id": self.currency_id.id,
         }
+        
+    def _prepare_invoice_line_for_fee(self, product, amount, label):
+        """Prépare une ligne pour un supplément (early/late)"""
+        return {
+            "product_id": product.id,
+            "name": "%s - %s" % (product.display_name, label),
+            "quantity": 1,
+            "price_unit": amount,
+            "tax_ids": [(6, 0, product.taxes_id.ids)],
+            "currency_id": self.currency_id.id,
+        }
+
 
     def action_create_invoice(self):
         """Crée la facture pour ce séjour"""
@@ -930,6 +975,68 @@ class HotelBookingStayS(models.Model):
             self.env["account.move.line"].create(
                 dict(stay._prepare_invoice_line(), move_id=move.id)
             )
+            
+                        # Supplément Early Checkin
+            if stay.early_checkin_fee > 0:
+                #product_early = self.env["product.product"].search([
+                 #   ("product_tmpl_id.name", "=", "Early Checkin Chambre A")], limit=1
+                #)
+                product_early = self.env["product.product"].search([
+                    ("product_tmpl_id.name", "ilike", "Early Checkin Chambre A")
+                ], limit=1)
+                if not product_early:
+                    raise UserError(_("Produit 'Early Checkin' introuvable"))
+
+                self.env["account.move.line"].create(
+                    dict(
+                        stay._prepare_invoice_line_for_fee(
+                            product_early,
+                            stay.early_checkin_fee,
+                            "Early Checkin Chambre A"
+                        ),
+                        move_id=move.id
+                    )
+                )
+                early_late_logger.info(
+                    "[INVOICE][EC] stay=%s | invoice_id=%s | produit=%s | montant=%s",
+                    stay.id,
+                    move.id,
+                    product_early.display_name,
+                    stay.early_checkin_fee,
+                )
+
+            # Supplément Late Checkout
+            if stay.late_checkout_fee > 0:
+                #product_late = self.env["product.product"].search([
+                 #   ("product_tmpl_id.name", "=", "Late Checkout Chambre A")
+               # ], limit=1)
+                
+                product_late = self.env["product.product"].search([
+                    ("product_tmpl_id.name", "ilike", "Late Checkout Chambre A")
+                ], limit=1)
+
+
+                if not product_late:
+                    raise UserError(_("Produit 'Late Checkout' introuvable"))
+
+                self.env["account.move.line"].create(
+                    dict(
+                        stay._prepare_invoice_line_for_fee(
+                            product_late,
+                            stay.late_checkout_fee,
+                            "Late Checkout Chambre A"
+                        ),
+                        move_id=move.id
+                    )
+                )
+                early_late_logger.info(
+                    "[INVOICE][LC] stay=%s | invoice_id=%s | produit=%s | montant=%s",
+                    stay.id,
+                    move.id,
+                    product_late.display_name,
+                    stay.late_checkout_fee,
+                )
+
 
         return True
 
@@ -1101,8 +1208,6 @@ class HotelBookingStayS(models.Model):
                 vals.setdefault("actual_checkout_date", vals["planned_checkout_date"])
         return super().write(vals)
 
-   
-    
    
     @api.depends(
     "planned_checkin_date",
