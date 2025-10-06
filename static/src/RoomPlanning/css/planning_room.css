@@ -1,0 +1,515 @@
+/* Room Planning avec Précision Horaire - Odoo */
+
+.o_room_planning {
+    height: 100%;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    overflow-y: auto;
+}
+
+.o_room_planning .o_content {
+    min-height: 100%;
+}
+
+/* En-tête */
+.o_room_planning h2 {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 1.75rem;
+}
+
+/* Navigation */
+.o_room_planning .btn-group .btn {
+    min-width: 45px;
+    font-weight: 500;
+}
+
+/* Légende */
+.o_room_planning .badge {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: none;
+}
+
+/* Container du planning */
+.o_room_planning .planning-grid-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Table principale */
+.o_room_planning .planning-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+/* En-têtes */
+.o_room_planning .planning-table thead th {
+    background: linear-gradient(180deg, #e9ecef 0%, #dee2e6 100%);
+    border-bottom: 2px solid #adb5bd;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    font-size: 0.875rem;
+}
+
+.o_room_planning .room-header {
+    width: 140px;
+    text-align: left !important;
+    padding-left: 16px !important;
+    position: sticky;
+    left: 0;
+    z-index: 30 !important;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.o_room_planning .date-header {
+    min-width: 120px;
+    border-left: 1px solid #dee2e6;
+}
+
+/* Lignes chambres */
+.o_room_planning .room-row {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.o_room_planning .room-row:hover {
+    background-color: #f8f9fa;
+}
+
+/* Cellule chambre */
+.o_room_planning .room-cell {
+    padding: 12px 16px;
+    background: white;
+    border-right: 2px solid #dee2e6;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    font-size: 0.9rem;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Cellule jour */
+.o_room_planning .day-cell {
+    padding: 0;
+    border-left: 1px solid #e9ecef;
+    height: 80px;
+    position: relative;
+    background: white;
+}
+
+.o_room_planning .day-cell-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 80px;
+}
+
+/* Grille horaire légère */
+.o_room_planning .hour-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.o_room_planning .hour-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Blocs d'activités */
+.o_room_planning .activity-block {
+    position: absolute;
+    top: 8px;
+    height: 64px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.o_room_planning .activity-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    z-index: 10;
+}
+
+.o_room_planning .activity-content {
+    padding: 6px 8px;
+    color: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.o_room_planning .activity-icon {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.o_room_planning .activity-label {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.o_room_planning .activity-time {
+    font-size: 0.7rem;
+    opacity: 0.95;
+    white-space: nowrap;
+}
+
+/* Nettoyage - plus petit, z-index supérieur */
+.o_room_planning .activity-block[style*="#ff9800"] {
+    z-index: 6;
+    height: 50px;
+    top: 15px;
+}
+
+/* Cartes statistiques */
+.o_room_planning .stat-card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.o_room_planning .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.o_room_planning .stat-card .card-body {
+    padding: 1.5rem;
+}
+
+.o_room_planning .stat-card h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.o_room_planning .stat-card h3 {
+    font-size: 2.25rem;
+    font-weight: 700;
+}
+
+/* Scroll horizontal */
+.o_room_planning .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.o_room_planning .table-responsive::-webkit-scrollbar {
+    height: 10px;
+}
+
+.o_room_planning .table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.o_room_planning .table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+.o_room_planning .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Animation d'entrée */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.o_room_planning .room-row {
+    animation: fadeInUp 0.4s ease both;
+}
+
+.o_room_planning .room-row:nth-child(1) { animation-delay: 0.05s; }
+.o_room_planning .room-row:nth-child(2) { animation-delay: 0.08s; }
+.o_room_planning .room-row:nth-child(3) { animation-delay: 0.11s; }
+.o_room_planning .room-row:nth-child(4) { animation-delay: 0.14s; }
+.o_room_planning .room-row:nth-child(5) { animation-delay: 0.17s; }
+.o_room_planning .room-row:nth-child(6) { animation-delay: 0.20s; }
+.o_room_planning .room-row:nth-child(7) { animation-delay: 0.23s; }
+.o_room_planning .room-row:nth-child(8) { animation-delay: 0.26s; }
+.o_room_planning .room-row:nth-child(9) { animation-delay: 0.29s; }
+.o_room_planning .room-row:nth-child(10) { animation-delay: 0.32s; }
+
+/* Animation au clic */
+.o_room_planning .activity-block:active {
+    transform: scale(0.98);
+}
+
+/* Week-end highlight */
+.o_room_planning .date-header:nth-child(7),
+.o_room_planning .date-header:nth-child(8),
+.o_room_planning .day-cell:nth-child(7),
+.o_room_planning .day-cell:nth-child(8) {
+    background: linear-gradient(180deg, rgba(33, 150, 243, 0.03) 0%, rgba(33, 150, 243, 0.01) 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .o_room_planning h2 {
+        font-size: 1.25rem;
+    }
+    
+    .o_room_planning .date-header {
+        min-width: 90px;
+        font-size: 0.75rem;
+        padding: 8px 4px;
+    }
+    
+    .o_room_planning .room-header {
+        width: 100px;
+    }
+    
+    .o_room_planning .day-cell {
+        height: 70px;
+    }
+    
+    .o_room_planning .day-cell-content {
+        min-height: 70px;
+    }
+    
+    .o_room_planning .activity-block {
+        height: 54px;
+    }
+    
+    .o_room_planning .activity-content {
+        font-size: 0.7rem;
+        padding: 4px 6px;
+    }
+    
+    .o_room_planning .stat-card h3 {
+        font-size: 1.75rem;
+    }
+}
+
+/* État vide */
+.o_room_planning .day-cell:empty::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(0, 0, 0, 0.02) 10px,
+        rgba(0, 0, 0, 0.02) 20px
+    );
+    pointer-events: none;
+}
+
+/* Print styles */
+@media print {
+    .o_room_planning .btn-group,
+    .o_room_planning .stat-card {
+        display: none;
+    }
+    
+    .o_room_planning {
+        background: white;
+    }
+    
+    .o_room_planning .planning-table {
+        page-break-inside: auto;
+    }
+    
+    .o_room_planning .room-row {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+}
+
+/* Amélioration des tooltips natifs */
+.o_room_planning .activity-block[title] {
+    position: relative;
+}
+
+/* Effet de pulse pour les activités du jour */
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
+    }
+}
+
+.o_room_planning .activity-block.today {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Focus accessibility */
+.o_room_planning .activity-block:focus {
+    outline: 2px solid #2196F3;
+    outline-offset: 2px;
+}
+
+.o_room_planning .btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
+}
+
+/* Loading state */
+.o_room_planning.loading .day-cell-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Amélioration du contraste pour l'accessibilité */
+.o_room_planning .activity-block {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Indicateur de conflit (si plusieurs activités se chevauchent) */
+.o_room_planning .activity-block.conflict {
+    border: 2px solid #ff5722;
+    z-index: 15 !important;
+}
+
+/* Styles pour les différents types d'activités - amélioration visuelle */
+.o_room_planning .activity-block[style*="#4caf50"] {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
+}
+
+.o_room_planning .activity-block[style*="#2196F3"] {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+}
+
+.o_room_planning .activity-block[style*="#ff9800"] {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
+}
+
+.o_room_planning .activity-block[style*="#f44336"] {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+}
+
+/* Badge de durée sur les blocs longs */
+.o_room_planning .activity-block[style*="width: 1"][style*="%"]::before,
+.o_room_planning .activity-block[style*="width: 2"][style*="%"]::before,
+.o_room_planning .activity-block[style*="width: 3"][style*="%"]::before {
+    content: '◀';
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    opacity: 0.7;
+}
+
+.o_room_planning .activity-block[style*="width: 9"][style*="%"]::after {
+    content: '▶';
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    opacity: 0.7;
+}
+
+/* Amélioration de la lisibilité sur petits blocs */
+.o_room_planning .activity-block[style*="width: 1"]:not([style*="width: 10"]) .activity-label,
+.o_room_planning .activity-block[style*="width: 2"] .activity-label,
+.o_room_planning .activity-block[style*="width: 3"] .activity-label,
+.o_room_planning .activity-block[style*="width: 4"] .activity-label {
+    font-size: 0;
+}
+
+.o_room_planning .activity-block[style*="width: 1"]:not([style*="width: 10"]) .activity-time,
+.o_room_planning .activity-block[style*="width: 2"] .activity-time,
+.o_room_planning .activity-block[style*="width: 3"] .activity-time,
+.o_room_planning .activity-block[style*="width: 4"] .activity-time {
+    font-size: 0;
+}
+
+/* Garder uniquement l'icône visible sur très petits blocs */
+.o_room_planning .activity-block[style*="width: 1"]:not([style*="width: 10"]) .activity-icon,
+.o_room_planning .activity-block[style*="width: 2"] .activity-icon,
+.o_room_planning .activity-block[style*="width: 3"] .activity-icon,
+.o_room_planning .activity-block[style*="width: 4"] .activity-icon {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+/* Hover effet sur les cellules vides */
+.o_room_planning .day-cell:hover {
+    background: rgba(33, 150, 243, 0.05);
+}
+
+/* Indicateur "aujourd'hui" */
+.o_room_planning .date-header.today {
+    background: linear-gradient(180deg, #2196F3 0%, #1976D2 100%) !important;
+    color: white;
+}
+
+.o_room_planning .day-cell.today {
+    background: linear-gradient(180deg, rgba(33, 150, 243, 0.08) 0%, rgba(33, 150, 243, 0.03) 100%);
+    border-left: 2px solid #2196F3;
+    border-right: 2px solid #2196F3;
+}
+
+/* Smooth scroll */
+.o_room_planning .table-responsive {
+    scroll-behavior: smooth;
+}
+
+/* État désactivé pour maintenance */
+.o_room_planning .room-row.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.o_room_planning .room-row.disabled .room-cell::after {
+    content: '🔒';
+    margin-left: 8px;
+    opacity: 0.5;
+}
