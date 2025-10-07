@@ -607,15 +607,17 @@ class HotelBookingStayS(models.Model):
         )
 
         # Récupération du buffer de nettoyage
-        try:
-            buffer_hours = float(
-                self.env['ir.config_parameter'].sudo().get_param(
-                    'hotel.cleaning_buffer_hours', default='2.0'
-                )
-            )
-        except (ValueError, TypeError):
-            buffer_hours = 2.0
-            _logger_booking.warning("⚠️ Buffer par défaut utilisé: 2.0h")
+        #try:
+         #   buffer_hours = float(
+          #      self.env['ir.config_parameter'].sudo().get_param(
+           #         'hotel.cleaning_buffer_hours', default='0.5'
+            #    )
+            #)
+        #except (ValueError, TypeError):
+         #   buffer_hours = 0.5
+          #  _logger_booking.warning("⚠️ Buffer par défaut utilisé: 2.0h")
+            
+        buffer_hours = 0.5
 
         # Appel au moteur de disponibilité
         try:
@@ -717,10 +719,10 @@ class HotelBookingStayS(models.Model):
     )
     def _onchange_dates_and_type(self):
         for rec in self:
-            _logger_booking.debug(
-                "🟠 _onchange_dates_and_type déclenché pour stay %s", rec.id
-            )
-            self._compute_dates_logic(rec)
+            _logger_booking.debug("🟠 _onchange_dates_and_type déclenché pour stay %s", rec.id)
+            result = self._compute_dates_logic(rec)
+            if result:
+                return result
 
     @api.onchange("early_checkin_requested", "late_checkout_requested")
     def _onchange_eclc_requested(self):

@@ -157,7 +157,7 @@ class HotelRoomAvailabilityEngine(models.AbstractModel):
                 'start': stay.actual_checkin_date,
                 'end': stay.actual_checkout_date,
                 'stay_id': stay.id,
-                'booking_ref': stay.booking_id.reservation_no if stay.booking_id else None,
+                'booking_ref': stay.booking_id if stay.booking_id else None,
                 'guest_name': ', '.join(stay.occupant_ids.mapped('name')) or _('Non renseigné')
             })
         
@@ -210,7 +210,7 @@ class HotelRoomAvailabilityEngine(models.AbstractModel):
                     'stay_id': stay.id,
                     'checkin': stay_start,
                     'checkout': stay_end,
-                    'booking_ref': stay.booking_id.reservation_no if stay.booking_id else None
+                    'booking_ref': stay.booking_id if stay.booking_id else None
                 }
 
         _logger.debug("[CHECK] ✅ Chambre disponible=%s", room.name)
