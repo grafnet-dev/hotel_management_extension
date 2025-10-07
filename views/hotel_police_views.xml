@@ -7,51 +7,46 @@
             <form string="Fiche de police - Enregistrement Client">
                 
                 <!-- Informations occupant -->
-                <group string="Identité de l'occupant">
-                    <field name="first_name"/>
-                    <field name="last_name"/>
-                    <field name="gender"/>
-                    <field name="date_of_birth"/>
-                    <field name="place_of_birth"/>
-                    <field name="nationality"/>
-                    <field name="street"/>
-                    <field name="zip"/>
-                    <field name="city"/>
-                    <field name="country_id"/>
+             <group string="🧍 Identité de l’occupant">
+                    <field name="first_name" string="Prénom"/>
+                    <field name="last_name" string="Nom"/>
+                    <field name="gender" string="Sexe"/>
+                    <field name="date_of_birth" string="Date de naissance"/>
+                    <field name="place_of_birth" string="Lieu de naissance"/>
+                    <field name="nationality" string="Nationalité"/>
+                    <field name="street" string="Adresse"/>
+                    <field name="zip" string="Code postal"/>
+                    <field name="city" string="Ville"/>
+                    <field name="country_id" string="Pays"/>
                 </group>
 
                 <!-- Pièce d'identité -->
-                <group string="Pièce d'identité">
-                    <field name="id_type" />
-                    <field name="id_number" />
-                    <field name="id_issue_date" />
-                    <field name="id_expiry_date" />
-                    <field name="id_issue_place" />
-                    <field name="id_document_file" filename="id_document_filename" />
+                <group string="🪪 Pièce d’identité">
+                    <field name="id_type" string="Type de pièce"/>
+                    <field name="id_number" string="Numéro de la pièce"/>
+                    <field name="id_issue_date" string="Date de délivrance"/>
+                    <field name="id_expiry_date" string="Date d’expiration"/>
+                    <field name="id_issue_place" string="Lieu de délivrance"/>
+                    <field name="id_document_file" string="Fichier de la pièce" filename="id_document_filename"/>
                 </group>
 
                 <!-- Informations sur le séjour -->
-                <group string="Séjour">
-                    <!-- Date et Heure d'arrivée prévue -->
-                    <field name="arrival_date_time" readonly="1"/>
-                    <!-- Date et Heure de départ prévue -->
-                    <field name="departure_date_time" readonly="1"/>
-                    <!-- Date et Heure d'arrivée réelle -->
-                    <field name="actual_arrival_date_time"/>
-                    <!-- Date et Heure de départ réel -->
-                    <field name="actual_departure_date_time"/>
-                    <field name="number_of_guests"/>
-                    <field name="room_id"/>
+                <group string="🏨 Informations sur le séjour">
+                    <field name="arrival_date_time" string="Arrivée prévue" readonly="1"/>
+                    <field name="departure_date_time" string="Départ prévu" readonly="1"/>
+                    <field name="actual_arrival_date_time" string="Arrivée réelle"/>
+                    <field name="actual_departure_date_time" string="Départ réel"/>
+                    <field name="number_of_guests" string="Nombre d’occupants"/>
+                    <field name="room_id" string="Chambre attribuée"/>
                 </group>
 
                 <!-- Informations complémentaires -->
-                <group string="Compléments">
-                    <field name="stay_purpose"/>
-                    <field name="arrival_transport"/>
-                    <field name="signature"/>
-                    <field name="signature_date"/>
+                <group string="📋 Informations complémentaires">
+                    <field name="stay_purpose" string="Motif du séjour"/>
+                    <field name="arrival_transport" string="Moyen de transport à l’arrivée"/>
+                    <field name="signature" string="Signature du client"/>
+                    <field name="signature_date" string="Date de signature"/>
                 </group>
-
                 <!-- Observations -->
                 <group string="Observations">
                     <field name="notes"/>

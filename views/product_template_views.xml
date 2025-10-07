@@ -132,7 +132,6 @@
         <field name="name">Produits</field>
         <field name="res_model">product.template</field>
         <field name="view_mode">list,kanban,form</field>
-        <!-- Utiliser directement votre vue liste -->
         <field name="view_id" ref="view_product_template_tree_hotel"/>
         <field name="context">{'default_type': 'consu', 'default_hotel_product_type': 'food'}</field>
         <field name="domain">[('hotel_product_type', '!=', False)]</field>

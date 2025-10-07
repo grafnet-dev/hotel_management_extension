@@ -6,17 +6,16 @@
             <field name="name">hotel.room.type.list</field>
             <field name="model">hotel.room.type</field>
             <field name="arch" type="xml">
-                <list string="Types de Chambres" decoration-muted="not active">
-                    <field name="sequence" widget="handle" />
-                    <field name="name" />
-                    <field name="bed_type" />
-                    <field name="capacity" />
-                    <field name="max_occupancy" />
-                    <field name="surface_area" />
-                    <field name="view_type" />
-                    <field name="room_count" />
+                <list string="Types de chambres" decoration-muted="not active">
+                    <field name="sequence" widget="handle" string="Ordre" />
+                    <field name="name" string="Nom du type de chambre" />
+                    <field name="bed_type" string="Type de lit" />
+                    <field name="capacity" string="Capacité standard" />
+                    <field name="max_occupancy" string="Occupation maximale" />
+                    <field name="surface_area" string="Superficie (m²)" />
+                    <field name="view_type" string="Vue" />
+                    <field name="room_count" string="Nombre de chambres" />
                     <field name="active" invisible="1" />
-
                 </list>
             </field>
         </record>
@@ -48,29 +47,29 @@
                         </div>
 
                         <group>
-                            <group name="general_info">
-                                <field name="sequence" />
-                                <field name="active" />
-                                <field name="capacity" />
-                                <field name="max_occupancy" />
+                            <group name="general_info" string="Informations générales">
+                                <field name="sequence" string="Ordre d’affichage" />
+                                <field name="active" string="Actif" />
+                                <field name="capacity" string="Capacité standard" />
+                                <field name="max_occupancy" string="Occupation maximale" />
                             </group>
-                            <group name="physical_info">
-                                <field name="bed_type" />
-                                <field name="surface_area" />
-                                <field name="flooring_type" />
-                                <field name="view_type" />
+                            <group name="physical_info" string="Détails physiques">
+                                <field name="bed_type" string="Type de lit" />
+                                <field name="surface_area" string="Superficie (m²)" />
+                                <field name="flooring_type" string="Type de sol" />
+                                <field name="view_type" string="Vue" />
                             </group>
                            
                         </group>
 
-                        <group name="policies">
-                            <group name="policy_left">
-                                <field name="is_smoking_allowed" />
-                                <field name="is_pets_allowed" />
+                       <group name="policies" string="Politiques et conditions">
+                            <group name="policy_left" string="Autorisations">
+                                <field name="is_smoking_allowed" string="Fumeurs autorisés ?" />
+                                <field name="is_pets_allowed" string="Animaux autorisés ?" />
                             </group>
-                            <group name="time_limits">
-                                <field name="early_checkin_hour_limit" widget="float_time" />
-                                <field name="late_checkout_hour_limit" widget="float_time" />
+                            <group name="time_limits" string="Heures limites">
+                                <field name="early_checkin_hour_limit" widget="float_time" string="Limite Check-in anticipé" />
+                                <field name="late_checkout_hour_limit" widget="float_time" string="Limite Check-out tardif" />
                             </group>
                         </group>
 
@@ -91,36 +90,37 @@
                                 </group>
                             </page>
 
-                            <page string="Créneaux Personnalisés" name='reservation'>
-                                <field name="reservation_slots_ids">
+                            <page string="Créneaux personnalisés" name="reservation">
+                                <field name="reservation_slots_ids" string="Créneaux de réservation">
                                     <list string="Créneaux" editable="bottom">
-                                        <field name="name" />
-                                        <field name="reservation_type_id" />
-                                        <field name="checkin_time" widget="float_time" />
-                                        <field name="checkout_time" widget="float_time" />
+                                        <field name="name" string="Nom du créneau" />
+                                        <field name="reservation_type_id" string="Type de réservation" />
+                                        <field name="checkin_time" widget="float_time" string="Heure d’arrivée" />
+                                        <field name="checkout_time" widget="float_time" string="Heure de départ" />
                                     </list>
                                 </field>
                             </page>
 
-                            <page string="Politiques Early/Late">
+                           <page string="Politiques Early / Late">
                                 <field name="policy_ids" context="{'default_room_type_id': id}">
                                     <list string="Politiques Early/Late" editable="bottom">
-                                        <field name="reservation_mode" />
-                                        <field name="rule_type" />
-                                        <field name="start_hour" widget="float_time" />
-                                        <field name="end_hour" widget="float_time" />
-                                        <field name="surcharge_percent" />
-                                        <field name="is_full_night" />
+                                        <field name="reservation_mode" string="Mode de réservation" />
+                                        <field name="rule_type" string="Type de règle" />
+                                        <field name="start_hour" widget="float_time" string="Heure de début" />
+                                        <field name="end_hour" widget="float_time" string="Heure de fin" />
+                                        <field name="surcharge_percent" string="Majoration (%)" />
+                                        <field name="is_full_night" string="Facturer nuit complète ?" />
                                     </list>
+
                                     <form string="Règle Early/Late">
                                         <group>
-                                            <field name="reservation_mode" />
-                                            <field name="rule_type" />
-                                            <field name="start_hour" widget="float_time" />
-                                            <field name="end_hour" widget="float_time" />
-                                            <field name="surcharge_percent" />
-                                            <field name="is_full_night" />
-                                            <field name="notes" />
+                                            <field name="reservation_mode" string="Mode de réservation" />
+                                            <field name="rule_type" string="Type de règle" />
+                                            <field name="start_hour" widget="float_time" string="Heure de début" />
+                                            <field name="end_hour" widget="float_time" string="Heure de fin" />
+                                            <field name="surcharge_percent" string="Majoration (%)" />
+                                            <field name="is_full_night" string="Facturer nuit complète ?" />
+                                            <field name="notes" string="Remarques" />
                                         </group>
                                     </form>
                                 </field>
@@ -131,34 +131,33 @@
                                 <field name="room_pricing_ids"
                                     context="{'default_room_type_id': id}">
                                     <list string="Tarifications" editable="bottom">
-                                        <field name="reservation_type_id" required="1" />
-                                        <field name="pricing_mode" widget="selection" />
+                                        <field name="reservation_type_id" required="1" string="Type de réservation" />
+                                        <field name="pricing_mode" widget="selection" string="Mode de tarification" />
 
-                                        <!-- Correct: utilise == et pas de quotes autour du nom du
-                                        champ -->
-                                        <field name="price_value" string="Montant" widget="monetary"
-                                            options="{'currency_field': 'currency_id'}"
-                                            invisible="pricing_mode == 'percentage'" />
+                                        <field name="price_value" string="Montant"
+                                               widget="monetary"
+                                               options="{'currency_field': 'currency_id'}"
+                                               invisible="pricing_mode == 'percentage'" />
 
                                         <field name="price_value" string="Pourcentage"
-                                            widget="percentage"
-                                            options="{'currency_field': 'currency_id'}"
-                                            invisible="pricing_mode != 'percentage'" />
+                                               widget="percentage"
+                                               options="{'currency_field': 'currency_id'}"
+                                               invisible="pricing_mode != 'percentage'" />
 
-                                        <field name="min_hours"
-                                            invisible="pricing_mode != 'hourly'" />
-                                        <field name="active" />
+                                        <field name="min_hours" string="Durée minimale (heures)"
+                                               invisible="pricing_mode != 'hourly'" />
+                                        <field name="active" string="Actif" />
                                     </list>
+
                                     <form string="Tarification">
                                         <group>
-                                            <field name="reservation_type_id" />
-                                            <field name="pricing_mode" />
-                                            <field name="price_value" />
-                                            <field name="min_hours" />
-                                            <field name="currency_id" />
-                                            <field name="active" />
+                                            <field name="reservation_type_id" string="Type de réservation" />
+                                            <field name="pricing_mode" string="Mode de tarification" />
+                                            <field name="price_value" string="Valeur / Pourcentage" />
+                                            <field name="min_hours" string="Durée minimale (heures)" />
+                                            <field name="currency_id" string="Devise" />
+                                            <field name="active" string="Actif" />
                                         </group>
-
                                     </form>
                                 </field>
                             </page>
@@ -174,18 +173,18 @@
                                 </field>
                             </page>
 
-                            <page string="Chambres">
+                           <page string="Chambres associées">
                                 <field name="room_ids">
                                     <list string="Chambres" create="true" delete="true">
-                                        <field name="name" placeholder="Numéro de chambre" />
-                                        <field name="floor_id" />
-                                        <field name="status" widget="selection" />
-                                        <field name="is_in_maintenance" />
-                                        <field name="last_maintenance_date" />
+                                        <field name="name" placeholder="Numéro de chambre" string="Nom / Numéro" />
+                                        <field name="floor_id" string="Étage" />
+                                        <field name="status" widget="selection" string="Statut" />
+                                        <field name="is_in_maintenance" string="En maintenance ?" />
+                                        <field name="last_maintenance_date" string="Dernière maintenance" />
                                     </list>
                                 </field>
                                 <group>
-                                    <field name="room_count" readonly="1" />
+                                    <field name="room_count" readonly="1" string="Nombre total de chambres" />
                                 </group>
                             </page>
                         </notebook>

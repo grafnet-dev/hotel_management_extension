@@ -37,8 +37,7 @@
                     decoration-muted="state in ('completed','cancelled')" />
 
                 <field name="extra_night_required" string="Nuit Extra" widget="boolean_toggle" />
-                <!--field
-                name="applied_pricing_code" string="Code Tarif Horaire" /-->
+              
 
 
             </list>
@@ -157,12 +156,12 @@
                             <group string="⏰ Demandes Spéciales Early / Late" name="ec_lc_group"
                                 colspan="2">
                                 <group>
-                                    <field name="early_checkin_requested" string="Early Check-in ?" />
+                                    <field name="early_checkin_requested" string="Arrivée Anticipée ?" />
                                     <field name="requested_checkin_datetime"
                                         string="Heure Arrivée Demandée"
                                         invisible="not early_checkin_requested" />
 
-                                    <field name="late_checkout_requested" string="Late Check-out ?" />
+                                    <field name="late_checkout_requested" string="Départ Tardif ?" />
                                     <field name="requested_checkout_datetime"
                                         string="Heure Départ Demandée"
                                         invisible="not late_checkout_requested" />
@@ -321,9 +320,9 @@
 
                 <!-- Filtres par options spéciales -->
                 <separator />
-                <filter string="⏰ Early Check-in" name="early_checkin"
+                <filter string="⏰ Arrivée Anticipée" name="early_checkin"
                     domain="[('early_checkin_requested', '=', True)]" />
-                <filter string="🕐 Late Check-out" name="late_checkout"
+                <filter string="🕐 Départ Tardif" name="late_checkout"
                     domain="[('late_checkout_requested', '=', True)]" />
 
                 <filter string="🌙 Nuit Extra" name="extra_night"
@@ -331,8 +330,7 @@
 
                 <filter string="🌙 Nuit Supplémentaire" name="extra_night"
                     domain="[('extra_night_required', '=', True)]" />
-                <!-- <filter string="💰 Demi-Journée" name="half_day"
-                    domain="[('applied_pricing_code', '=', 'HALF_DAY')]" />-->
+
 
                 <!-- Filtres par état -->
                 <separator />

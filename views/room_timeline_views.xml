@@ -27,8 +27,8 @@
          
             <div style="margin-top: 8px; font-size: 13px; line-height: 1.4;">
               <div><i class="fa fa-bed" style="color:#007bff;"/> <b>Type:</b> <field name="reservation_type_id" widget="many2one"/></div>
-              <div><i class="fa fa-calendar-plus-o" style="color:#28a745;"/> <b>Check-in:</b> <field name="checkin_date"/></div>
-              <div><i class="fa fa-calendar-times-o" style="color:#dc3545;"/> <b>Check-out:</b> <field name="checkout_date"/></div>
+              <div><i class="fa fa-calendar-plus-o" style="color:#28a745;"/> <b>Arrivée :</b> <field name="checkin_date"/></div>
+              <div><i class="fa fa-calendar-times-o" style="color:#dc3545;"/> <b>Départ :</b> <field name="checkout_date"/></div>
             </div>
           </div>
         </t>
@@ -43,11 +43,11 @@
       <field name="name">room.booking.line.list</field>
       <field name="model">room.booking.line</field>
       <field name="arch" type="xml">
-        <list string="Lignes de réservation">
-          <field name="room_id"/>
-          <field name="checkin_date"/>
-          <field name="checkout_date"/>
-          <field name="reservation_type_id"/>
+         <list string="Lignes de réservation">
+          <field name="room_id" string="Chambre"/>
+          <field name="checkin_date" string="Arrivée"/>
+          <field name="checkout_date" string="Départ"/>
+          <field name="reservation_type_id" string="Type"/>
         </list>
       </field>
   </record>
