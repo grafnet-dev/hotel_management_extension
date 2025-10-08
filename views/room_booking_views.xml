@@ -27,6 +27,16 @@
             <field name="name">Véhicules</field>
         </record>
 
+                <record id="hotel_management_odoo.room_booking_action" model="ir.actions.act_window">
+            <field name="name">Réservations de Chambres</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Réservez vos chambres ici !
+                </p>
+            </field>
+        </record>
+
+
     
 
 

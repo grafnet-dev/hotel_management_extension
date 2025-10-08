@@ -28,7 +28,7 @@
                 <field name="available_count" string="Total Disponibilités"/>
             </field>
             
-            <!-- Optionnel: Ajouter des décorations pour le statut--> 
+           
             <list position="attributes">
                 <attribute name="decoration-success">status == 'available'</attribute>
                 <attribute name="decoration-danger">status == 'occupied'</attribute>
