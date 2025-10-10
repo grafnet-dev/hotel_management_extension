@@ -522,21 +522,45 @@ class HotelBookingStayS(models.Model):
     
     ###############################################
 
-    @api.constrains('room_type_id', 'planned_checkin_date', 'planned_checkout_date')
+    @api.constrains('room_type_id', 'booking_start_date', 'booking_end_date', 
+                'reservation_type_id', 'planned_checkin_date', 'planned_checkout_date')
     def _check_room_availability(self):
-        """Contrainte bloquante : empêche l'enregistrement si aucune chambre n'est disponible"""
+        """
+        Contrainte bloquante : empêche l'enregistrement si aucune chambre n'est disponible.
+        NOUVELLE VERSION : Gère correctement l'ordre des calculs.
+        """
         for rec in self:
-            # Skip si données incomplètes
-            if not rec.room_type_id or not rec.planned_checkin_date or not rec.planned_checkout_date:
-                continue
-                
             # Skip pour les réservations flexibles (pas de dates fixes)
             if rec.is_flexible_reservation:
+                _logger.debug("[CONSTRAINT] Skip : réservation flexible | stay=%s", rec.id or 'new')
+                continue
+
+            # ÉTAPE 1 : S'assurer que les dates planned sont calculées
+            # Si elles sont vides, les forcer à se calculer
+            if not rec.planned_checkin_date or not rec.planned_checkout_date:
+                if rec.booking_start_date and rec.booking_end_date and rec.reservation_type_id:
+                    _logger.info("[CONSTRAINT] Force le calcul des dates planned | stay=%s", rec.id or 'new')
+                    rec._compute_dates_logic(rec)
+                
+                # Si toujours vides après calcul, skip
+                if not rec.planned_checkin_date or not rec.planned_checkout_date:
+                    _logger.warning(
+                        "[CONSTRAINT] Impossible de calculer les dates planned, skip | stay=%s",
+                        rec.id or 'new'
+                    )
+                    continue
+
+            # ÉTAPE 2 : Vérifier qu'on a bien un room_type_id
+            if not rec.room_type_id:
+                _logger.debug("[CONSTRAINT] Pas de room_type_id, skip | stay=%s", rec.id or 'new')
                 continue
 
             _logger.info(
-                "🔒 [CONSTRAINT] Vérification disponibilité obligatoire | stay=%s",
-                rec.id or 'new'
+                "🔒 [CONSTRAINT] Vérification disponibilité OBLIGATOIRE | stay=%s | type=%s | in=%s | out=%s",
+                rec.id or 'new',
+                rec.room_type_id.name,
+                rec.planned_checkin_date,
+                rec.planned_checkout_date
             )
 
             buffer_hours = 0.5
@@ -549,40 +573,65 @@ class HotelBookingStayS(models.Model):
                     checkout_date=rec.planned_checkout_date,
                     exclude_stay_id=rec.id if rec.id else None,
                     buffer_hours=buffer_hours,
-                    reservation_type_id=rec.reservation_type_id.id
+                    reservation_type_id=rec.reservation_type_id.id if rec.reservation_type_id else None
                 )
 
+                _logger.info(
+                    "[CONSTRAINT] Résultat moteur | status=%s | room=%s",
+                    availability_result.get('status'),
+                    availability_result.get('room_name', 'N/A')
+                )
+
+                # ÉTAPE 3 : Traiter les différents cas
                 if availability_result['status'] == 'unavailable':
                     alternatives = availability_result.get('alternatives', [])
                     error_msg = availability_result.get('message', 'Aucune chambre disponible pour ces dates.')
                     
+                    # Ajouter les alternatives au message d'erreur
                     if alternatives:
-                        error_msg += "\n\nCréneaux alternatifs disponibles :"
+                        error_msg += "\n\n📋 Créneaux alternatifs disponibles :"
                         for idx, alt in enumerate(alternatives[:3], 1):
                             alt_in = alt['checkin'].strftime('%d/%m/%Y %H:%M')
                             alt_out = alt['checkout'].strftime('%d/%m/%Y %H:%M')
-                            error_msg += f"\n{idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
+                            error_msg += f"\n  {idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
+                        error_msg += "\n\n⚠️ Veuillez ajuster vos dates ou choisir un autre type de chambre."
                     
+                    _logger.error("[CONSTRAINT] BLOCAGE | %s", error_msg)
                     raise ValidationError(error_msg)
                 
                 elif availability_result['status'] == 'error':
+                    error_msg = availability_result.get('message', 'Erreur technique lors de la vérification')
+                    _logger.error("[CONSTRAINT] ERREUR TECHNIQUE | %s", error_msg)
                     raise ValidationError(
-                        _("Erreur lors de la vérification de disponibilité : %s") 
-                        % availability_result.get('message', 'Erreur technique')
+                        _("❌ Erreur lors de la vérification de disponibilité :\n%s") % error_msg
                     )
+                
+                elif availability_result['status'] == 'available':
+                    # Attribution automatique de la chambre si pas déjà assignée
+                    if availability_result.get('room_id') and not rec.room_id:
+                        rec.room_id = availability_result['room_id']
+                        _logger.info(
+                            "✅ [CONSTRAINT] Chambre assignée automatiquement | room=%s (%s)",
+                            availability_result.get('room_name'),
+                            availability_result.get('room_id')
+                        )
 
             except ValidationError:
-                raise  # Propager les ValidationError
+                raise  # Propager les ValidationError (important !)
+            
             except Exception as e:
                 _logger.exception(
-                    "🔥 [CONSTRAINT] Exception lors de la vérification | stay=%s | err=%s",
+                    "🔥 [CONSTRAINT] Exception critique | stay=%s | err=%s",
                     rec.id or 'new',
                     str(e)
                 )
                 raise ValidationError(
-                    _("Impossible de vérifier la disponibilité. Veuillez réessayer ou contacter l'administrateur.")
+                    _("❌ Erreur critique lors de la vérification de disponibilité.\n"
+                    "Détails techniques : %s\n\n"
+                    "Veuillez contacter l'administrateur si le problème persiste.") % str(e)
                 )
 
+    
     # ----------- Calcul des dates en fonction du type de resa -------------
     
     def _compute_dates_logic(self, rec):
@@ -678,14 +727,13 @@ class HotelBookingStayS(models.Model):
             result = self._compute_dates_logic(rec)
             if result:
                 return result
-
-    @api.onchange(
-        "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
-)
+    
+    @api.onchange('booking_start_date', 'booking_end_date', 'reservation_type_id', 'room_type_id')
     def _onchange_dates_and_type(self):
         """
         Calcul instantané + vérification de disponibilité en temps réel.
         Affiche un warning dès que les dates sont saisies.
+        VERSION AMÉLIORÉE : Gère mieux les cas edge et les erreurs.
         """
         for rec in self:
             _logger_booking.debug("🟠 _onchange_dates_and_type déclenché pour stay %s", rec.id)
@@ -699,19 +747,28 @@ class HotelBookingStayS(models.Model):
                 rec.planned_checkout_date and
                 not rec.is_flexible_reservation):
                 
+                _logger_booking.info(
+                    "[ONCHANGE] Vérification disponibilité | type=%s | in=%s | out=%s",
+                    rec.room_type_id.name,
+                    rec.planned_checkin_date,
+                    rec.planned_checkout_date
+                )
+                
                 return self._check_and_warn_availability(rec)
+            else:
+                _logger_booking.debug(
+                    "[ONCHANGE] Skip vérification | has_type=%s | has_dates=%s | is_flexible=%s",
+                    bool(rec.room_type_id),
+                    bool(rec.planned_checkin_date and rec.planned_checkout_date),
+                    rec.is_flexible_reservation
+                )
+
 
     def _check_and_warn_availability(self, rec):
         """
         Méthode utilitaire pour vérifier la disponibilité et retourner un warning.
-        Utilisée par onchange pour affichage immédiat.
+        VERSION AMÉLIORÉE : Meilleure gestion des erreurs et messages plus clairs.
         """
-        _logger_booking.info(
-            "🔍 [ONCHANGE AVAILABILITY] Vérification | stay=%s | type=%s",
-            rec.id or 'new',
-            rec.room_type_id.id
-        )
-        
         buffer_hours = 0.5
         
         try:
@@ -722,39 +779,65 @@ class HotelBookingStayS(models.Model):
                 checkout_date=rec.planned_checkout_date,
                 exclude_stay_id=rec.id if rec.id else None,
                 buffer_hours=buffer_hours,
-                reservation_type_id=rec.reservation_type_id.id
+                reservation_type_id=rec.reservation_type_id.id if rec.reservation_type_id else None
             )
 
             _logger_booking.info(
-                "📊 [ONCHANGE AVAILABILITY] Résultat | status=%s",
-                availability_result.get('status')
+                "📊 [ONCHANGE] Résultat disponibilité | status=%s | room=%s",
+                availability_result.get('status'),
+                availability_result.get('room_name', 'N/A')
             )
 
-            # Chambre disponible : attribution automatique
+            # === CAS 1 : DISPONIBLE ===
             if availability_result['status'] == 'available':
-                if availability_result.get('room_id') and not rec.room_id:
-                    rec.room_id = availability_result['room_id']
-                    _logger_booking.info(
-                        "✅ Chambre assignée auto | room=%s",
-                        availability_result.get('room_name')
-                    )
-                return None  # Pas de warning
+                if availability_result.get('room_id'):
+                    # Attribution automatique si pas déjà assignée
+                    if not rec.room_id:
+                        rec.room_id = availability_result['room_id']
+                        _logger_booking.info(
+                            "✅ Chambre assignée automatiquement | room=%s",
+                            availability_result.get('room_name')
+                        )
+                        return {
+                            'warning': {
+                                'title': _('✅ Chambre disponible'),
+                                'message': _('La chambre "%s" a été assignée automatiquement.') 
+                                        % availability_result.get('room_name')
+                            }
+                        }
+                return None  # Pas de warning si déjà assignée
 
-            # Indisponible : afficher le warning avec alternatives
+            # === CAS 2 : INDISPONIBLE ===
             elif availability_result['status'] == 'unavailable':
                 alternatives = availability_result.get('alternatives', [])
-                warning_msg = availability_result.get('message', 'Aucune chambre disponible.')
+                reason = availability_result.get('reason', 'unavailable')
                 
+                # Construction du message d'erreur
+                if reason == 'no_rooms':
+                    warning_msg = _("❌ Aucune chambre de type '%s' n'existe dans le système.") % rec.room_type_id.name
+                else:
+                    warning_msg = availability_result.get('message', _('Aucune chambre disponible pour ces dates.'))
+                
+                # Ajouter les alternatives
                 if alternatives:
-                    warning_msg += "\n\n" + _("Créneaux alternatifs disponibles :")
+                    warning_msg += "\n\n" + _("📋 Créneaux alternatifs disponibles :")
                     for idx, alt in enumerate(alternatives[:3], 1):
                         alt_in = alt['checkin'].strftime('%d/%m/%Y %H:%M')
                         alt_out = alt['checkout'].strftime('%d/%m/%Y %H:%M')
-                        warning_msg += f"\n{idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
+                        warning_msg += f"\n  {idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
                     
-                    warning_msg += "\n\n⚠️ L'enregistrement sera bloqué si vous continuez avec ces dates."
+                    warning_msg += "\n\n⚠️ L'enregistrement sera BLOQUÉ si vous continuez avec ces dates."
+                else:
+                    warning_msg += "\n\n⚠️ Aucune alternative disponible. Veuillez choisir d'autres dates ou un autre type de chambre."
                 
-                _logger_booking.warning("⚠️ [ONCHANGE] Indisponible : %s", warning_msg)
+                # Afficher les détails de conflit en mode debug
+                conflicts = availability_result.get('conflict_details', [])
+                if conflicts and _logger_booking.isEnabledFor(logging.DEBUG):
+                    warning_msg += f"\n\n[DEBUG] {len(conflicts)} conflit(s) détecté(s) :"
+                    for conf in conflicts[:3]:
+                        warning_msg += f"\n  - Chambre {conf.get('room_name')}: {conf.get('overlap_type')}"
+                
+                _logger_booking.warning("⚠️ [ONCHANGE] Indisponible | reason=%s", reason)
                 
                 return {
                     'warning': {
@@ -763,27 +846,38 @@ class HotelBookingStayS(models.Model):
                     }
                 }
 
-            # Erreur technique
+            # === CAS 3 : ERREUR ===
             elif availability_result['status'] == 'error':
+                error_msg = availability_result.get('message', _('Erreur lors de la vérification'))
+                _logger_booking.error("[ONCHANGE] Erreur moteur | msg=%s", error_msg)
+                
                 return {
                     'warning': {
                         'title': _('⚠️ Erreur'),
-                        'message': availability_result.get('message', 
-                                                        _('Erreur lors de la vérification'))
+                        'message': _("Erreur lors de la vérification de disponibilité :\n%s\n\n"
+                                "L'enregistrement pourrait être bloqué.") % error_msg
                     }
                 }
 
         except Exception as e:
             _logger_booking.exception(
-                "🔥 [ONCHANGE AVAILABILITY] Exception | err=%s",
+                "🔥 [ONCHANGE] Exception | stay=%s | err=%s",
+                rec.id or 'new',
                 str(e)
             )
             return {
                 'warning': {
                     'title': _('⚠️ Erreur technique'),
-                    'message': _('Impossible de vérifier la disponibilité. L\'enregistrement pourrait échouer.')
+                    'message': _('Impossible de vérifier la disponibilité.\n'
+                            'Détails : %s\n\n'
+                            "L'enregistrement pourrait être bloqué.") % str(e)
                 }
             }
+
+
+    
+    
+    
     
     
     @api.onchange("early_checkin_requested", "late_checkout_requested")
@@ -1235,15 +1329,57 @@ class HotelBookingStayS(models.Model):
                 rec.early_pricing_mode or rec.late_pricing_mode or False
             )
 
+    # ==================== OPTIMISATION SUPPLÉMENTAIRE ====================
+    # Ajouter une méthode de validation avant create/write
+
+    def _validate_availability_before_save(self):
+        """
+        Validation explicite avant sauvegarde.
+        Peut être appelée manuellement ou dans un workflow.
+        """
+        for rec in self:
+            if rec.is_flexible_reservation:
+                continue
+                
+            if not rec.planned_checkin_date or not rec.planned_checkout_date:
+                if rec.booking_start_date and rec.booking_end_date and rec.reservation_type_id:
+                    rec._compute_dates_logic(rec)
+            
+            if not rec.room_type_id or not rec.planned_checkin_date or not rec.planned_checkout_date:
+                continue
+            
+            # Même logique que la contrainte
+            availability_engine = self.env['hotel.room.availability.engine']
+            result = availability_engine.check_availability(
+                room_type_id=rec.room_type_id.id,
+                checkin_date=rec.planned_checkin_date,
+                checkout_date=rec.planned_checkout_date,
+                exclude_stay_id=rec.id if rec.id else None,
+                buffer_hours=0.5,
+                reservation_type_id=rec.reservation_type_id.id if rec.reservation_type_id else None
+            )
+            
+            if result['status'] == 'unavailable':
+                raise ValidationError(result.get('message', 'Aucune chambre disponible'))
+
+
     @api.model
     def create(self, vals):
-        """S'assurer que actual = planned par défaut à la création"""
+        """S'assurer que actual = planned par défaut + validation disponibilité"""
         if not vals.get("actual_checkin_date") and vals.get("planned_checkin_date"):
             vals["actual_checkin_date"] = vals["planned_checkin_date"]
         if not vals.get("actual_checkout_date") and vals.get("planned_checkout_date"):
             vals["actual_checkout_date"] = vals["planned_checkout_date"]
-
-        return super().create(vals)
+        
+        record = super().create(vals)
+        try:
+            record._validate_availability_before_save()
+        except ValidationError as e:
+            # Si validation échoue, supprimer l'enregistrement créé
+            record.unlink()
+            raise e
+        
+        return record
 
     def write(self, vals):
         """Si les dates prévues changent, on ajuste les actuals (sauf si déjà modifiées par EC/LC)"""
