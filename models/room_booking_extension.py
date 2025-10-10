@@ -54,6 +54,7 @@ class RoomBooking(models.Model):
             'target': 'new',
             'context': {
                 'default_booking_id': self.id,
+                'default_stay_id': self.id,
             }
         }
 
