@@ -368,6 +368,11 @@ class HotelBookingStayS(models.Model):
         readonly=False,
     )
 
+    @api.onchange('room_type_id')
+    def _onchange_room_type_id(self):
+        if self.room_id and self.room_id.room_type_id != self.room_type_id:
+            self.room_id = False
+
     # ouvrir un modal pour la fiche de police
     def action_start_checkin_wizard(self):
         return {

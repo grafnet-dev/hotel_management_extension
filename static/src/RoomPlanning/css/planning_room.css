@@ -1,58 +1,399 @@
-/* --- Style global du planning --- */
-#room-timeline {
-  height: 600px;
-  background-color: #f9fafc;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  font-family: "Inter", sans-serif;
+/* ===============================
+   🏨 Room Planning - Timeline Pro
+   Charte: Bleu sarcelle #005D7C + Or #CE9226
+   =============================== */
+
+/* ---- GLOBAL STRUCTURE ---- */
+.o_room_planning {
+  background: linear-gradient(135deg, #f8fafb 0%, #e8f4f8 100%);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: "Bahnschrift", "Arial", "Segoe UI", sans-serif;
+  color: #1e293b;
+  padding: 24px;
+  gap: 20px;
 }
 
-/* --- Axe du temps (dates) --- */
-.vis-time-axis.vis-top {
-  background-color: #f0f2f5;
-  border-bottom: 1px solid #dcdcdc;
-  font-weight: 600;
-  text-align: center;
+.o_room_planning .o_content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 0;
 }
 
-/* --- Colonne des chambres (Y) --- */
-.vis-labelset .vis-label {
-  background-color: #f7f8fa;
-  border-right: 1px solid #e0e0e0;
-  font-weight: 600;
-  text-align: left;
-  padding-left: 12px;
-}
-.room-label {
-  padding: 6px 0;
+/* ---- HEADER ---- */
+.o_room_planning_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #005D7C 0%, #007ba3 100%);
+  padding: 20px 32px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 93, 124, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
-/* --- Lignes du planning --- */
-.vis-item {
+.o_room_planning_header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(206, 146, 38, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.o_room_planning_header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: "Bahnschrift", sans-serif;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- LEGENDS + STATS ---- */
+.o_planning_info {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.o_planning_legends {
+  display: flex;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.o_legend_item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.o_legend_badge {
+  width: 20px;
+  height: 20px;
   border-radius: 6px;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Couleurs légendes avec charte */
+.o_legend_badge.booking {
+  background: linear-gradient(135deg, #005D7C, #007ba3);
+}
+.o_legend_badge.cleaning {
+  background: linear-gradient(135deg, #CE9226, #FEDE32);
+}
+.o_legend_badge.maintenance {
+  background: linear-gradient(135deg, #E05A1B, #ff7043);
+}
+.o_legend_badge.free_slot {
+  background: #ffffff;
+  border: 2px dashed rgba(255, 255, 255, 0.8);
+}
+
+/* ---- STATS ---- */
+.o_planning_stats {
+  display: flex;
+  gap: 32px;
+}
+
+.o_stat_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  min-width: 90px;
+}
+
+.o_stat_value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #FEDE32;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.o_stat_label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---- TIMELINE WRAPPER ---- */
+.o_room_timeline_wrapper {
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 93, 124, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 93, 124, 0.12);
+  overflow: hidden;
+  padding: 8px;
+}
+
+/* ---- TIMELINE CONTAINER ---- */
+#room-timeline {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ===============================
+   🧭 VIS-TIMELINE CUSTOM STYLES
+   =============================== */
+
+/* Group labels (chambres) */
+.vis-label {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-right: 2px solid rgba(0, 93, 124, 0.15) !important;
+  color: #005D7C !important;
+  font-weight: 700;
+  font-family: "Bahnschrift", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  padding: 0 16px !important;
+}
+
+/* Chaque ligne du planning - ESPACÉ */
+.vis-group {
+  border-bottom: 1px solid #e8f4f8 !important;
+}
+
+/* Fond général */
+.vis-panel.vis-center {
+  background: #ffffff;
+}
+
+.vis-panel.vis-left {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* Items (réservations, maintenance...) - CENTRÉS VERTICALEMENT */
+.vis-item {
+  border: none !important;
+  border-radius: 10px;
   color: white;
   font-size: 13px;
-  padding: 2px 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-/* Couleurs selon le type */
+.vis-item .vis-item-content {
+  padding: 8px 12px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Couleurs selon le type - CHARTE GRAPHIQUE */
 .vis-item.booking {
-  background-color: #4caf50;
-}
-.vis-item.cleaning {
-  background-color: #ff9800;
-}
-.vis-item.maintenance {
-  background-color: #f44336;
-}
-.vis-item.day_use {
-  background-color: #2196f3;
+  background: linear-gradient(135deg, #005D7C 0%, #007ba3 100%);
+  border-left: 4px solid #CE9226 !important;
 }
 
-/* Effet survol */
-.vis-item:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
-  transition: all 0.15s ease;
+.vis-item.cleaning {
+  background: linear-gradient(135deg, #CE9226 0%, #FEDE32 100%);
+  color: #593B0B !important;
+  font-weight: 700;
+  border-left: 4px solid #005D7C !important;
+}
+
+.vis-item.maintenance {
+  background: linear-gradient(135deg, #E05A1B 0%, #ff7043 100%);
+  border-left: 4px solid #593B0B !important;
+}
+
+.vis-item.day_use {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  border-left: 4px solid #065f46 !important;
+}
+
+.vis-item.free_slot {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%) !important;
+  color: #0e3264 !important;
+  border: 2px dashed rgba(0, 93, 124, 0.3) !important;
+  font-style: italic;
+  box-shadow: none;
+  font-weight: 500;
+}
+
+/* Effet hover MODERNE */
+.vis-item:not(.free_slot):hover {
+  transform: translateY(-3px) scale(1.02);
+  z-index: 10;
+  box-shadow: 0 12px 28px rgba(0, 93, 124, 0.3);
+}
+
+.vis-item.free_slot:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e8f4f8 100%) !important;
+  border-color: rgba(0, 93, 124, 0.5) !important;
+}
+
+/* Axe du temps (top) - CHARTE */
+.vis-time-axis {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
+  border-bottom: 3px solid #005D7C !important;
+  box-shadow: 0 2px 8px rgba(0, 93, 124, 0.08);
+}
+
+.vis-time-axis .vis-text {
+  color: #64748b !important;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.vis-time-axis .vis-text.vis-major {
+  font-weight: 700;
+  color: #005D7C !important;
+  font-size: 13px;
+}
+
+/* Ligne "aujourd'hui" */
+.vis-custom-time {
+  background-color: #E05A1B !important;
+  width: 3px !important;
+  box-shadow: 0 0 8px rgba(224, 90, 27, 0.5);
+}
+
+.vis-current-time {
+  background-color: #fdfdfd !important;
+  width: 3px !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* Grille verticale - SUBTILE */
+.vis-grid.vis-vertical {
+  border-color: #f1f5f9 !important;
+  border-width: 1px !important;
+}
+
+.vis-grid.vis-major {
+  border-color: rgba(0, 93, 124, 0.15) !important;
+  border-width: 2px !important;
+}
+
+.vis-grid.vis-minor {
+  border-color: #f8fafc !important;
+}
+
+/* Weekend highlighting (optionnel) */
+.vis-time-axis .vis-text.weekend {
+  color: #E05A1B !important;
+  font-weight: 600;
+}
+
+/* Scrollbar MODERNE */
+.vis-panel.vis-center::-webkit-scrollbar {
+  height: 10px;
+  background: #f1f5f9;
+}
+
+.vis-panel.vis-center::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #005D7C, #007ba3);
+  border-radius: 5px;
+  border: 2px solid #f1f5f9;
+}
+
+.vis-panel.vis-center::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #004a63, #005D7C);
+}
+
+.vis-panel.vis-center::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 5px;
+}
+
+/* Tooltip personnalisé */
+.vis-tooltip {
+  background: linear-gradient(135deg, #005D7C 0%, #007ba3 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #CE9226 !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 8px 24px rgba(0, 93, 124, 0.3) !important;
+  font-family: "Arial", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .o_planning_info {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-end;
+  }
+  
+  .o_room_planning_header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .o_room_planning_header h2 {
+    text-align: center;
+  }
+  
+  .o_planning_info {
+    align-items: center;
+  }
+}
+
+/* Animation d'entrée */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.o_room_planning_header {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.o_room_timeline_wrapper {
+  animation: fadeInUp 0.6s ease-out 0.1s both;
 }
