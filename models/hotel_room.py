@@ -238,6 +238,8 @@ class HotelRoom(models.Model):
     def _compute_fake(self):
         for rec in self:
             rec.num_person = 0  # ou rien, selon le besoin
+    
+    
  
 
 #: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)

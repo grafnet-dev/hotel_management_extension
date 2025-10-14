@@ -8,9 +8,16 @@ class HotelPoliceForm(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
     # Lien réservation / séjour
-    booking_id = fields.Many2one("room.booking", string="Réservation")
+    booking_id = fields.Many2one(
+        "room.booking", 
+        string="Réservation",
+        default=lambda self: self._default_booking_id()
+    )
     stay_id = fields.Many2one(
-        "hotel.booking.stay", string="Séjour associé", required=True
+        "hotel.booking.stay", 
+        string="Séjour associé", 
+        required=True,
+        default=lambda self: self._default_stay_id()
     )
 
     # Informations Occupant
@@ -54,16 +61,14 @@ class HotelPoliceForm(models.Model):
         "Date et Heure d'arrivée prévu",
         readonly=True,
         compute="_compute_dates",
-        store=True,
-        default=lambda self: self._default_arrival_date()
+        store=True
     )
     actual_arrival_date_time = fields.Datetime("Date et Heure d'arrivée réelle")
     departure_date_time = fields.Datetime(
         "Date et Heure de départ prévu",
         readonly=True,
         compute="_compute_dates",
-        store=True,
-        default=lambda self: self._default_departure_date()
+        store=True
     )
     actual_departure_date_time = fields.Datetime("Date et Heure de départ réel")
     number_of_guests = fields.Integer("Nombre de personnes dans la chambre")
@@ -89,6 +94,20 @@ class HotelPoliceForm(models.Model):
     # Observations
     notes = fields.Text("Observations")
 
+    def _default_booking_id(self):
+        """Récupère le booking_id depuis le contexte"""
+        booking_id = self.env.context.get("default_booking_id")
+        if booking_id:
+            return booking_id
+        return False
+
+    def _default_stay_id(self):
+        """Récupère le stay_id depuis le contexte"""
+        stay_id = self.env.context.get("default_stay_id")
+        if stay_id:
+            return stay_id
+        return False
+
     def _apply_dates_from_stay(self, rec):
         rec.arrival_date_time = rec.stay_id.planned_checkin_date if rec.stay_id else False
         rec.departure_date_time = rec.stay_id.planned_checkout_date if rec.stay_id else False
@@ -103,22 +122,6 @@ class HotelPoliceForm(models.Model):
     def _onchange_stay_id(self):
         for record in self:
             self._apply_dates_from_stay(record)
-
-
-    def _default_arrival_date(self):
-        stay = self.env.context.get("default_stay_id")
-        if stay:
-            stay_rec = self.env["hotel.booking.stay"].browse(stay)
-            return stay_rec.planned_checkin_date
-        return False
-    
-    def _default_departure_date(self):
-        stay = self.env.context.get("default_stay_id")
-        if stay:
-            stay_rec = self.env["hotel.booking.stay"].browse(stay)
-            return stay_rec.planned_checkout_date
-        return False
-
 
     def action_validate_police_form(self):
         """Valide le formulaire de police et passe au check-in"""
