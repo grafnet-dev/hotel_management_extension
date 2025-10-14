@@ -831,11 +831,11 @@ class HotelBookingStayS(models.Model):
                     warning_msg += "\n\n⚠️ Aucune alternative disponible. Veuillez choisir d'autres dates ou un autre type de chambre."
                 
                 # Afficher les détails de conflit en mode debug
-                conflicts = availability_result.get('conflict_details', [])
-                if conflicts and _logger_booking.isEnabledFor(logging.DEBUG):
-                    warning_msg += f"\n\n[DEBUG] {len(conflicts)} conflit(s) détecté(s) :"
-                    for conf in conflicts[:3]:
-                        warning_msg += f"\n  - Chambre {conf.get('room_name')}: {conf.get('overlap_type')}"
+                #conflicts = availability_result.get('conflict_details', [])
+                #if conflicts and _logger_booking.isEnabledFor(logging.DEBUG):
+                    #warning_msg += f"\n\n[DEBUG] {len(conflicts)} conflit(s) détecté(s) :"
+                    #for conf in conflicts[:3]:
+                        #warning_msg += f"\n  - Chambre {conf.get('room_name')}: {conf.get('overlap_type')}"
                 
                 _logger_booking.warning("⚠️ [ONCHANGE] Indisponible | reason=%s", reason)
                 
