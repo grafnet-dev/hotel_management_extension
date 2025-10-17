@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Groupe Manager Hotel -->
+    <record id="hotel_group_manager" model="res.groups">
+        <field name="name">Manager Hotel</field>
+        <field name="category_id" 
+               ref="hotel_management_odoo.module_category_hotel_management"/>
+        <field name="implied_ids"
+               eval="[(4, ref('hotel_management_odoo.hotel_group_reception')),
+                      (4, ref('hotel_management_odoo.maintenance_team_group_user')),
+                      (4, ref('hotel_management_odoo.cleaning_team_group_user'))]"/>
+        <field name="comment">Manager with access to reception, maintenance and cleaning operations</field>
+    </record>
+
+    <!-- Groupe Serveur Restaurant -->
+    <record id="restaurant_group_server" model="res.groups">
+        <field name="name">Serveur Restaurant</field>
+        <field name="category_id" 
+               ref="hotel_management_odoo.module_category_hotel_management"/>
+        <field name="comment">Restaurant server with access to food booking and POS menu</field>
+    </record>
+
+    <!-- Groupe Chef Restaurant -->
+    <record id="restaurant_group_chef" model="res.groups">
+        <field name="name">Chef Restaurant</field>
+        <field name="category_id" 
+               ref="hotel_management_odoo.module_category_hotel_management"/>
+        <field name="implied_ids"
+               eval="[(4, ref('hotel_management_extension.restaurant_group_server'))]"/>
+        <field name="comment">Restaurant chef with full access to restaurant operations</field>
+    </record>
+
+    <!-- Groupe Responsable Événements -->
+    <record id="event_group_manager" model="res.groups">
+        <field name="name">Responsable Événements</field>
+        <field name="category_id" 
+               ref="hotel_management_odoo.module_category_hotel_management"/>
+        <field name="comment">Event manager with access to event bookings</field>
+    </record>
+
+    <!-- Groupe Comptable Hotel -->
+    <record id="hotel_group_accountant" model="res.groups">
+        <field name="name">Comptable Hotel</field>
+        <field name="category_id" 
+               ref="hotel_management_odoo.module_category_hotel_management"/>
+        <field name="comment">Hotel accountant with read access to all bookings and financial data</field>
+    </record>
+
+    <!-- Mise à jour du groupe Admin pour inclure les nouveaux groupes -->
+    <record id="hotel_management_odoo.hotel_group_admin" model="res.groups">
+        <field name="implied_ids"
+               eval="[(4, ref('hotel_management_extension.hotel_group_manager')),
+                      (4, ref('hotel_management_extension.restaurant_group_chef')),
+                      (4, ref('hotel_management_extension.event_group_manager')),
+                      (4, ref('hotel_management_extension.hotel_group_accountant'))]"/>
+    </record>
+</odoo>

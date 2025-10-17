@@ -47,7 +47,9 @@
     },
     # always loaded
     "data": [
+        "security/hotel_management_extension_groups.xml",
         "security/ir.model.access.csv",
+        "security/hotel_management_extension_security.xml",
         "views/hotel_room_type_views.xml",
         "views/hotel_room_views.xml",
         "views/hotel_reservation_type.xml",

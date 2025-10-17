@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ========== RECORD RULES FOR MANAGER HOTEL ========== -->
+    <record id="room_booking_rule_manager" model="ir.rule">
+        <field name="name">Room Booking Rule for Manager</field>
+        <field name="model_id" ref="hotel_management_odoo.model_room_booking"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.hotel_group_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ========== RECORD RULES FOR SERVEUR RESTAURANT ========== -->
+    <record id="food_booking_rule_server" model="ir.rule">
+        <field name="name">Food Booking Rule for Server</field>
+        <field name="model_id" ref="hotel_management_extension.model_food_booking_line"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.restaurant_group_server'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="pos_menu_rule_server" model="ir.rule">
+        <field name="name">POS Menu Rule for Server</field>
+        <field name="model_id" ref="hotel_management_extension.model_hotel_pos_menu"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.restaurant_group_server'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ========== RECORD RULES FOR CHEF RESTAURANT ========== -->
+    <record id="pos_menu_rule_chef" model="ir.rule">
+        <field name="name">POS Menu Rule for Chef</field>
+        <field name="model_id" ref="hotel_management_extension.model_hotel_pos_menu"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.restaurant_group_chef'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="pos_menu_line_rule_chef" model="ir.rule">
+        <field name="name">POS Menu Line Rule for Chef</field>
+        <field name="model_id" ref="hotel_management_extension.model_hotel_pos_menu_line"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.restaurant_group_chef'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ========== RECORD RULES FOR RESPONSABLE ÉVÉNEMENTS ========== -->
+    <record id="event_booking_rule_manager" model="ir.rule">
+        <field name="name">Event Booking Rule for Event Manager</field>
+        <field name="model_id" ref="hotel_management_odoo.model_event_booking_line"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.event_group_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ========== RECORD RULES FOR COMPTABLE HOTEL ========== -->
+    <record id="room_booking_rule_accountant" model="ir.rule">
+        <field name="name">Room Booking Rule for Accountant</field>
+        <field name="model_id" ref="hotel_management_odoo.model_room_booking"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.hotel_group_accountant'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="sale_order_detail_rule_accountant" model="ir.rule">
+        <field name="name">Sale Order Detail Rule for Accountant</field>
+        <field name="model_id" ref="hotel_management_odoo.model_sale_order_detail"/>
+        <field name="groups" eval="[(4, ref('hotel_management_extension.hotel_group_accountant'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ========== ADMIN RULES (Full Access) ========== -->
+    <record id="room_booking_rule_admin" model="ir.rule">
+        <field name="name">Room Booking Rule for Admin</field>
+        <field name="model_id" ref="hotel_management_odoo.model_room_booking"/>
+        <field name="groups" eval="[(4, ref('hotel_management_odoo.hotel_group_admin'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+</odoo>
