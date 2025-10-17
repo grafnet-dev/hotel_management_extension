@@ -15,3 +15,4 @@ access_hotel_pricing_rule_all,access_hotel_pricing_rule_all,model_hotel_pricing_
 access_hotel_pricing_rule_line_all,access_hotel_pricing_rule_line_all,model_hotel_pricing_rule_line,,1,1,1,1
 access_hotel_season_all,access_hotel_season_all,model_hotel_season,,1,1,1,1
 access_hotel_eclc_policy_all,access_hotel_eclc_policy_all,model_hotel_eclc_policy,,1,1,1,1
+access_hotel_metric_all,access_hotel_metric_all,model_hotel_metric,,1,1,1,1

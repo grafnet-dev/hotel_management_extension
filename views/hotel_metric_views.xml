@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Vue Liste (Tree) -->
+    <record id="view_hotel_metric_list" model="ir.ui.view">
+        <field name="name">hotel.metric.list</field>
+        <field name="model">hotel.metric</field>
+        <field name="arch" type="xml">
+            <list string="Performances hôtelières" default_order="date desc">
+                <field name="date" />
+                <field name="rooms_total" />
+                <field name="rooms_occupied" />
+                <field name="occupancy_rate" widget="percentpie" />
+                <field name="revenue_total" sum="Total" />
+                <field name="revpar" sum="Total" />
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue Form (facultative mais utile pour debug ou détail) -->
+    <record id="view_hotel_metric_form" model="ir.ui.view">
+        <field name="name">hotel.metric.form</field>
+        <field name="model">hotel.metric</field>
+        <field name="arch" type="xml">
+            <form string="Détail de la performance">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date" />
+                            <field name="rooms_total" />
+                            <field name="rooms_occupied" />
+                            <field name="rooms_short_stay" />
+                            <field name="rooms_night_use" />
+                        </group>
+                        <group>
+                            <field name="occupancy_rate" />
+                            <field name="short_stay_rate" />
+                            <field name="night_use_rate" />
+                            <field name="revpar" />
+                        </group>
+                    </group>
+                    <separator string="Revenus" colspan="2" />
+                    <group>
+                        <field name="revenue_total" />
+                        <field name="revenue_short_stay" />
+                        <field name="revenue_night_use" />
+                        <field name="revenue_long_stay" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vue Graph -->
+    <record id="view_hotel_metric_graph" model="ir.ui.view">
+        <field name="name">hotel.metric.graph</field>
+        <field name="model">hotel.metric</field>
+        <field name="arch" type="xml">
+            <graph string="Performance hôtelière" type="line">
+                <field name="date" type="row" />
+                <field name="occupancy_rate" type="measure" />
+                <field name="revpar" type="measure" />
+                <field name="revenue_total" type="measure" />
+            </graph>
+        </field>
+    </record>
+
+    <!-- Vue Pivot -->
+    <record id="view_hotel_metric_pivot" model="ir.ui.view">
+        <field name="name">hotel.metric.pivot</field>
+        <field name="model">hotel.metric</field>
+        <field name="arch" type="xml">
+            <pivot string="Analyse des performances hôtelières">
+                <field name="date" type="row" />
+                <field name="revenue_total" type="measure" />
+                <field name="revpar" type="measure" />
+                <field name="occupancy_rate" type="measure" />
+                <field name="short_stay_rate" type="measure" />
+                <field name="night_use_rate" type="measure" />
+            </pivot>
+        </field>
+    </record>
+
+  
+
+    <!-- Action fenêtre -->
+    <record id="action_hotel_metric" model="ir.actions.act_window">
+        <field name="name">Performances Hôtelières</field>
+        <field name="res_model">hotel.metric</field>
+        <field name="view_mode">list,graph,pivot,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p>Suivez les indicateurs clés de performance (occupation, revenus, RevPAR, etc.) de
+                votre hôtel jour après jour.</p>
+        </field>
+    </record>
+
+    <!-- Menu principal Dashboard & Analyse -->
+    <menuitem id="menu_hotel_dashboard_analysis"
+        name="Dashboard &amp; Analyse"
+        parent="hotel_management_odoo.hotel_management_menu_root"
+        sequence="50" />
+
+    <!-- Sous-menu Rapport -->
+    <menuitem id="menu_hotel_report"
+        name="Rapport"
+        parent="hotel_management_extension.menu_hotel_dashboard_analysis"
+        sequence="10" />
+
+    <!-- Sous-menu Performances Hôtelières -->
+    <menuitem id="menu_hotel_metrics"
+        name="Performances Hôtelières"
+        parent="hotel_management_extension.menu_hotel_report"
+        action="action_hotel_metric"
+        sequence="10" />
+
+</odoo>
