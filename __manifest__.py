@@ -65,9 +65,11 @@
         "report/report_hotel_invoice.xml",
         "views/hotel_ui_menu.xml",  # menu + action UI juste pour le test
         "views/room_planning_menu.xml",
+        "views/hotel_metric_views.xml",
         "views/reception_standalone_app_template.xml",
         "views/views.xml",
         "views/templates.xml",
+        "data/hotel_metric_cron.xml",
         "data/ir_sequence_data.xml"
       
     ],

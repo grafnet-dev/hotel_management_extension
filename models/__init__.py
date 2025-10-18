@@ -24,5 +24,6 @@ from . import hotel_eclc_engine
 from . import account_move_extension
 from . import hotel_availability_engine  # ou le nom exact du fichier
 from . import room_availability_check
+from . import hotel_metric
 
 
