@@ -107,6 +107,13 @@ class HotelPoliceForm(models.Model):
         if stay_id:
             return stay_id
         return False
+    
+    @api.onchange('stay_id')
+    def _onchange_stay_id(self):
+        if self.stay_id and self.stay_id.occupant_names:
+            parts = self.stay_id.occupant_names.strip().split(" ", 1)
+            self.first_name = parts[0] if len(parts) > 0 else ""
+            self.last_name = parts[1] if len(parts) > 1 else ""
 
     def _apply_dates_from_stay(self, rec):
         rec.arrival_date_time = rec.stay_id.planned_checkin_date if rec.stay_id else False

@@ -370,6 +370,14 @@ class HotelBookingStayS(models.Model):
 
     # ouvrir un modal pour la fiche de police
     def action_start_checkin_wizard(self):
+        self.ensure_one()  # sécurité si la méthode est appelée sur plusieurs enregistrements
+        
+        # On récupère occupant_names
+        occupant_name = self.occupant_names or ""
+        parts = occupant_name.strip().split(" ", 1)
+        first_name = parts[0] if len(parts) > 0 else ""
+        last_name = parts[1] if len(parts) > 1 else ""
+
         return {
             "type": "ir.actions.act_window",
             "name": "Fiche de Police",
@@ -379,8 +387,11 @@ class HotelBookingStayS(models.Model):
             "context": {
                 "default_stay_id": self.id,
                 "default_booking_id": self.booking_id.id,
+                "default_first_name": first_name,
+                "default_last_name": last_name,
             },
         }
+
 
     def action_open_police_form(self):
         self.ensure_one()

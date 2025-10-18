@@ -30,6 +30,12 @@ class RoomBooking(models.Model):
         store=True,
     )
     
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('room.booking.custom')
+        return super().create(vals)
+    
     @api.depends("state")
     def _compute_state_new(self):
         mapping = {

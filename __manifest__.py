@@ -68,6 +68,7 @@
         "views/reception_standalone_app_template.xml",
         "views/views.xml",
         "views/templates.xml",
+        "data/ir_sequence_data.xml"
       
     ],
     "demo": [
