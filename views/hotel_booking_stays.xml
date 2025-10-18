@@ -113,9 +113,12 @@
                             <field name="occupant_ids" widget="many2many_tags"
                                 placeholder="Sélectionner les occupants"
                                 options="{'color_field': 'color', 'no_create_edit': True}" />
+
+                             <field name="room_name"/>
                         </group>
                         <group>
                             <field name="product_id" />
+                           
                         </group>
                     </group>
 
