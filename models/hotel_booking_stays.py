@@ -1351,6 +1351,42 @@ class HotelBookingStayS(models.Model):
                     product_late.display_name,
                     stay.late_checkout_fee,
                 )
+                
+                
+            # Récupérer les factures POS liées
+            pos_invoices = self.env["account.move"].search([
+                ("stay_id", "=", stay.id),
+                ("to_invoice_with_stay", "=", True),
+                ("state", "in", ["draft", "posted"]),
+            ])
+            _logger.info("[INVOICE][POS] %d factures POS liées trouvées pour stay=%s", len(pos_invoices), stay.id)
+
+            for pos_move in pos_invoices:
+                for line in pos_move.invoice_line_ids:
+                    # Créer une nouvelle ligne sur la facture séjour
+                    vals = {
+                        "move_id": move.id,
+                        "product_id": line.product_id.id,
+                        "name": f"{line.name} (Reprise POS {pos_move.name})",
+                        "quantity": line.quantity,
+                        "price_unit": line.price_unit,
+                        "tax_ids": [(6, 0, line.tax_ids.ids)],
+                        "currency_id": move.currency_id.id,
+                    }
+                    self.env["account.move.line"].create(vals)
+                    _logger.info("[INVOICE][POS-LINE] Reprise %s (qte=%s, prix=%s) depuis facture POS %s → facture séjour %s",
+                        line.product_id.display_name, line.quantity, line.price_unit, pos_move.name, move.name
+                    )
+
+                # Marquer la facture POS comme reportée
+                pos_move.message_post(body=f"Facture POS reportée sur la facture séjour {move.name}")
+                pos_move.write({"to_invoice_with_stay": False,
+                                 "pos_invoice_reported": True,
+                                })
+                _logger.info("[INVOICE][POS-LINKED] Facture POS %s marquée comme reportée", pos_move.name)
+
+            # Log final
+            _logger.info("[INVOICE][DONE] Facture séjour %s générée avec %d lignes POS intégrées", move.name, len(pos_invoices))
 
         return True
 
