@@ -37,7 +37,6 @@
                     decoration-muted="state in ('completed','cancelled')" />
 
                 <field name="extra_night_required" string="Nuit Extra" widget="boolean_toggle" />
-              
 
 
             </list>
@@ -73,11 +72,23 @@
                         type="object"
                         string="Voir Fiche Police"
                         class="btn-secondary" />
-                    <button name="action_create_invoice"
+                    <!--button
+                    name="action_create_invoice"
                         string="Créer la facture"
                         type="object"
                         class="btn-primary"
+                        invisible="state != 'ongoing'" /-->
+
+                    <button name="action_create_and_open_invoice"
+                        string="Créer et ouvrir la facture"
+                        type="object"
+                        class="btn-secondary"
                         invisible="state != 'ongoing'" />
+                    <button name="action_view_invoice"
+                        string="Voir la facture"
+                        type="object"
+                        class="btn-outline-secondary"
+                         />
 
 
                     <button name="action_cancel" type="object"
@@ -114,11 +125,11 @@
                                 placeholder="Sélectionner les occupants"
                                 options="{'color_field': 'color', 'no_create_edit': True}" />
 
-                             <field name="room_name"/>
+                            <field name="room_name" />
                         </group>
                         <group>
                             <field name="product_id" />
-                           
+
                         </group>
                     </group>
 
@@ -159,7 +170,8 @@
                             <group string="⏰ Demandes Spéciales Early / Late" name="ec_lc_group"
                                 colspan="2">
                                 <group>
-                                    <field name="early_checkin_requested" string="Arrivée Anticipée ?" />
+                                    <field name="early_checkin_requested"
+                                        string="Arrivée Anticipée ?" />
                                     <field name="requested_checkin_datetime"
                                         string="Heure Arrivée Demandée"
                                         invisible="not early_checkin_requested" />
@@ -281,7 +293,6 @@
                         </page>
 
 
-                        
                     </notebook>
 
 

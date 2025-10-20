@@ -1,17 +1,25 @@
-<odoo>
-    <data noupdate="1">
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
 
-        <!-- CRON JOB pour calculer les metrics chaque jour à 1h -->
-        <record id="ir_cron_hotel_metric_daily" model="ir.cron">
-            <field name="name">Hotel Metrics - Daily Compute</field>
-            <field name="model_id" ref="model_hotel_metric"/>
-            <field name="state">code</field>
-            <field name="code">model.action_compute_today()</field>
-            <field name="active">True</field>
-            <field name="interval_number">1</field>
-            <field name="interval_type">days</field>
-            <field name="nextcall">2025-10-16 01:00:00</field>
-        </record>
+    <!-- Tâche planifiée : calcul quotidien des métriques hôtelières -->
+    <record id="ir_cron_compute_hotel_metrics_daily" model="ir.cron">
+        <field name="name">Calcul quotidien des métriques hôtelières</field>
+        <field name="model_id" ref="hotel_management_extension.model_hotel_metric"/>
+        <field name="state">code</field>
+        <field name="code">model._compute_metrics_for_date(fields.Date.today())</field>
 
-    </data>
+        <!-- Fréquence : chaque jour -->
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+
+        <!-- Heure de départ : demain à 2h du matin -->
+        <field name="nextcall" eval="(datetime.now() + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')"/>
+
+        <!-- Utilisateur système -->
+        <field name="user_id" ref="base.user_root"/>
+
+        <!-- Activer la tâche -->
+        <field name="active" eval="True"/>
+    </record>
+
 </odoo>

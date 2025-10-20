@@ -1389,6 +1389,56 @@ class HotelBookingStayS(models.Model):
             _logger.info("[INVOICE][DONE] Facture séjour %s générée avec %d lignes POS intégrées", move.name, len(pos_invoices))
 
         return True
+    
+    
+    def action_create_and_open_invoice(self):
+        """Crée la facture et ouvre la vue de la facture"""
+        self.ensure_one()
+
+        # Appeler la méthode existante pour créer la facture
+        self.action_create_invoice()
+
+        # Récupérer la facture créée ou existante
+        move = self.env["account.move"].search(
+            [
+                ("stay_id", "=", self.id),
+                ("move_type", "=", "out_invoice"),
+            ],
+            order="id desc",
+            limit=1,
+        )
+
+        if not move:
+            raise UserError(_("Aucune facture trouvée pour ce séjour."))
+
+        # Retourner une action pour ouvrir la vue facture
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Facture du séjour"),
+            "res_model": "account.move",
+            "res_id": move.id,
+            "view_mode": "form",
+            "target": "current",
+        }
+
+
+    def action_view_invoice(self):
+        self.ensure_one()
+        invoice = self.env["account.move"].search(
+            [("stay_id", "=", self.id), ("move_type", "=", "out_invoice")],
+            limit=1,
+        )
+        if not invoice:
+            raise UserError(_("Aucune facture n'est associée à ce séjour."))
+
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "account.move",
+            "view_mode": "form",
+            "res_id": invoice.id,
+            "target": "current",
+        }
+
 
     """@api.depends(
         "pricing_price_base", "pricing_adjustments", "pricing_supplements"
