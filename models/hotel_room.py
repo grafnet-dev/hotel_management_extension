@@ -1,9 +1,17 @@
-from odoo import models, fields, api
-from datetime import timedelta
+from odoo import models, fields, api, _
+from datetime import timedelta, datetime
+from odoo.exceptions import ValidationError, UserError
+import uuid
 
 
 class HotelRoom(models.Model):
     _inherit = "hotel.room"
+    stay_ids = fields.One2many(
+        "hotel.booking.stay",
+        "room_id",
+        string="Séjours associés",
+        help="Liste des séjours ayant utilisé cette chambre",
+    )
 
     room_type_id = fields.Many2one(
         "hotel.room.type", string="Type de chambre", required=True, ondelete="cascade"
@@ -288,6 +296,188 @@ class HotelRoom(models.Model):
     def _compute_fake(self):
         for rec in self:
             rec.num_person = 0  # ou rien, selon le besoin
+
+    @api.model
+    def get_room_activities(self, room_id, start_date, end_date):
+        """
+        Retourne toutes les activités d'une chambre (séjours, nettoyages, etc.)
+        entre deux dates données, avec gestion d'erreurs et format uniforme.
+
+        :param room_type_id: int → ID du type de chambre
+        :param start_date: str (YYYY-MM-DD)
+        :param end_date: str (YYYY-MM-DD)
+        :return: dict {success: bool, message: str, data: list}
+        """
+        try:
+            # === Validation des entrées ===
+            if not room_id:
+                raise ValidationError(_("Aucun type de chambre spécifié."))
+
+            if not start_date or not end_date:
+                raise ValidationError(
+                    _("Les dates de début et de fin sont obligatoires.")
+                )
+
+            try:
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError(
+                    _("Le format de date est invalide. Utilisez YYYY-MM-DD.")
+                )
+
+            if end_dt < start_dt:
+                raise ValidationError(
+                    _("La date de fin doit être postérieure à la date de début.")
+                )
+
+            # === Vérification du type de chambre ===
+            room = self.browse(room_id)
+            if not room.exists():
+                raise ValidationError(_("La chambre spécifiée n'existe pas."))
+
+            activities = []
+
+            # === Récupération des séjours ===
+            stays = self.env["hotel.booking.stay"].search(
+                [
+                    ("room_id", "=", room_id),
+                    ("state", "in", ["pending", "ongoing"]),
+                    "|",
+                    "&",
+                    ("planned_checkin_date", ">=", start_dt),
+                    ("planned_checkin_date", "<=", end_dt),
+                    "&",
+                    ("planned_checkout_date", ">=", start_dt),
+                    ("planned_checkout_date", "<=", end_dt),
+                ]
+            )
+
+            for s in stays:
+                type_code = "stay_ongoing" if s.state == "ongoing" else "upcoming_stay"
+                label = "Séjour en cours" if s.state == "ongoing" else "Séjour à venir"
+
+                activities.append(
+                    {
+                        "id": s.id,
+                        "room_id": s.room_id.id,
+                        "room_name": s.room_id.name,
+                        "type": type_code,
+                        "label": label,
+                        "start": fields.Datetime.to_string(s.planned_checkin_date),
+                        "end": fields.Datetime.to_string(s.planned_checkout_date),
+                        "guest_names": s.occupant_names or "",
+                        "booking_ref": s.booking_id.name if s.booking_id else "",
+                    }
+                )
+                
+                """Crée une activité de nettoyage simulée de 30 min après un séjour."""
+                cleaning_duration = timedelta(minutes=30)
+                cleaning_start = s.planned_checkout_date
+                cleaning_end = s.planned_checkout_date + cleaning_duration
+                                
+                activities.append({
+                    "id": f"sim_clean_{s.id}",
+                    "room_id": s.room_id.id,
+                    "room_name": s.room_id.name,
+                    "type": "cleaning",
+                    "label": "Nettoyage prévu ",
+                    "start": fields.Datetime.to_string(cleaning_start),
+                    "end": fields.Datetime.to_string(cleaning_end),
+                })
+
+            # ===  Tri chronologique ===
+            activities.sort(key=lambda x: x["start"] or "")
+            
+            # === 5️⃣ Détection des créneaux libres ===
+            free_slots = []
+
+            for i in range(len(activities) - 1):
+                current_end = fields.Datetime.from_string(activities[i]["end"])
+                next_start = fields.Datetime.from_string(activities[i + 1]["start"])
+
+                # Si un trou existe entre deux activités
+                if current_end < next_start:
+                    free_slots.append({
+                        "id": f"free_{room_id}_{uuid.uuid4().hex}",
+                        "room_id": room.id,
+                        "room_name": room.name,
+                        "type": "free_slot",
+                        "label": "Créneau non exploitable",
+                        "start": fields.Datetime.to_string(current_end),
+                        "end": fields.Datetime.to_string(next_start),
+                    })
+
+            # === 6️⃣ Slots avant et après l’intervalle demandé ===
+            if activities:
+                first_start = fields.Datetime.from_string(activities[0]["start"])
+                last_end = fields.Datetime.from_string(activities[-1]["end"])
+
+                # Avant la première activité
+                if first_start > start_dt:
+                    free_slots.append({
+                        "id": f"free_{room_id}_{uuid.uuid4().hex}",
+                        "room_id": room.id,
+                        "room_name": room.name,
+                        "type": "free_slot",
+                        "label": "Disponible",
+                        "start": fields.Datetime.to_string(start_dt),
+                        "end": activities[0]["start"],
+                    })
+
+                # Après la dernière activité
+                if last_end < end_dt:
+                    free_slots.append({
+                        "id": f"free_{room_id}_{uuid.uuid4().hex}",
+                        "room_id": room.id,
+                        "room_name": room.name,
+                        "type": "free_slot",
+                        "label": "Disponible",
+                        "start": activities[-1]["end"],
+                        "end": fields.Datetime.to_string(end_dt),
+                    })
+            else:
+                # Aucune activité → toute la période est libre
+                free_slots.append({
+                    "id": f"free_{room_id}_{uuid.uuid4().hex}",
+                    "room_id": room.id,
+                    "room_name": room.name,
+                    "type": "free_slot",
+                    "label": "Disponible (aucune réservation)",
+                    "start": fields.Datetime.to_string(start_dt),
+                    "end": fields.Datetime.to_string(end_dt),
+                })
+
+            # === 7️⃣ Fusion des activités ===
+            activities.extend(free_slots)
+            activities.sort(key=lambda x: x["start"] or "")
+            
+            # ===  Retour structuré ===
+            message = (
+                _("Aucune activité trouvée pour ce type de chambre.")
+                if not activities
+                else _("Activités récupérées avec succès.")
+            )
+
+            return {
+                "success": True,
+                "message": message,
+                "data": activities,
+            }
+
+        # === 7️⃣ Gestion d'erreurs ===
+        except (ValidationError, UserError) as e:
+            return {
+                "success": False,
+                "message": str(e),
+                "data": [],
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": _("Erreur interne : %s") % str(e),
+                "data": [],
+            }
 
 
 #: Créer un nouveau modèle hotel.room.feature( à analyser la possibilté de le faire)

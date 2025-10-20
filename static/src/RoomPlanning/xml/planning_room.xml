@@ -3,165 +3,57 @@
   <t t-name="rooms_planning.template" owl="1">
     <div class="o_action o_view_controller o_room_planning">
       <div class="o_content">
-        <div class="p-3">
-          
-          <!-- En-tête avec navigation -->
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h2 class="mb-1">
-                <i class="fa fa-calendar me-2"/>
-                Planning Hôtel - Précision Horaire
-              </h2>
-              <p class="text-muted mb-0 small">Vue détaillée minute par minute</p>
-            </div>
-            
-            <div class="btn-group">
-              <button class="btn btn-secondary" t-on-click="previousWeek">
-                <i class="fa fa-chevron-left"/>
-              </button>
-              <button class="btn btn-primary" t-on-click="today">
-                <i class="fa fa-calendar-check-o me-1"/>
-                Aujourd'hui
-              </button>
-              <button class="btn btn-secondary" t-on-click="nextWeek">
-                <i class="fa fa-chevron-right"/>
-              </button>
-            </div>
-          </div>
 
-          <!-- Légende -->
-          <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
-            <small class="text-muted me-2">Légende:</small>
-            <span class="badge" style="background-color: #4caf50;">🛏️ Réservation</span>
-            <span class="badge" style="background-color: #2196F3;">⏱️ Day-use</span>
-            <span class="badge" style="background-color: #ff9800;">🧹 Nettoyage</span>
-            <span class="badge" style="background-color: #f44336;">🔧 Maintenance</span>
-          </div>
+        <!-- HEADER -->
+        <div class="o_room_planning_header">
+          <h2>Planning Hôtel</h2>
 
-          <!-- Planning Grid -->
-          <div class="planning-grid-container shadow-sm rounded">
-            <div class="table-responsive">
-              <table class="planning-table">
-                
-                <!-- En-têtes colonnes -->
-                <thead>
-                  <tr>
-                    <th class="room-header">Chambres</th>
-                    <t t-foreach="dates" t-as="date" t-key="date.iso">
-                      <th class="date-header">
-                        <div class="fw-bold"><t t-esc="date.dayName"/></div>
-                        <div class="small text-muted"><t t-esc="date.display"/></div>
-                      </th>
-                    </t>
-                  </tr>
-                </thead>
+          <div class="o_planning_info">
 
-                <!-- Lignes chambres -->
-                <tbody>
-                  <t t-foreach="rooms" t-as="room" t-key="room.id">
-                    <tr class="room-row">
-                      <td class="room-cell">
-                        <div class="fw-bold"><t t-esc="room.name"/></div>
-                      </td>
-                      
-                      <t t-foreach="dates" t-as="date" t-key="date.iso">
-                        <td class="day-cell">
-                          <div class="day-cell-content">
-                            
-                            <!-- Grille horaire légère -->
-                            <div class="hour-grid">
-                              <div class="hour-line" style="left: 0%"/>
-                              <div class="hour-line" style="left: 25%"/>
-                              <div class="hour-line" style="left: 50%"/>
-                              <div class="hour-line" style="left: 75%"/>
-                            </div>
-
-                            <!-- Blocs d'activités -->
-                            <t t-set="blocks" t-value="getBlocksForRoomAndDate(room.id, date.iso)"/>
-                            <t t-foreach="blocks" t-as="block" t-key="block_index">
-                              <div 
-                                class="activity-block"
-                                t-att-style="`left: ${block.left}%; width: ${block.width}%; background-color: ${block.color};`"
-                                t-att-title="`${block.label} - ${block.startTime} à ${block.endTime}`"
-                                t-on-click="() => this.onBlockClick(block)"
-                              >
-                                <div class="activity-content">
-                                  <div class="activity-icon">
-                                    <t t-esc="getTypeIcon(block.type)"/>
-                                  </div>
-                                  <div class="activity-label">
-                                    <t t-esc="block.label"/>
-                                  </div>
-                                  <div class="activity-time">
-                                    <i class="fa fa-clock-o me-1"/>
-                                    <t t-esc="block.startTime"/> - <t t-esc="block.endTime"/>
-                                  </div>
-                                </div>
-                              </div>
-                            </t>
-
-                          </div>
-                        </td>
-                      </t>
-                    </tr>
-                  </t>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Échelle horaire -->
-          <div class="mt-3 text-center">
-            <small class="text-muted">
-              <span class="me-4">00h (0%)</span>
-              <span class="me-4">06h (25%)</span>
-              <span class="me-4">12h (50%)</span>
-              <span class="me-4">18h (75%)</span>
-              <span>24h (100%)</span>
-            </small>
-          </div>
-
-          <!-- Statistiques -->
-          <div class="row mt-4 g-3">
-            <div class="col-md-3">
-              <div class="card stat-card">
-                <div class="card-body text-center">
-                  <i class="fa fa-pie-chart fa-2x text-primary mb-2"/>
-                  <h6 class="text-muted mb-1">Taux d'occupation</h6>
-                  <h3 class="text-primary mb-0">72%</h3>
-                </div>
+            <!-- Légendes -->
+            <div class="o_planning_legends">
+              <div class="o_legend_item">
+                <span class="o_legend_badge booking"></span>
+                <span>Réservation</span>
+              </div>
+              <div class="o_legend_item">
+                <span class="o_legend_badge cleaning"></span>
+                <span>Nettoyage</span>
+              </div>
+              <div class="o_legend_item">
+                <span class="o_legend_badge maintenance"></span>
+                <span>Maintenance</span>
+              </div>
+              <div class="o_legend_item">
+                <span class="o_legend_badge free_slot"></span>
+                <span>Disponible</span>
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="card stat-card">
-                <div class="card-body text-center">
-                  <i class="fa fa-check-circle fa-2x text-success mb-2"/>
-                  <h6 class="text-muted mb-1">Chambres libres</h6>
-                  <h3 class="text-success mb-0">3</h3>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card stat-card">
-                <div class="card-body text-center">
-                  <i class="fa fa-bed fa-2x text-danger mb-2"/>
-                  <h6 class="text-muted mb-1">Chambres occupées</h6>
-                  <h3 class="text-danger mb-0">6</h3>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card stat-card">
-                <div class="card-body text-center">
-                  <i class="fa fa-wrench fa-2x text-warning mb-2"/>
-                  <h6 class="text-muted mb-1">Maintenance</h6>
-                  <h3 class="text-warning mb-0">1</h3>
-                </div>
-              </div>
-            </div>
-          </div>
 
+            <!-- Statistiques -->
+            <div class="o_planning_stats">
+              <div class="o_stat_item">
+                <span class="o_stat_value">6</span>
+                <span class="o_stat_label">Chambres</span>
+              </div>
+              <div class="o_stat_item">
+                <span class="o_stat_value">1</span>
+                <span class="o_stat_label">Occupées</span>
+              </div>
+              <div class="o_stat_item">
+                <span class="o_stat_value">75%</span>
+                <span class="o_stat_label">Taux</span>
+              </div>
+            </div>
+
+          </div>
         </div>
+
+        <!-- TIMELINE -->
+        <div class="o_room_timeline_wrapper">
+          <div id="room-timeline"></div>
+        </div>
+
       </div>
     </div>
   </t>

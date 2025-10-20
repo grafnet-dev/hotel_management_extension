@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from datetime import timedelta
+from odoo import models, api, _, fields
+from datetime import datetime
 from odoo.exceptions import ValidationError, UserError
 
 
@@ -9,9 +9,13 @@ class HotelRoomType(models.Model):
     _order = "sequence, name"
 
     # Informations de base
-    room_ids = fields.Many2one(
-        "hotel.room", string="chambre", required=True, ondelete="cascade"
-    )
+    room_ids = fields.One2many(
+        "hotel.room",
+        "room_type_id",
+        string="Chambres de ce type",
+        help="Liste des chambres appartenant à ce type de chambre",
+)
+
     name = fields.Char(string="Nom du type de chambre", required=True, translate=True)
     code = fields.Char(
         string="Code",
@@ -275,6 +279,98 @@ class HotelRoomType(models.Model):
                 "data": data,
             }
 
+        except (ValidationError, UserError) as e:
+            return {
+                "success": False,
+                "message": str(e),
+                "data": [],
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": _("Erreur interne : %s") % str(e),
+                "data": [],
+            }
+            
+            
+    @api.model
+    def get_room_type_activities(self, room_type_id, start_date, end_date):
+        """
+        Retourne toutes les activités d'un type de chambre (séjours, nettoyages, etc.)
+        entre deux dates données, avec gestion d'erreurs et format uniforme.
+
+        :param room_type_id: int → ID du type de chambre
+        :param start_date: str (YYYY-MM-DD)
+        :param end_date: str (YYYY-MM-DD)
+        :return: dict {success: bool, message: str, data: list}
+        """
+        try:
+            # === Validation des entrées ===
+            if not room_type_id:
+                raise ValidationError(_("Aucun type de chambre spécifié."))
+
+            if not start_date or not end_date:
+                raise ValidationError(_("Les dates de début et de fin sont obligatoires."))
+
+            try:
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            except ValueError:
+                raise ValidationError(_("Le format de date est invalide. Utilisez YYYY-MM-DD."))
+
+            if end_dt < start_dt:
+                raise ValidationError(_("La date de fin doit être postérieure à la date de début."))
+
+            # === Vérification du type de chambre ===
+            room_type = self.browse(room_type_id)
+            if not room_type.exists():
+                raise ValidationError(_("Le type de chambre spécifié n'existe pas."))
+
+            activities = []
+
+            # === Récupération des séjours ===
+            stays = self.env["hotel.booking.stay"].search([
+                ("room_type_id", "=", room_type_id),
+                ("state", "in", ["pending", "ongoing"]),
+                "|",
+                "&", ("planned_checkin_date", ">=", start_dt), ("planned_checkin_date", "<=", end_dt),
+                "&", ("planned_checkout_date", ">=", start_dt), ("planned_checkout_date", "<=", end_dt),
+            ])
+
+            for s in stays:
+                type_code = "stay_ongoing" if s.state == "ongoing" else "upcoming_stay"
+                label = "Séjour en cours" if s.state == "ongoing" else "Séjour à venir"
+
+                activities.append({
+                    "id": s.id,
+                    "room_id": s.room_id.id,
+                    "room_name": s.room_id.name,
+                    "type": type_code,
+                    "label": label,
+                    "start": s.planned_checkin_date,
+                    "end": s.planned_checkout_date,
+                    "guest_names": s.occupant_names or "",
+                    "booking_ref": s.booking_id.name if s.booking_id else "",
+                })
+
+          
+            # ===  Tri chronologique ===
+            activities.sort(key=lambda x: x["start"] or datetime.min)
+
+            # ===  Retour structuré ===
+            message = (
+                _("Aucune activité trouvée pour ce type de chambre.")
+                if not activities
+                else _("Activités récupérées avec succès.")
+            )
+
+            return {
+                "success": True,
+                "message": message,
+                "data": activities,
+            }
+
+        # === 7️⃣ Gestion d'erreurs ===
         except (ValidationError, UserError) as e:
             return {
                 "success": False,

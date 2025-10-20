@@ -28,6 +28,8 @@
             "hotel_management_extension/static/src/xml/time_clock_template.xml",
             "hotel_management_extension/static/src/js/time_float_widget.js",
             "hotel_management_extension/static/src/xml/time_float_template.xml",
+            "https://unpkg.com/vis-timeline@latest/dist/vis-timeline-graph2d.min.css",
+            "https://unpkg.com/vis-timeline@latest/dist/vis-timeline-graph2d.min.js",
             "hotel_management_extension/static/src/RoomPlanning/js/planning_room.js",
             "hotel_management_extension/static/src/RoomPlanning/xml/planning_room.xml",
             "hotel_management_extension/static/src/RoomPlanning/css/planning_room.css",

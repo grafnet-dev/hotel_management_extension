@@ -1,270 +1,257 @@
 /** @odoo-module **/
 
-import { Component, useState } from "@odoo/owl";
+import { Component, onWillStart, onMounted, onWillUnmount } from "@odoo/owl";
 import { registry } from "@web/core/registry";
-
+import { rpc } from "@web/core/network/rpc";
+import { useService } from "@web/core/utils/hooks";
 export class RoomPlanning extends Component {
-    static template = "rooms_planning.template";
+  static template = "rooms_planning.template";
 
-    setup() {
-        this.state = useState({
-            currentDate: new Date(),
-            viewDays: 7
+  setup() {
+    this.action = useService("action");
+    this.rooms = [];
+    this.activities = [];
+
+    // Charger les données AVANT le rendu
+    onWillStart(async () => {
+      await this.loadData();
+    });
+
+    onMounted(() => {
+      this.initTimeline();
+    });
+
+    onWillUnmount(() => {
+      if (this.timeline) {
+        this.timeline.destroy();
+        console.log("🧹 Timeline détruite proprement");
+      }
+    });
+  }
+  // chargement des datas
+  async loadData() {
+    console.log("📡 Chargement initial (onWillStart)...");
+
+    try {
+      // Charger les chambres
+      const rooms = await rpc("/web/dataset/call_kw", {
+        model: "hotel.room",
+        method: "search_read",
+        args: [],
+        kwargs: {
+          fields: ["id", "name", "status"],
+        },
+      });
+
+      this.rooms = rooms;
+      console.log("🏨 Chambres chargées :", this.rooms);
+
+      // Charger les activités pour toutes les chambres en parallèle
+      const startDate = "2025-10-01";
+      const endDate = "2025-10-30";
+
+      const activityPromises = rooms.map(async (room) => {
+        const result = await rpc("/web/dataset/call_kw", {
+          model: "hotel.room",
+          method: "get_room_activities",
+          args: [room.id, startDate, endDate],
+          kwargs: {},
         });
 
-        // 10 chambres A001 à A010
-        this.rooms = Array.from({ length: 10 }, (_, i) => ({
-            id: i + 1,
-            name: `A${String(i + 1).padStart(3, '0')}`
-        }));
+        console.log(`📩 Activités chambre ${room.id}:`, result);
 
-        this.dates = this.generateDates();
-        this.activities = this.generateMockActivities();
+        // Retourne un tableau d'activités enrichies avec l'id de la chambre
+        return result.success
+          ? result.data.map((a) => ({
+              ...a,
+              room_id: room.id,
+              room_name: room.name,
+            }))
+          : [];
+      });
+      // Aplatir tous les tableaux d'activités en un seul
+      const activitiesNested = await Promise.all(activityPromises);
+      this.activities = activitiesNested.flat();
+
+      console.log("✅ Chambres :", this.rooms);
+      console.log("✅ Activités :", this.activities);
+    } catch (error) {
+      console.error("💥 Erreur lors du chargement initial :", error);
+      this.rooms = [];
+      this.activities = [];
+    }
+  }
+  //initialisation de la timeline
+  initTimeline() {
+    console.log("✅ Composant RoomPlanning monté !");
+    const container = document.getElementById("room-timeline");
+    if (!container) {
+      console.error("❌ Conteneur introuvable !");
+      return;
+    }
+    console.log("🎯 Conteneur trouvé :", container);
+
+    // Vérif que vis-timeline est dispo
+    if (!(window.vis && window.vis.Timeline)) {
+      console.error("❌ vis-timeline n'est pas chargé !");
+      return;
+    }
+    console.log("🚀 vis-timeline est bien chargé !");
+
+    // Transformer rooms → groups
+    this.groups = this.rooms.map((r) => ({
+      id: r.id,
+      content: r.name,
+    }));
+    console.log("📦 Groups générés :", this.groups);
+
+    // Transformer activities → items (pour vis-timeline)
+    this.items = this.activities.map((act) => ({
+      id: act.id,
+      group: act.room_id,
+      room_id: act.room_id,
+      content: act.label,
+      start: act.start,
+      end: act.end,
+      className: act.type,
+      title: `
+        <b>${act.room_name}</b><br>
+        ${act.content}<br>
+        Du ${act.start} au ${act.end}
+        `,
+    }));
+    console.log ("content  ", this.items.content);
+    console.log("🧩 Items générés :", this.items);
+
+    const now = new Date();
+    const options = {
+      stack: false,
+      horizontalScroll: true,
+      zoomKey: "ctrlKey",
+      min: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7),
+      max: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14),
+      zoomMin: 1000 * 60 * 60, // 1h
+      zoomMax: 1000 * 60 * 60 * 24 * 31, // 1 mois
+    };
+
+    // Supprime les doublons d'id avant d'afficher la timeline
+    const uniqueItems = [];
+    const seenIds = new Set();
+
+    for (const item of this.items) {
+      if (!seenIds.has(item.id)) {
+        uniqueItems.push(item);
+        seenIds.add(item.id);
+      } else {
+        console.warn("⚠️ ID dupliqué détecté et ignoré :", item.id);
+      }
     }
 
-    generateDates() {
-        const dates = [];
-        const start = new Date(this.state.currentDate);
-        
-        for (let i = 0; i < this.state.viewDays; i++) {
-            const date = new Date(start);
-            date.setDate(start.getDate() + i);
-            dates.push({
-                full: date,
-                iso: date.toISOString().split('T')[0],
-                display: `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`,
-                dayName: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][date.getDay()]
-            });
-        }
-        return dates;
+    this.items = uniqueItems;
+
+    // Création de la timeline et stockage dans l'instance 🧹 S’il existe déjà une timeline, la réinitialiser
+    if (this.timeline) {
+      console.log("♻️ Réinitialisation de la timeline...");
+      this.timeline.setItems(new vis.DataSet(this.items));
+    } else {
+      // Première création
+      this.timeline = new vis.Timeline(
+        container,
+        this.items,
+        this.groups,
+        options
+      );
+      console.log("📅 Timeline initialisée avec succès !");
+    }
+    // 🔹 Gestion du clic
+    this.timeline.on("click", (props) => this.onTimelineClick(props));
+  }
+  //Gestion du click
+  onTimelineClick(props) {
+    console.log("🖱️ [EVENT] Clic sur timeline → props reçus :", props);
+
+    if (!props.item) {
+      console.log("🟣 Clic vide (pas sur un item).");
+      return;
+    }
+    // Recherche de l'objet complet dans la liste this.items
+    const clickedItem = this.items.find((i) => i.id === props.item);
+    console.log("📦 Item trouvé :", clickedItem);
+
+    if (!clickedItem) {
+      console.warn("⚠️ Aucun item correspondant trouvé !");
+      return;
     }
 
-    generateMockActivities() {
-        const activities = [];
-        let id = 1;
+    if (clickedItem.className === "free_slot") {
+      console.log("✅ Créneau libre → ouverture du formulaire...");
+      this.onFreeSlotClick(clickedItem);
+    } else {
+      console.log("⛔ Item non libre (type :", clickedItem.className, ")");
+    }
+  }
+  onFreeSlotClick(item) {
+    console.log("🟢 [onFreeSlotClick] Créneau libre cliqué :", item);
 
-        // Pour chaque chambre, générer des activités réalistes
-        this.rooms.forEach((room, roomIdx) => {
-            const startDate = new Date(this.state.currentDate);
-            
-            // Pattern aléatoire mais réaliste
-            if (roomIdx % 3 === 0) {
-                // Chambre avec réservation longue
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'booking',
-                    start: this.formatDateTime(startDate, 14, 0),
-                    end: this.formatDateTime(this.addDays(startDate, 3), 11, 0),
-                    status: 'in_stay',
-                    guest: `Client ${roomIdx + 1}`,
-                    color: '#4caf50'
-                });
-
-                // Nettoyage après
-                const cleanDate = this.addDays(startDate, 3);
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'cleaning',
-                    start: this.formatDateTime(cleanDate, 11, 0),
-                    end: this.formatDateTime(cleanDate, 12, 30),
-                    status: 'cleaning',
-                    guest: 'Nettoyage',
-                    color: '#ff9800'
-                });
-
-            } else if (roomIdx % 3 === 1) {
-                // Maintenance puis réservations courtes
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'maintenance',
-                    start: this.formatDateTime(startDate, 8, 0),
-                    end: this.formatDateTime(this.addDays(startDate, 1), 18, 0),
-                    status: 'maintenance',
-                    guest: 'Réparation',
-                    color: '#f44336'
-                });
-
-                // Day-use après maintenance
-                const dayUseDate = this.addDays(startDate, 2);
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'day_use',
-                    start: this.formatDateTime(dayUseDate, 10, 0),
-                    end: this.formatDateTime(dayUseDate, 14, 30),
-                    status: 'confirmed',
-                    guest: 'Location 4h30',
-                    color: '#2196F3'
-                });
-
-                // Réservation classique
-                const bookDate = this.addDays(startDate, 4);
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'booking',
-                    start: this.formatDateTime(bookDate, 15, 0),
-                    end: this.formatDateTime(this.addDays(bookDate, 2), 11, 0),
-                    status: 'confirmed',
-                    guest: `M. Dupont ${roomIdx}`,
-                    color: '#4caf50'
-                });
-
-            } else {
-                // Pattern mixte
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'booking',
-                    start: this.formatDateTime(startDate, 16, 0),
-                    end: this.formatDateTime(this.addDays(startDate, 1), 11, 0),
-                    status: 'confirmed',
-                    guest: `Famille ${roomIdx}`,
-                    color: '#4caf50'
-                });
-
-                const clean1 = this.addDays(startDate, 1);
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'cleaning',
-                    start: this.formatDateTime(clean1, 11, 0),
-                    end: this.formatDateTime(clean1, 12, 0),
-                    status: 'cleaning',
-                    guest: 'Nettoyage',
-                    color: '#ff9800'
-                });
-
-                // Day-use
-                const dayUse = this.addDays(startDate, 2);
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'day_use',
-                    start: this.formatDateTime(dayUse, 12, 30),
-                    end: this.formatDateTime(dayUse, 16, 0),
-                    status: 'confirmed',
-                    guest: 'Location 3h30',
-                    color: '#2196F3'
-                });
-
-                // Réservation longue
-                const longStay = this.addDays(startDate, 3);
-                activities.push({
-                    id: id++,
-                    room_id: room.id,
-                    type: 'booking',
-                    start: this.formatDateTime(longStay, 14, 0),
-                    end: this.formatDateTime(this.addDays(longStay, 3), 11, 0),
-                    status: 'confirmed',
-                    guest: `Client VIP ${roomIdx}`,
-                    color: '#4caf50'
-                });
-            }
-        });
-
-        return activities;
+    if (!item.room_id) {
+      console.warn("⚠️ Aucun room_id trouvé sur l’item :", item);
+      return;
     }
 
-    // Utilitaires
-    addDays(date, days) {
-        const result = new Date(date);
-        result.setDate(result.getDate() + days);
-        return result;
+    console.log("🚀 Ouverture du formulaire Odoo pour créer un séjour...");
+    this.action
+      .doAction({
+        type: "ir.actions.act_window",
+        name: "Nouvelle réservation",
+        res_model: "hotel.booking.stay",
+        target: "new",
+        views: [[false, "form"]],
+        view_mode: "form",
+        context: {
+          default_room_id: item.room_id,
+        },
+      })
+      .then(async () => {
+        console.log(
+          "🟢 Fenêtre de réservation fermée, mise à jour du planning..."
+        );
+        await this.refreshTimeline();
+      });
+
+    console.log("✅ Action envoyée à Odoo !");
+  }
+
+  async refreshTimeline() {
+    console.log("🔄 Rafraîchissement de la timeline...");
+    await this.loadData();
+
+    // Recréer les items
+    const items = this.activities.map((act) => ({
+      id: act.id,
+      group: act.room_id,
+      room_id: act.room_id,
+      content: act.label,
+      start: act.start,
+      end: act.end,
+      className: act.type,
+      title: `<b>${act.room_name}</b><br>${act.content}<br>Du ${act.start} au ${act.end}`,
+    }));
+
+    if (this.timeline) {
+      this.timeline.setItems(new vis.DataSet(items));
+      console.log("✅ Timeline mise à jour !");
     }
+  }
 
-    formatDateTime(date, hour, minute) {
-        const d = new Date(date);
-        d.setHours(hour, minute, 0, 0);
-        return d.toISOString();
-    }
-
-    // Calcul de position pour un bloc
-    calculateBlockPosition(activity, dateStr) {
-        const start = new Date(activity.start);
-        const end = new Date(activity.end);
-        const currentDate = new Date(dateStr);
-        
-        const dayStart = new Date(currentDate);
-        dayStart.setHours(0, 0, 0, 0);
-        
-        const dayEnd = new Date(currentDate);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        if (end < dayStart || start > dayEnd) {
-            return null;
-        }
-
-        const effectiveStart = start < dayStart ? dayStart : start;
-        const effectiveEnd = end > dayEnd ? dayEnd : end;
-
-        const startHour = effectiveStart.getHours();
-        const startMinute = effectiveStart.getMinutes();
-        const endHour = effectiveEnd.getHours();
-        const endMinute = effectiveEnd.getMinutes();
-
-        const startFraction = (startHour + startMinute / 60) / 24;
-        const endFraction = (endHour + endMinute / 60) / 24;
-        const widthFraction = endFraction === 0 && end > dayEnd ? 1 - startFraction : endFraction - startFraction;
-
-        return {
-            left: startFraction * 100,
-            width: widthFraction * 100,
-            label: activity.guest,
-            type: activity.type,
-            color: activity.color,
-            startTime: `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`,
-            endTime: `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`
-        };
-    }
-
-    getBlocksForRoomAndDate(roomId, dateStr) {
-        return this.activities
-            .filter(a => a.room_id === roomId)
-            .map(activity => this.calculateBlockPosition(activity, dateStr))
-            .filter(block => block !== null);
-    }
-
-    getTypeIcon(type) {
-        const icons = {
-            'booking': '🛏️',
-            'cleaning': '🧹',
-            'maintenance': '🔧',
-            'day_use': '⏱️'
-        };
-        return icons[type] || '📋';
-    }
-
-    // Navigation
-    previousWeek() {
-        const newDate = new Date(this.state.currentDate);
-        newDate.setDate(newDate.getDate() - 7);
-        this.state.currentDate = newDate;
-        this.dates = this.generateDates();
-        this.activities = this.generateMockActivities();
-    }
-
-    nextWeek() {
-        const newDate = new Date(this.state.currentDate);
-        newDate.setDate(newDate.getDate() + 7);
-        this.state.currentDate = newDate;
-        this.dates = this.generateDates();
-        this.activities = this.generateMockActivities();
-    }
-
-    today() {
-        this.state.currentDate = new Date();
-        this.dates = this.generateDates();
-        this.activities = this.generateMockActivities();
-    }
-
-    onBlockClick(activity) {
-        console.log('Clicked activity:', activity);
-        // Ouvrir un modal ou un formulaire Odoo
-    }
+  getTypeIcon(type) {
+    const icons = {
+      booking: "🛏️",
+      cleaning: "🧹",
+      maintenance: "🔧",
+      day_use: "⏱️",
+    };
+    return icons[type] || "📋";
+  }
 }
 
 registry.category("actions").add("room_planning.app", RoomPlanning);
