@@ -3,57 +3,101 @@
   <t t-name="rooms_planning.template" owl="1">
     <div class="o_action o_view_controller o_room_planning">
       <div class="o_content">
-
-        <!-- HEADER -->
-        <div class="o_room_planning_header">
-          <h2>Planning Hôtel</h2>
-
-          <div class="o_planning_info">
-
-            <!-- Légendes -->
-            <div class="o_planning_legends">
-              <div class="o_legend_item">
-                <span class="o_legend_badge booking"></span>
-                <span>Réservation</span>
+          <div class="o_room_timeline_wrapper">
+            
+            <!-- ========================================
+                 HEADER - Design moderne avec filtres verticaux
+                 ======================================== -->
+            <div class="o_room_planning_header">
+              
+              <!-- Titre -->
+              <h2>Room Planning</h2>
+              
+              <!-- Filtres alignés verticalement -->
+              <div class="o_room_planning_filters">
+                <div class="o_filter_group">
+                  <span class="o_filter_label">Type:</span>
+                  <select>
+                    <option>All Types</option>
+                    <option>Booking</option>
+                    <option>Cleaning</option>
+                    <option>Maintenance</option>
+                    <option>Day Use</option>
+                  </select>
+                </div>
+                
+                <div class="o_filter_group">
+                  <span class="o_filter_label">Status:</span>
+                  <select>
+                    <option>All Status</option>
+                    <option>Confirmed</option>
+                    <option>Pending</option>
+                    <option>Cancelled</option>
+                  </select>
+                </div>
+                
+                <div class="o_filter_group">
+                  <span class="o_filter_label">Period:</span>
+                  <select>
+                    <option>16 Days</option>
+                    <option>7 Days</option>
+                    <option>14 Days</option>
+                    <option>30 Days</option>
+                  </select>
+                </div>
               </div>
-              <div class="o_legend_item">
-                <span class="o_legend_badge cleaning"></span>
-                <span>Nettoyage</span>
+              
+              <!-- Actions (boutons) -->
+              <div class="o_room_planning_actions">
+                <button class="o_planning_btn o_planning_btn_refresh" t-on-click="refreshTimeline">
+                  <span>↻</span> Refresh
+                </button>
+                <button class="o_planning_btn o_planning_btn_new" t-on-click="onNewBooking">
+                  <span>+</span> New Booking
+                </button>
               </div>
-              <div class="o_legend_item">
-                <span class="o_legend_badge maintenance"></span>
-                <span>Maintenance</span>
-              </div>
-              <div class="o_legend_item">
-                <span class="o_legend_badge free_slot"></span>
-                <span>Disponible</span>
-              </div>
+              
             </div>
-
-            <!-- Statistiques -->
-            <div class="o_planning_stats">
-              <div class="o_stat_item">
-                <span class="o_stat_value">6</span>
-                <span class="o_stat_label">Chambres</span>
-              </div>
-              <div class="o_stat_item">
-                <span class="o_stat_value">1</span>
-                <span class="o_stat_label">Occupées</span>
-              </div>
-              <div class="o_stat_item">
-                <span class="o_stat_value">75%</span>
-                <span class="o_stat_label">Taux</span>
-              </div>
+            
+            <!-- ========================================
+                 TIMELINE - Zone principale
+                 ======================================== -->
+            <div id="room-timeline">
+              <!-- La timeline vis.js sera injectée ici -->
             </div>
-
+            
+            <!-- ========================================
+                 FOOTER - Légendes modernes
+                 ======================================== -->
+            <div class="o_room_timeline_footer">
+              
+              <div class="o_timeline_legend">
+                <span class="o_timeline_legend_label">Legend</span>
+                
+                <div class="o_timeline_legend_item">
+                  <div class="o_timeline_legend_color booking"></div>
+                  <span class="o_timeline_legend_text">Booked</span>
+                </div>
+                
+                <div class="o_timeline_legend_item">
+                  <div class="o_timeline_legend_color cleaning"></div>
+                  <span class="o_timeline_legend_text">Cleaning</span>
+                </div>
+                
+                <div class="o_timeline_legend_item">
+                  <div class="o_timeline_legend_color maintenance"></div>
+                  <span class="o_timeline_legend_text">Maintenance</span>
+                </div>
+                
+                <div class="o_timeline_legend_item">
+                  <div class="o_timeline_legend_color day_use"></div>
+                  <span class="o_timeline_legend_text">Day Use</span>
+                </div>
+              </div>
+              
+            </div>
+            
           </div>
-        </div>
-
-        <!-- TIMELINE -->
-        <div class="o_room_timeline_wrapper">
-          <div id="room-timeline"></div>
-        </div>
-
       </div>
     </div>
   </t>

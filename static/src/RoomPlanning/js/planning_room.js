@@ -132,6 +132,11 @@ export class RoomPlanning extends Component {
       max: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14),
       zoomMin: 1000 * 60 * 60, // 1h
       zoomMax: 1000 * 60 * 60 * 24 * 31, // 1 mois
+       
+  orientation: {
+    axis: "top",
+    item: "bottom",
+  },
     };
 
     // Supprime les doublons d'id avant d'afficher la timeline

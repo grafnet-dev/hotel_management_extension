@@ -1,0 +1,355 @@
+/* ============================================
+   🎨 THÈMES ALTERNATIFS POUR LA TIMELINE PMS
+   ============================================ */
+
+/* 
+  Pour utiliser un thème, ajoutez la classe correspondante 
+  sur l'élément .o_room_planning
+  
+  Exemple : <div class="o_room_planning theme-oceanic">
+*/
+
+/* ============================================
+   THÈME 1 : OCEANIC (Bleu/Cyan)
+   ============================================ */
+.theme-oceanic {
+  --timeline-booking: #0EA5E9;
+  --timeline-booking-light: #E0F2FE;
+  --timeline-cleaning: #F59E0B;
+  --timeline-cleaning-light: #FEF3C7;
+  --timeline-maintenance: #EF4444;
+  --timeline-maintenance-light: #FEE2E2;
+  --timeline-day-use: #14B8A6;
+  --timeline-day-use-light: #CCFBF1;
+}
+
+/* ============================================
+   THÈME 2 : FOREST (Vert naturel)
+   ============================================ */
+.theme-forest {
+  --timeline-booking: #059669;
+  --timeline-booking-light: #D1FAE5;
+  --timeline-cleaning: #F59E0B;
+  --timeline-cleaning-light: #FEF3C7;
+  --timeline-maintenance: #DC2626;
+  --timeline-maintenance-light: #FEE2E2;
+  --timeline-day-use: #10B981;
+  --timeline-day-use-light: #D1FAE5;
+}
+
+/* ============================================
+   THÈME 3 : SUNSET (Orange/Rose)
+   ============================================ */
+.theme-sunset {
+  --timeline-booking: #F97316;
+  --timeline-booking-light: #FFEDD5;
+  --timeline-cleaning: #FBBF24;
+  --timeline-cleaning-light: #FEF3C7;
+  --timeline-maintenance: #DC2626;
+  --timeline-maintenance-light: #FEE2E2;
+  --timeline-day-use: #FB923C;
+  --timeline-day-use-light: #FED7AA;
+}
+
+/* ============================================
+   THÈME 4 : ROYAL (Violet/Pourpre)
+   ============================================ */
+.theme-royal {
+  --timeline-booking: #7C3AED;
+  --timeline-booking-light: #EDE9FE;
+  --timeline-cleaning: #F59E0B;
+  --timeline-cleaning-light: #FEF3C7;
+  --timeline-maintenance: #DC2626;
+  --timeline-maintenance-light: #FEE2E2;
+  --timeline-day-use: #A855F7;
+  --timeline-day-use-light: #F3E8FF;
+}
+
+/* ============================================
+   THÈME 5 : CORPORATE (Gris/Bleu foncé)
+   ============================================ */
+.theme-corporate {
+  --timeline-booking: #1E40AF;
+  --timeline-booking-light: #DBEAFE;
+  --timeline-cleaning: #D97706;
+  --timeline-cleaning-light: #FEF3C7;
+  --timeline-maintenance: #B91C1C;
+  --timeline-maintenance-light: #FEE2E2;
+  --timeline-day-use: #0369A1;
+  --timeline-day-use-light: #E0F2FE;
+  
+  /* Interface plus sombre */
+  --timeline-header-bg: #F9FAFB;
+  --timeline-border: #D1D5DB;
+}
+
+/* ============================================
+   THÈME 6 : MINIMAL (Noir et blanc)
+   ============================================ */
+.theme-minimal {
+  --timeline-booking: #1F2937;
+  --timeline-booking-light: #F3F4F6;
+  --timeline-cleaning: #6B7280;
+  --timeline-cleaning-light: #F9FAFB;
+  --timeline-maintenance: #374151;
+  --timeline-maintenance-light: #E5E7EB;
+  --timeline-day-use: #4B5563;
+  --timeline-day-use-light: #F3F4F6;
+}
+
+/* ============================================
+   MODE SOMBRE / DARK MODE
+   ============================================ */
+.o_room_planning.dark-mode {
+  --timeline-header-bg: #1F2937;
+  --timeline-border: #374151;
+  --timeline-border-light: #374151;
+  --timeline-row-bg: #111827;
+  --timeline-row-alt-bg: #1F2937;
+  --timeline-text-primary: #F9FAFB;
+  --timeline-text-secondary: #D1D5DB;
+  --timeline-text-tertiary: #9CA3AF;
+  --timeline-free-slot: #374151;
+}
+
+.o_room_planning.dark-mode .o_room_timeline_wrapper {
+  background-color: #111827;
+  border-color: #374151;
+}
+
+.o_room_planning.dark-mode .o_room_planning_header {
+  background-color: #1F2937;
+  border-bottom-color: #374151;
+}
+
+.o_room_planning.dark-mode .o_room_planning_filters input,
+.o_room_planning.dark-mode .o_room_planning_filters select {
+  background-color: #111827;
+  border-color: #374151;
+  color: #F9FAFB;
+}
+
+.o_room_planning.dark-mode .o_planning_btn_refresh {
+  background-color: #374151;
+  color: #F9FAFB;
+  border-color: #4B5563;
+}
+
+.o_room_planning.dark-mode .o_planning_btn_refresh:hover {
+  background-color: #4B5563;
+}
+
+.o_room_planning.dark-mode .o_room_timeline_footer {
+  background-color: #1F2937;
+  border-top-color: #374151;
+}
+
+.o_room_planning.dark-mode .vis-label {
+  background-color: #1F2937 !important;
+  color: #F9FAFB;
+}
+
+.o_room_planning.dark-mode .vis-labelset .vis-label:nth-child(even) {
+  background-color: #111827 !important;
+}
+
+.o_room_planning.dark-mode .vis-labelset .vis-label:nth-child(odd) {
+  background-color: #1F2937 !important;
+}
+
+.o_room_planning.dark-mode .vis-background .vis-group:nth-child(even) {
+  background-color: #111827;
+}
+
+.o_room_planning.dark-mode .vis-background .vis-group:nth-child(odd) {
+  background-color: #1F2937;
+}
+
+.o_room_planning.dark-mode .vis-time-axis {
+  background-color: #1F2937 !important;
+}
+
+.o_room_planning.dark-mode .vis-time-axis .vis-text {
+  color: #F9FAFB;
+}
+
+/* ============================================
+   OPTIONS DE DENSITÉ
+   ============================================ */
+
+/* Compact - Pour voir plus de chambres */
+.o_room_planning.density-compact {
+  --timeline-row-height: 45px;
+  --timeline-item-height: 36px;
+}
+
+.o_room_planning.density-compact .vis-label {
+  padding: 0 16px !important;
+}
+
+.o_room_planning.density-compact .vis-item-content {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* Confortable - Design par défaut */
+.o_room_planning.density-comfortable {
+  --timeline-row-height: 60px;
+  --timeline-item-height: 48px;
+}
+
+/* Spacieux - Pour plus de lisibilité */
+.o_room_planning.density-spacious {
+  --timeline-row-height: 80px;
+  --timeline-item-height: 64px;
+}
+
+.o_room_planning.density-spacious .vis-label {
+  padding: 0 24px !important;
+}
+
+.o_room_planning.density-spacious .vis-item-content {
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
+/* ============================================
+   STYLES DE BORDURES
+   ============================================ */
+
+/* Bordures arrondies */
+.o_room_planning.rounded-lg .vis-item {
+  border-radius: 12px !important;
+}
+
+.o_room_planning.rounded-xl .vis-item {
+  border-radius: 16px !important;
+}
+
+/* Sans bordures arrondies */
+.o_room_planning.rounded-none .vis-item {
+  border-radius: 0 !important;
+}
+
+/* ============================================
+   EFFETS VISUELS SUPPLÉMENTAIRES
+   ============================================ */
+
+/* Items avec ombres prononcées */
+.o_room_planning.shadow-strong .vis-item {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.o_room_planning.shadow-strong .vis-item:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Items sans ombres */
+.o_room_planning.shadow-none .vis-item {
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Lignes alternées plus marquées */
+.o_room_planning.striped-strong .vis-background .vis-group:nth-child(even) {
+  background-color: #F3F4F6;
+}
+
+/* Sans lignes alternées */
+.o_room_planning.striped-none .vis-background .vis-group {
+  background-color: #FFFFFF !important;
+}
+
+/* ============================================
+   ANIMATIONS PERSONNALISÉES
+   ============================================ */
+
+/* Items qui glissent au hover */
+.o_room_planning.animate-slide .vis-item:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* Items qui pulsent légèrement */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.o_room_planning.animate-pulse .vis-item.vis-selected {
+  animation: pulse 2s infinite;
+}
+
+/* ============================================
+   INDICATEURS DE STATUT
+   ============================================ */
+
+/* Barre de progression pour les réservations */
+.vis-item.booking.in-progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5));
+  border-radius: 8px 8px 0 0;
+}
+
+/* Badge "NEW" pour les nouvelles réservations */
+.vis-item.new::after {
+  content: 'NEW';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #EF4444;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+/* ============================================
+   UTILITAIRES
+   ============================================ */
+
+/* Cacher les légendes */
+.o_room_planning.hide-legend .o_room_timeline_footer {
+  display: none;
+}
+
+/* Timeline en plein écran */
+.o_room_planning.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  margin: 0;
+}
+
+.o_room_planning.fullscreen .o_room_timeline_wrapper {
+  margin: 0;
+  border-radius: 0;
+  height: 100vh;
+}
+
+/* ============================================
+   EXEMPLES D'UTILISATION
+   ============================================ */
+
+/*
+  Thème océanique avec densité compacte :
+  <div class="o_room_planning theme-oceanic density-compact">
+  
+  Mode sombre avec ombres prononcées :
+  <div class="o_room_planning dark-mode shadow-strong">
+  
+  Design minimal sans rayures :
+  <div class="o_room_planning theme-minimal striped-none">
+  
+  Spacieux avec bordures très arrondies :
+  <div class="o_room_planning density-spacious rounded-xl">
+*/
