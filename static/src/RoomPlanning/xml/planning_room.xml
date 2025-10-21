@@ -6,45 +6,33 @@
           <div class="o_room_timeline_wrapper">
             
             <!-- ========================================
-                 HEADER - Design moderne avec filtres verticaux
+                 HEADER - En-tête avec titre, boutons et filtres
                  ======================================== -->
             <div class="o_room_planning_header">
-              
               <!-- Titre -->
-              <h2>Room Planning</h2>
+              <h2>Hotel Room Planning</h2>
               
-              <!-- Filtres alignés verticalement -->
+              <!-- Filtres -->
               <div class="o_room_planning_filters">
-                <div class="o_filter_group">
-                  <span class="o_filter_label">Type:</span>
-                  <select>
-                    <option>All Types</option>
-                    <option>Booking</option>
-                    <option>Cleaning</option>
-                    <option>Maintenance</option>
-                    <option>Day Use</option>
-                  </select>
-                </div>
+                <select>
+                  <option>All Types</option>
+                  <option>Booking</option>
+                  <option>Cleaning</option>
+                  <option>Maintenance</option>
+                </select>
                 
-                <div class="o_filter_group">
-                  <span class="o_filter_label">Status:</span>
-                  <select>
-                    <option>All Status</option>
-                    <option>Confirmed</option>
-                    <option>Pending</option>
-                    <option>Cancelled</option>
-                  </select>
-                </div>
+                <select>
+                  <option>All Status</option>
+                  <option>Confirmed</option>
+                  <option>Pending</option>
+                  <option>Cancelled</option>
+                </select>
                 
-                <div class="o_filter_group">
-                  <span class="o_filter_label">Period:</span>
-                  <select>
-                    <option>16 Days</option>
-                    <option>7 Days</option>
-                    <option>14 Days</option>
-                    <option>30 Days</option>
-                  </select>
-                </div>
+                <select>
+                  <option>16 Days</option>
+                  <option>7 Days</option>
+                  <option>30 Days</option>
+                </select>
               </div>
               
               <!-- Actions (boutons) -->
@@ -53,10 +41,9 @@
                   <span>↻</span> Refresh
                 </button>
                 <button class="o_planning_btn o_planning_btn_new" t-on-click="onNewBooking">
-                  <span>+</span> New Booking
+                  + New Booking
                 </button>
               </div>
-              
             </div>
             
             <!-- ========================================
@@ -67,34 +54,27 @@
             </div>
             
             <!-- ========================================
-                 FOOTER - Légendes modernes
+                 FOOTER - Légendes
                  ======================================== -->
             <div class="o_room_timeline_footer">
-              
               <div class="o_timeline_legend">
-                <span class="o_timeline_legend_label">Legend</span>
+                <span style="margin-right: 8px;">Legend:</span>
                 
                 <div class="o_timeline_legend_item">
                   <div class="o_timeline_legend_color booking"></div>
-                  <span class="o_timeline_legend_text">Booked</span>
+                  <span>Booked</span>
                 </div>
                 
                 <div class="o_timeline_legend_item">
                   <div class="o_timeline_legend_color cleaning"></div>
-                  <span class="o_timeline_legend_text">Cleaning</span>
+                  <span>Cleaning</span>
                 </div>
                 
                 <div class="o_timeline_legend_item">
                   <div class="o_timeline_legend_color maintenance"></div>
-                  <span class="o_timeline_legend_text">Maintenance</span>
-                </div>
-                
-                <div class="o_timeline_legend_item">
-                  <div class="o_timeline_legend_color day_use"></div>
-                  <span class="o_timeline_legend_text">Day Use</span>
+                  <span>Maintenance</span>
                 </div>
               </div>
-              
             </div>
             
           </div>

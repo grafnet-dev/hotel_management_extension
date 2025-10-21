@@ -120,7 +120,7 @@ export class RoomPlanning extends Component {
         Du ${act.start} au ${act.end}
         `,
     }));
-    console.log ("content  ", this.items.content);
+    console.log("content  ", this.items.content);
     console.log("🧩 Items générés :", this.items);
 
     const now = new Date();
@@ -132,11 +132,11 @@ export class RoomPlanning extends Component {
       max: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14),
       zoomMin: 1000 * 60 * 60, // 1h
       zoomMax: 1000 * 60 * 60 * 24 * 31, // 1 mois
-       
-  orientation: {
-    axis: "top",
-    item: "bottom",
-  },
+
+      orientation: {
+        axis: "top",
+        item: "bottom",
+      },
     };
 
     // Supprime les doublons d'id avant d'afficher la timeline
@@ -241,6 +241,9 @@ export class RoomPlanning extends Component {
       className: act.type,
       title: `<b>${act.room_name}</b><br>${act.content}<br>Du ${act.start} au ${act.end}`,
     }));
+
+    // 🧩 Très important : mettre à jour la référence locale
+    this.items = items;
 
     if (this.timeline) {
       this.timeline.setItems(new vis.DataSet(items));
