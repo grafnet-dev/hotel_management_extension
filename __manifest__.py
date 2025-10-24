@@ -31,8 +31,11 @@
             "https://unpkg.com/vis-timeline@latest/dist/vis-timeline-graph2d.min.css",
             "https://unpkg.com/vis-timeline@latest/dist/vis-timeline-graph2d.min.js",
             "hotel_management_extension/static/src/RoomPlanning/js/planning_room.js",
+            'hotel_management_extension/static/src/RoomPlanning/js/room_details_panel.js',
             "hotel_management_extension/static/src/RoomPlanning/xml/planning_room.xml",
+            'hotel_management_extension/static/src/RoomPlanning/xml/room_details_panel.xml',
             "hotel_management_extension/static/src/RoomPlanning/css/planning_room.css",
+            'hotel_management_extension/static/src/RoomPlanning/css/room_details_panel.css',
         ],
         "hotel_management_extension.assets_reception_standalone_app": [
             # Assets de base d'Odoo

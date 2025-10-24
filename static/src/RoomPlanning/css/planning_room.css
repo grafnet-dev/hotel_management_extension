@@ -189,21 +189,35 @@ html {
 }
 
 /* ============================================
-   🏨 HOTEL ROOM PLANNING TIMELINE - CSS
+   🏨 HOTEL ROOM PLANNING TIMELINE - CSS PREMIUM
+   Design inspiré de Mews, Clock PMS+ et Cloudbeds
    ============================================ */
 
-/* Variables pour la timeline */
+/* Variables pour la timeline - Palette Premium */
 :root {
-  --timeline-booking: #3b6f8f;
-  --timeline-cleaning: #f39c12;
-  --timeline-maintenance: #e74c3c;
-  --timeline-day-use: #f39c12;
-  --timeline-free-slot: #ecf0f1;
-  --timeline-today: #e74c3c;
-  --timeline-header-bg: #ffffff;
-  --timeline-border: #e0e0e0;
-  --timeline-row-bg: #fafafa;
-  --timeline-row-alt-bg: #ffffff;
+  /* Couleurs principales - Tons modernes et sophistiqués */
+  --timeline-booking: #5B7C99;        /* Bleu ardoise élégant */
+  --timeline-cleaning: #F8B339;       /* Ambre doré */
+  --timeline-maintenance: #E85D75;    /* Rose corail */
+  --timeline-day-use: #9B59B6;        /* Violet améthyste */
+  --timeline-free-slot: #E8EDF2;      /* Gris bleuté clair */
+  
+  /* Interface */
+  --timeline-today: #E85D75;          /* Rose corail pour TODAY */
+  --timeline-header-bg: #FFFFFF;
+  --timeline-border: #E1E8ED;         /* Bordures douces */
+  --timeline-row-bg: #F8FAFB;         /* Fond lignes alternées */
+  --timeline-row-alt-bg: #FFFFFF;
+  
+  /* Textes */
+  --timeline-text-primary: #1A2332;
+  --timeline-text-secondary: #6B7A8F;
+  --timeline-text-muted: #9BA8B7;
+  
+  /* Espacements Premium */
+  --timeline-row-height: 60px;        /* Lignes plus hautes */
+  --timeline-header-height: 72px;
+  --timeline-footer-height: 64px;
 }
 
 /* ============================================
@@ -213,7 +227,7 @@ html {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #F8FAFB 0%, #E8EDF2 100%);
 }
 
 .o_content {
@@ -227,31 +241,46 @@ html {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
-  margin: 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: #FFFFFF;
+  margin: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(26, 35, 50, 0.08), 0 2px 8px rgba(26, 35, 50, 0.04);
   overflow: hidden;
+  border: 1px solid rgba(225, 232, 237, 0.6);
 }
 
 /* ============================================
-   HEADER - En-tête
+   HEADER - En-tête Premium
    ============================================ */
 .o_room_planning_header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 20px 32px;
   background-color: var(--timeline-header-bg);
-  border-bottom: 1px solid var(--timeline-border);
-  gap: 16px;
+  border-bottom: 2px solid var(--timeline-border);
+  gap: 24px;
   flex-wrap: wrap;
+  min-height: var(--timeline-header-height);
+}
+
+.o_room_planning_header_left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .o_room_planning_header h2 {
   margin: 0;
-  color: #2c3e50;
-  flex-shrink: 0;
+  color: var(--timeline-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.o_room_planning_subtitle {
+  margin: 0;
+  color: var(--timeline-text-secondary);
+  font-size: 14px;
 }
 
 .o_room_planning_actions {
@@ -264,71 +293,103 @@ html {
 .o_room_planning_filters {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+}
+
+.o_filter_group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.o_filter_group label {
+  font-size: 12px;
+  color: var(--timeline-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
 }
 
 .o_room_planning_filters input,
 .o_room_planning_filters select {
-  padding: 8px 12px;
-  border: 1px solid var(--timeline-border);
-  border-radius: 4px;
-  background-color: #ffffff;
+  padding: 10px 14px;
+  border: 1.5px solid var(--timeline-border);
+  border-radius: 8px;
+  background-color: #FFFFFF;
   font-size: 14px;
-  color: #2c3e50;
+  color: var(--timeline-text-primary);
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  cursor: pointer;
+}
+
+.o_room_planning_filters input:hover,
+.o_room_planning_filters select:hover {
+  border-color: #B8C5D0;
 }
 
 .o_room_planning_filters input:focus,
 .o_room_planning_filters select:focus {
-  border-color: #3b6f8f;
+  border-color: var(--timeline-booking);
+  box-shadow: 0 0 0 3px rgba(91, 124, 153, 0.1);
 }
 
 .o_room_planning_filters input::placeholder {
-  color: #95a5a6;
+  color: var(--timeline-text-muted);
 }
 
 .o_planning_btn {
-  padding: 8px 16px;
+  padding: 11px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.o_planning_btn svg {
+  flex-shrink: 0;
 }
 
 .o_planning_btn_refresh {
-  background-color: #ffffff;
-  color: #2c3e50;
-  border: 1px solid var(--timeline-border);
+  background-color: #FFFFFF;
+  color: var(--timeline-text-primary);
+  border: 1.5px solid var(--timeline-border);
 }
 
 .o_planning_btn_refresh:hover {
-  background-color: #f8f9fa;
-  border-color: #bdc3c7;
+  background-color: #F8FAFB;
+  border-color: #B8C5D0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(26, 35, 50, 0.08);
 }
 
 .o_planning_btn_new {
-  background-color: #16a085;
-  color: #ffffff;
+  background: linear-gradient(135deg, #5B7C99 0%, #4A6B85 100%);
+  color: #FFFFFF;
   border: none;
+  box-shadow: 0 2px 8px rgba(91, 124, 153, 0.2);
 }
 
 .o_planning_btn_new:hover {
-  background-color: #138d75;
+  background: linear-gradient(135deg, #4A6B85 0%, #3A5A74 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 124, 153, 0.3);
 }
 
 /* ============================================
-   TIMELINE - Zone principale
+   TIMELINE - Zone principale avec hauteur augmentée
    ============================================ */
 #room-timeline {
   flex: 1;
   overflow: auto;
-  background-color: #ffffff;
+  background-color: #FFFFFF;
 }
 
 /* Styles pour vis-timeline */
@@ -337,46 +398,57 @@ html {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* En-tête de la timeline (dates) */
+/* En-tête de la timeline (dates) - Style Premium */
+.vis-time-axis {
+  background: linear-gradient(to bottom, #FAFBFC 0%, #F5F7FA 100%) !important;
+}
+
 .vis-time-axis .vis-text {
-  color: #2c3e50;
+  color: var(--timeline-text-primary);
   font-size: 13px;
-  padding: 8px 4px;
+  padding: 10px 6px;
 }
 
 .vis-time-axis .vis-grid.vis-minor {
-  border-color: var(--timeline-border);
+  border-color: rgba(225, 232, 237, 0.5);
 }
 
 .vis-time-axis .vis-grid.vis-major {
-  border-color: #bdc3c7;
+  border-color: var(--timeline-border);
+  border-width: 1.5px;
 }
 
-/* Ligne aujourd'hui (TODAY) */
+/* Ligne aujourd'hui (TODAY) - Plus visible */
 .vis-custom-time {
   background-color: var(--timeline-today);
   width: 2px !important;
+  z-index: 5;
 }
 
 .vis-custom-time > .vis-custom-time-marker {
-  background-color: var(--timeline-today);
-  color: #ffffff;
-  padding: 4px 8px;
-  border-radius: 3px;
+  background: linear-gradient(135deg, #E85D75 0%, #D94E67 100%);
+  color: #FFFFFF;
+  padding: 5px 10px;
+  border-radius: 6px;
   font-size: 11px;
+  box-shadow: 0 2px 8px rgba(232, 93, 117, 0.3);
 }
 
-/* Panel des groupes (noms des chambres) */
+/* Panel des groupes (noms des chambres) - Hauteur augmentée */
 .vis-label {
   border-bottom: 1px solid var(--timeline-border) !important;
-  background-color: #ffffff !important;
-  padding: 12px 16px !important;
-  min-width: 120px;
+  background-color: #FFFFFF !important;
+  padding: 0 24px !important;
+  min-width: 160px;
+  height: var(--timeline-row-height) !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .vis-label .vis-inner {
-  color: #2c3e50;
+  color: var(--timeline-text-primary);
   font-size: 14px;
+  line-height: 1.4;
 }
 
 .vis-labelset .vis-label:nth-child(even) {
@@ -387,16 +459,20 @@ html {
   background-color: var(--timeline-row-bg) !important;
 }
 
-/* Lignes de la grille */
+/* Lignes de la grille - Plus subtiles */
 .vis-grid.vis-vertical {
-  border-color: var(--timeline-border);
+  border-color: rgba(225, 232, 237, 0.5);
 }
 
 .vis-grid.vis-horizontal {
   border-color: var(--timeline-border);
 }
 
-/* Fond des rangées */
+/* Fond des rangées - Hauteur augmentée */
+.vis-background .vis-group {
+  height: var(--timeline-row-height) !important;
+}
+
 .vis-background .vis-group:nth-child(even) {
   background-color: var(--timeline-row-alt-bg);
 }
@@ -406,80 +482,96 @@ html {
 }
 
 /* ============================================
-   ITEMS - Barres de la timeline
+   ITEMS - Barres de la timeline Premium
    ============================================ */
 .vis-item {
-  border-radius: 4px;
+  border-radius: 8px;
   border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(26, 35, 50, 0.12), 0 1px 3px rgba(26, 35, 50, 0.06);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 44px !important;
+  top: 8px !important;
+  user-select: none;
 }
 
 .vis-item:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(26, 35, 50, 0.18), 0 2px 6px rgba(26, 35, 50, 0.1);
+  transform: translateY(-2px) scale(1.02);
+  z-index: 10;
 }
 
 .vis-item.vis-selected {
-  box-shadow: 0 0 0 2px #3b6f8f;
+  box-shadow: 0 0 0 3px rgba(91, 124, 153, 0.3), 0 4px 16px rgba(91, 124, 153, 0.2);
   z-index: 999;
 }
 
-/* Contenu des items */
+/* Contenu des items - Plus d'espace */
 .vis-item-content {
-  padding: 6px 10px;
-  color: #ffffff;
+  padding: 10px 14px;
+  color: #FFFFFF;
   font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
-/* Types d'activités */
-.vis-item.booking {
-  background-color: var(--timeline-booking);
+/* Types d'activités - Couleurs Premium */
+.vis-item.booking,
+.vis-item.stay_ongoing {
+  background: linear-gradient(135deg, #5B7C99 0%, #4E6D89 100%);
+}
+
+.vis-item.upcoming_stay {
+  background: linear-gradient(135deg, #3A86B8 0%, #2E6F9E 100%);
 }
 
 .vis-item.cleaning {
-  background-color: var(--timeline-cleaning);
+  background: linear-gradient(135deg, #F8B339 0%, #F5A623 100%);
 }
 
 .vis-item.maintenance {
-  background-color: var(--timeline-maintenance);
+  background: linear-gradient(135deg, #E85D75 0%, #E04E68 100%);
 }
 
 .vis-item.day_use {
-  background-color: var(--timeline-day-use);
+  background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
 }
 
 .vis-item.free_slot {
-  background-color: var(--timeline-free-slot);
-  border: 2px dashed #bdc3c7;
-  opacity: 0.6;
+  background-color: rgba(232, 237, 242, 0.5);
+  border: 2px dashed #B8C5D0;
+  opacity: 0.7;
+  box-shadow: none;
 }
 
 .vis-item.free_slot:hover {
   opacity: 1;
   border-style: solid;
-  border-color: #16a085;
+  border-color: var(--timeline-booking);
+  background-color: rgba(91, 124, 153, 0.08);
 }
 
 .vis-item.free_slot .vis-item-content {
-  color: #7f8c8d;
+  color: var(--timeline-text-secondary);
 }
 
 /* ============================================
-   FOOTER - Légendes
+   FOOTER - Légendes et Statistiques Premium
    ============================================ */
 .o_room_timeline_footer {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 12px 24px;
-  background-color: var(--timeline-header-bg);
-  border-top: 1px solid var(--timeline-border);
-  gap: 24px;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: linear-gradient(to top, #FAFBFC 0%, #FFFFFF 100%);
+  border-top: 2px solid var(--timeline-border);
+  gap: 32px;
+  min-height: var(--timeline-footer-height);
+  flex-wrap: wrap;
 }
 
 .o_room_timeline_footer h2 {
@@ -489,44 +581,101 @@ html {
 .o_timeline_legend {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   flex-wrap: wrap;
+}
+
+.o_timeline_legend_title {
+  font-size: 13px;
+  color: var(--timeline-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .o_timeline_legend_item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 13px;
-  color: #2c3e50;
+  color: var(--timeline-text-primary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.o_timeline_legend_item:hover {
+  background-color: rgba(91, 124, 153, 0.05);
 }
 
 .o_timeline_legend_color {
-  width: 20px;
-  height: 16px;
-  border-radius: 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  width: 24px;
+  height: 18px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(26, 35, 50, 0.1);
+  flex-shrink: 0;
 }
 
 .o_timeline_legend_color.booking {
-  background-color: var(--timeline-booking);
+  background: linear-gradient(135deg, #5B7C99 0%, #4E6D89 100%);
 }
 
 .o_timeline_legend_color.cleaning {
-  background-color: var(--timeline-cleaning);
+  background: linear-gradient(135deg, #F8B339 0%, #F5A623 100%);
 }
 
 .o_timeline_legend_color.maintenance {
-  background-color: var(--timeline-maintenance);
+  background: linear-gradient(135deg, #E85D75 0%, #E04E68 100%);
+}
+
+.o_timeline_legend_color.day_use {
+  background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+}
+
+/* Statistiques dans le footer */
+.o_timeline_stats {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-left: auto;
+}
+
+.o_timeline_stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.o_timeline_stat_value {
+  font-size: 20px;
+  color: var(--timeline-text-primary);
+}
+
+.o_timeline_stat_label {
+  font-size: 12px;
+  color: var(--timeline-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* ============================================
-   RESPONSIVE
+   RESPONSIVE - Mobile et tablette
    ============================================ */
+@media (max-width: 1024px) {
+  .o_room_planning_header {
+    padding: 16px 20px;
+  }
+  
+  .o_room_timeline_wrapper {
+    margin: 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .o_room_planning_header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
 
   .o_room_planning_actions,
@@ -537,40 +686,619 @@ html {
   .o_planning_btn {
     flex: 1;
   }
+  
+  .o_filter_group {
+    flex: 1;
+    min-width: 140px;
+  }
+  
+  .o_timeline_stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+  
+  .o_room_timeline_footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 }
 
 /* ============================================
-   TOOLTIP personnalisé pour vis-timeline
+   TOOLTIP personnalisé Premium pour vis-timeline
    ============================================ */
 .vis-tooltip {
-  background-color: #2c3e50 !important;
-  color: #ffffff !important;
+  background: linear-gradient(135deg, #1A2332 0%, #2A3444 100%) !important;
+  color: #FFFFFF !important;
   border: none !important;
-  border-radius: 6px !important;
-  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
   font-size: 13px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 8px 24px rgba(26, 35, 50, 0.3), 0 2px 8px rgba(26, 35, 50, 0.2) !important;
   line-height: 1.6 !important;
-  max-width: 300px;
+  max-width: 320px;
+  backdrop-filter: blur(10px);
 }
 
 /* ============================================
-   SCROLLBAR personnalisée
+   SCROLLBAR personnalisée Premium
    ============================================ */
 #room-timeline::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
 
 #room-timeline::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #F5F7FA;
+  border-radius: 6px;
 }
 
 #room-timeline::-webkit-scrollbar-thumb {
-  background: #bdc3c7;
-  border-radius: 5px;
+  background: linear-gradient(135deg, #B8C5D0 0%, #9BA8B7 100%);
+  border-radius: 6px;
+  border: 2px solid #F5F7FA;
 }
 
 #room-timeline::-webkit-scrollbar-thumb:hover {
-  background: #95a5a6;
+  background: linear-gradient(135deg, #9BA8B7 0%, #8A98A9 100%);
+}
+
+#room-timeline::-webkit-scrollbar-corner {
+  background: #F5F7FA;
+}
+
+/* ============================================
+   DEMO TIMELINE - Styles pour la prévisualisation
+   ============================================ */
+.o_timeline_demo_container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background-color: #FFFFFF;
+}
+
+.o_timeline_demo_sidebar {
+  width: 180px;
+  border-right: 2px solid var(--timeline-border);
+  background: linear-gradient(to right, #FAFBFC 0%, #F8F9FA 100%);
+  flex-shrink: 0;
+}
+
+.o_timeline_demo_row {
+  height: var(--timeline-row-height);
+  border-bottom: 1px solid var(--timeline-border);
+  display: flex;
+  align-items: center;
+}
+
+.o_timeline_demo_row:nth-child(even) {
+  background-color: var(--timeline-row-alt-bg);
+}
+
+.o_timeline_demo_row:nth-child(odd) {
+  background-color: var(--timeline-row-bg);
+}
+
+.o_timeline_demo_label {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.o_timeline_demo_room_name {
+  color: var(--timeline-text-primary);
+  font-size: 14px;
+}
+
+.o_timeline_demo_room_type {
+  color: var(--timeline-text-secondary);
+  font-size: 12px;
+}
+
+.o_timeline_demo_content {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.o_timeline_demo_header {
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 2px solid var(--timeline-border);
+  background: linear-gradient(to bottom, #FAFBFC 0%, #F5F7FA 100%);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.o_timeline_demo_day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--timeline-text-primary);
+  font-size: 13px;
+  border-right: 1px solid rgba(225, 232, 237, 0.5);
+}
+
+.o_timeline_demo_grid {
+  position: relative;
+}
+
+.o_timeline_demo_grid_row {
+  height: var(--timeline-row-height);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--timeline-border);
+  position: relative;
+}
+
+.o_timeline_demo_grid_row:nth-child(even) {
+  background-color: var(--timeline-row-alt-bg);
+}
+
+.o_timeline_demo_grid_row:nth-child(odd) {
+  background-color: var(--timeline-row-bg);
+}
+
+.o_timeline_demo_item {
+  position: relative;
+  margin: 8px 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(26, 35, 50, 0.12), 0 1px 3px rgba(26, 35, 50, 0.06);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  user-select: none;
+}
+
+.o_timeline_demo_item:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 16px rgba(26, 35, 50, 0.18), 0 2px 6px rgba(26, 35, 50, 0.1);
+  z-index: 10;
+}
+
+.o_timeline_demo_item.booking {
+  background: linear-gradient(135deg, #5B7C99 0%, #4E6D89 100%);
+}
+
+.o_timeline_demo_item.cleaning {
+  background: linear-gradient(135deg, #F8B339 0%, #F5A623 100%);
+}
+
+.o_timeline_demo_item.maintenance {
+  background: linear-gradient(135deg, #E85D75 0%, #E04E68 100%);
+}
+
+.o_timeline_demo_item_content {
+  padding: 10px 14px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  justify-content: center;
+}
+
+.o_timeline_demo_item_content span:first-child {
+  font-size: 13px;
+}
+
+.o_timeline_demo_item_meta {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.o_timeline_demo_today_line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--timeline-today);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.o_timeline_demo_today_line::before {
+  content: 'AUJOURD\'HUI';
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #E85D75 0%, #D94E67 100%);
+  color: #FFFFFF;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(232, 93, 117, 0.3);
+  white-space: nowrap;
+}
+
+/* ============================================
+   PANNEAU DE DÉTAILS PREMIUM (Room Details Panel)
+   Design inspiré des PMS modernes (Mews, Cloudbeds)
+   ============================================ */
+
+/* Overlay semi-transparent pour le fond */
+.room-details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 35, 50, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Panneau principal - Slide-in depuis la droite */
+.room-details-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 480px;
+  max-width: 90vw;
+  background: #FFFFFF;
+  box-shadow: -4px 0 32px rgba(26, 35, 50, 0.15), -2px 0 8px rgba(26, 35, 50, 0.1);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Header du panneau */
+.room-details-panel .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #5B7C99 0%, #4E6D89 100%);
+  color: #FFFFFF;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.room-details-panel .header h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #FFFFFF;
+}
+
+.room-details-panel .header h3::before {
+  content: '🏨';
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.room-details-panel .header .close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.room-details-panel .header .close:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+/* Body du panneau avec scroll */
+.room-details-panel .body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  background: #FAFBFC;
+}
+
+.room-details-panel .body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.room-details-panel .body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.room-details-panel .body::-webkit-scrollbar-thumb {
+  background: #D1D8E0;
+  border-radius: 4px;
+}
+
+.room-details-panel .body::-webkit-scrollbar-thumb:hover {
+  background: #B8C5D0;
+}
+
+/* Section d'information */
+.room-details-section {
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(225, 232, 237, 0.6);
+  box-shadow: 0 2px 8px rgba(26, 35, 50, 0.04);
+}
+
+.room-details-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Badge de type d'activité */
+.activity-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(26, 35, 50, 0.08);
+}
+
+.activity-type-badge.stay_ongoing {
+  background: linear-gradient(135deg, #5B7C99 0%, #4E6D89 100%);
+  color: #FFFFFF;
+}
+
+.activity-type-badge.upcoming_stay {
+  background: linear-gradient(135deg, #3A86B8 0%, #2E6F9E 100%);
+  color: #FFFFFF;
+}
+
+.activity-type-badge.cleaning {
+  background: linear-gradient(135deg, #F8B339 0%, #F5A623 100%);
+  color: #FFFFFF;
+}
+
+.activity-type-badge.maintenance {
+  background: linear-gradient(135deg, #E85D75 0%, #E04E68 100%);
+  color: #FFFFFF;
+}
+
+.activity-type-badge.day_use {
+  background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+  color: #FFFFFF;
+}
+
+.activity-type-badge.free_slot {
+  background: #E8EDF2;
+  color: var(--timeline-text-secondary);
+  border: 1.5px dashed #B8C5D0;
+}
+
+/* Lignes d'information */
+.room-details-panel .body p {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--timeline-text-primary);
+}
+
+.room-details-panel .body p:last-child {
+  margin-bottom: 0;
+}
+
+.room-details-panel .body p b {
+  min-width: 100px;
+  color: var(--timeline-text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Icônes pour les informations */
+.info-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(91, 124, 153, 0.1);
+  border-radius: 6px;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Dates stylisées */
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(91, 124, 153, 0.06) 0%, rgba(91, 124, 153, 0.02) 100%);
+  border-radius: 10px;
+  border-left: 4px solid #5B7C99;
+  margin-bottom: 20px;
+}
+
+.date-range .date-item {
+  flex: 1;
+}
+
+.date-range .date-label {
+  font-size: 11px;
+  color: var(--timeline-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.date-range .date-value {
+  font-size: 15px;
+  color: var(--timeline-text-primary);
+}
+
+.date-range .separator {
+  color: var(--timeline-text-muted);
+  font-size: 18px;
+}
+
+/* Footer avec boutons d'action */
+.room-details-panel .footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 28px;
+  background: #FFFFFF;
+  border-top: 2px solid var(--timeline-border);
+  flex-shrink: 0;
+}
+
+.room-details-panel .footer .btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(26, 35, 50, 0.1);
+}
+
+.room-details-panel .footer .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 35, 50, 0.15);
+}
+
+.room-details-panel .footer .btn:active {
+  transform: translateY(0);
+}
+
+.room-details-panel .footer .btn-primary {
+  background: linear-gradient(135deg, #5B7C99 0%, #4A6B85 100%);
+  color: #FFFFFF;
+}
+
+.room-details-panel .footer .btn-primary:hover {
+  background: linear-gradient(135deg, #4A6B85 0%, #3A5A74 100%);
+}
+
+.room-details-panel .footer .btn-secondary {
+  background: #FFFFFF;
+  color: var(--timeline-text-primary);
+  border: 1.5px solid var(--timeline-border);
+}
+
+.room-details-panel .footer .btn-secondary:hover {
+  background: #F8FAFB;
+  border-color: #B8C5D0;
+}
+
+/* Icônes dans les boutons */
+.room-details-panel .footer .btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+  .room-details-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .room-details-panel .header,
+  .room-details-panel .body,
+  .room-details-panel .footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .room-details-panel .footer {
+    flex-direction: column;
+  }
+
+  .date-range {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .date-range .separator {
+    transform: rotate(90deg);
+  }
+}
+
+/* États de chargement */
+.room-details-panel.loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.room-details-panel.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(91, 124, 153, 0.2);
+  border-top-color: #5B7C99;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* Styles pour les légendes supplémentaires */
+.o_timeline_legend_color.stay_ongoing {
+  background: linear-gradient(135deg, #5B7C99 0%, #4E6D89 100%);
+}
+
+.o_timeline_legend_color.upcoming_stay {
+  background: linear-gradient(135deg, #3A86B8 0%, #2E6F9E 100%);
+}
+
+.o_timeline_legend_color.free_slot {
+  background: #E8EDF2;
+  border: 2px dashed #B8C5D0;
 }

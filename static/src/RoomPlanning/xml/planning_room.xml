@@ -4,78 +4,87 @@
     <div class="o_action o_view_controller o_room_planning">
       <div class="o_content">
           <div class="o_room_timeline_wrapper">
-            
-            <!-- ========================================
-                 HEADER - En-tête avec titre, boutons et filtres
-                 ======================================== -->
-            <div class="o_room_planning_header">
-              <!-- Titre -->
-              <h2>Hotel Room Planning</h2>
-              
-              <!-- Filtres -->
-              <div class="o_room_planning_filters">
-                <select>
-                  <option>All Types</option>
-                  <option>Booking</option>
-                  <option>Cleaning</option>
-                  <option>Maintenance</option>
-                </select>
-                
-                <select>
-                  <option>All Status</option>
-                  <option>Confirmed</option>
-                  <option>Pending</option>
-                  <option>Cancelled</option>
-                </select>
-                
-                <select>
-                  <option>16 Days</option>
-                  <option>7 Days</option>
-                  <option>30 Days</option>
-                </select>
-              </div>
-              
-              <!-- Actions (boutons) -->
-              <div class="o_room_planning_actions">
-                <button class="o_planning_btn o_planning_btn_refresh" t-on-click="refreshTimeline">
-                  <span>↻</span> Refresh
-                </button>
-                <button class="o_planning_btn o_planning_btn_new" t-on-click="onNewBooking">
-                  + New Booking
-                </button>
-              </div>
-            </div>
-            
-            <!-- ========================================
+
+          <!-- ========================================
+     HEADER - En-tête moderne style PMS
+     ======================================== -->
+<div class="o_room_planning_header">
+  <!-- Titre avec icône -->
+  <div class="o_header_title">
+    <div class="o_title_icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <h2>Hotel Room Planning</h2>
+      <p class="o_header_subtitle">Gestion des réservations et disponibilités</p>
+    </div>
+  </div>
+
+  <!-- Actions (boutons) -->
+  <div class="o_room_planning_actions">
+    <button class="o_planning_btn o_planning_btn_refresh" t-on-click="refreshTimeline">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M21.5 2V8M21.5 8H16M21.5 8L18 4.5C16.7429 3.24291 15.1767 2.35559 13.4693 1.93772C11.7618 1.51985 9.97847 1.58884 8.30903 2.13636C6.63959 2.68388 5.14921 3.68868 4.00462 5.03878C2.86002 6.38887 2.10387 8.02652 1.81876 9.77329" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2.5 22V16M2.5 16H8M2.5 16L6 19.5C7.25713 20.7571 8.82331 21.6444 10.5307 22.0623C12.2382 22.4802 14.0215 22.4112 15.691 21.8636C17.3604 21.3161 18.8508 20.3113 19.9954 18.9612C21.14 17.6111 21.8961 15.9735 22.1812 14.2267" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Actualiser</span>
+    </button>
+  </div>
+</div>
+
+          <!-- ========================================
                  TIMELINE - Zone principale
                  ======================================== -->
             <div id="room-timeline">
-              <!-- La timeline vis.js sera injectée ici -->
+            <!-- La timeline vis.js sera injectée ici -->
             </div>
-            
-            <!-- ========================================
+            <t t-if="state.selectedActivity">
+      <RoomDetailsPanel activity="state.selectedActivity" close.bind="closePanel"/>
+    </t>
+
+          <!-- ========================================
                  FOOTER - Légendes
                  ======================================== -->
             <div class="o_room_timeline_footer">
-              <div class="o_timeline_legend">
-                <span style="margin-right: 8px;">Legend:</span>
-                
-                <div class="o_timeline_legend_item">
-                  <div class="o_timeline_legend_color booking"></div>
-                  <span>Booked</span>
-                </div>
-                
-                <div class="o_timeline_legend_item">
-                  <div class="o_timeline_legend_color cleaning"></div>
-                  <span>Cleaning</span>
-                </div>
-                
-                <div class="o_timeline_legend_item">
-                  <div class="o_timeline_legend_color maintenance"></div>
-                  <span>Maintenance</span>
-                </div>
-              </div>
-            </div>
+  <div class="o_timeline_legend">
+    <span style="margin-right: 8px;">Legend:</span>
+
+
+    <div class="o_timeline_legend_item">
+      <div class="o_timeline_legend_color stay_ongoing"></div>
+      <span>Séjour en Cours</span>
+    </div>
+
+    <div class="o_timeline_legend_item">
+      <div class="o_timeline_legend_color upcoming_stay"></div>
+      <span>Séjour à venir </span>
+    </div>
+
+    <div class="o_timeline_legend_item">
+      <div class="o_timeline_legend_color cleaning"></div>
+      <span>Nettoyage programmé</span>
+    </div>
+
+    <div class="o_timeline_legend_item">
+      <div class="o_timeline_legend_color maintenance"></div>
+      <span>Maintenance</span>
+    </div>
+
+    <div class="o_timeline_legend_item">
+      <div class="o_timeline_legend_color free_slot"></div>
+      <span>Créneau libre</span>
+    </div>
+
+    <div class="o_timeline_legend_item">
+      <div class="o_timeline_legend_color day_use"></div>
+      <span>Court Séjour</span>
+    </div>
+  </div>
+</div>
+
             
           </div>
       </div>

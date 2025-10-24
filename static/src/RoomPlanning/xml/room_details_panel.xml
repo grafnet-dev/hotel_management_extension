@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="rooms_planning.details_panel">
+    <!-- Overlay pour fermer en cliquant à l'extérieur -->
+    <div class="room-details-overlay" t-on-click="props.close"></div>
+    
+    <!-- Panneau principal -->
+    <div class="room-details-panel">
+      
+      <!-- Header avec nom de chambre et bouton fermer -->
+      <div class="header">
+        <h3><t t-esc="props.activity.room_name"/></h3>
+        <button class="close" t-on-click="props.close">✖</button>
+      </div>
+
+      <!-- Body avec informations détaillées -->
+      <div class="body">
+        
+        <!-- Badge de type d'activité -->
+        <div t-attf-class="activity-type-badge #{props.activity.type}">
+          <span><t t-esc="getTypeIcon(props.activity.type)"/></span>
+          <span><t t-esc="getTypeName(props.activity.type)"/></span>
+        </div>
+
+        <!-- Plage de dates -->
+        <div class="date-range">
+          <div class="date-item">
+            <div class="date-label">Début</div>
+            <div class="date-value">
+              📅 <t t-esc="formatDate(props.activity.start)"/>
+            </div>
+          </div>
+          <div class="separator">→</div>
+          <div class="date-item">
+            <div class="date-label">Fin</div>
+            <div class="date-value">
+              📅 <t t-esc="formatDate(props.activity.end)"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section d'informations -->
+        <div class="room-details-section">
+          <p>
+            <span class="info-icon">🏨</span>
+            <b>Chambre</b>
+            <span><t t-esc="props.activity.room_name"/></span>
+          </p>
+          
+          <p>
+            <span class="info-icon">📋</span>
+            <b>Type</b>
+            <span><t t-esc="getTypeName(props.activity.type)"/></span>
+          </p>
+          
+          <p t-if="props.activity.label">
+            <span class="info-icon">📝</span>
+            <b>Description</b>
+            <span><t t-esc="props.activity.label"/></span>
+          </p>
+          
+          <p t-if="props.activity.guest_name">
+            <span class="info-icon">👤</span>
+            <b>Client</b>
+            <span><t t-esc="props.activity.guest_name"/></span>
+          </p>
+          
+          <p t-if="props.activity.duration">
+            <span class="info-icon">⏱️</span>
+            <b>Durée</b>
+            <span><t t-esc="props.activity.duration"/> jours</span>
+          </p>
+          
+          <p t-if="props.activity.status">
+            <span class="info-icon">🔔</span>
+            <b>Statut</b>
+            <span><t t-esc="props.activity.status"/></span>
+          </p>
+        </div>
+
+        <!-- Section notes (optionnelle) -->
+        <div class="room-details-section" t-if="props.activity.notes">
+          <p>
+            <span class="info-icon">💬</span>
+            <b>Notes</b>
+            <span><t t-esc="props.activity.notes"/></span>
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Footer avec boutons d'action -->
+      <div class="footer">
+        <button class="btn btn-secondary" t-on-click="props.close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Fermer
+        </button>
+        
+        <button class="btn btn-secondary" t-on-click="onEditReservation" t-if="props.activity.type === 'upcoming_stay'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Éditer
+        </button>
+        
+        <button class="btn btn-primary" t-on-click="onViewDetails" t-if="props.activity.type === 'upcoming_stay'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          Voir détails
+        </button>
+      </div>
+
+    </div>
+  </t>
+</templates>
