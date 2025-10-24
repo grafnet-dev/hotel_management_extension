@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+   
+    
+    <record id="project_task_form_hotel_extension" model="ir.ui.view">
+        <field name="name">project.task.form.hotel</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[@name='description']" position="after">
+                <page string="Hôtel" name="hotel" attrs="{'invisible': [('x_room_id', '=', False)]}">
+                    <group>
+                        <group string="Informations Hôtel">
+                            <field name="x_room_id"/>
+                            <field name="x_stay_id"/>
+                            <field name="x_housekeeping_id"/>
+                        </group>
+                        
+                        <group string="Timing Réel">
+                            <field name="x_start_datetime"/>
+                            <field name="x_end_datetime"/>
+                            <field name="x_inspected"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+  
+    
+    <record id="project_task_list_hotel_extension" model="ir.ui.view">
+        <field name="name">project.task.list.hotel</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_list2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="x_room_id" optional="hide"/>
+                <field name="x_housekeeping_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+   
+    
+    <record id="project_task_kanban_housekeeping" model="ir.ui.view">
+        <field name="name">project.task.kanban.housekeeping</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" records_draggable="true">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="x_room_id"/>
+                <field name="assigned_to_id"/>
+                <field name="stage_id"/>
+                
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <strong><t t-esc="record.name.value"/></strong>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <p t-if="record.x_room_id.value">
+                                    <strong>Chambre:</strong> <t t-esc="record.x_room_id.value"/>
+                                </p>
+                                <p t-if="record.assigned_to_id.value">
+                                    <strong>Assigné:</strong> <t t-esc="record.assigned_to_id.value"/>
+                                </p>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+</odoo>

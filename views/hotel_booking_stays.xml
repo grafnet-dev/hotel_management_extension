@@ -80,22 +80,25 @@
                         class="btn-primary"
                         invisible="state != 'ongoing'" /-->
 
-                    <button name="action_create_and_open_invoice"
-                        string="Créer et ouvrir la facture"
-                        type="object"
-                        class="btn-secondary"
-                        invisible="state != 'ongoing'" />
-                    <button name="action_view_invoice"
-                        string="Voir la facture"
-                        type="object"
-                        class="btn-outline-secondary"
-                         />
+                    <!--
+<button name="action_create_and_open_invoice" 
+        string="Créer et ouvrir la facture" 
+        type="object" 
+        class="btn-secondary" 
+        invisible="state != 'ongoing'"/>
+<button name="action_view_invoice" 
+        string="Voir la facture" 
+        type="object" 
+        class="btn-outline-secondary"/>
+-->
 
 
-                    <button name="action_cancel" type="object"
-                        string="Annuler"
-                        invisible="not (state in ['pending','ongoing'])"
-                        confirm="Êtes-vous sûr de vouloir annuler ce séjour ?" />
+                    <!--
+<button name="action_cancel" type="object"
+        string="Annuler"
+        invisible="not (state in ['pending','ongoing'])"
+        confirm="Êtes-vous sûr de vouloir annuler ce séjour ?" />
+-->
                 </header>
 
                 <sheet>

@@ -13,7 +13,7 @@
     "category": "Uncategorized",
     "version": "0.1",
     # any module necessary for this one to work correctly
-    "depends": ["hotel_management_odoo", "base", "web", "website"],
+    "depends": ["hotel_management_odoo", "base", "web", "website", "project"],
     "assets": {
         "web.assets_backend": [
             "hotel_management_extension/static/src/styles/room_list.css",
@@ -49,6 +49,7 @@
     },
     # always loaded
     "data": [
+        "security/housekeeping_security.xml",
         "security/ir.model.access.csv",
         "views/hotel_room_type_views.xml",
         "views/hotel_room_views.xml",
@@ -72,7 +73,10 @@
         "views/views.xml",
         "views/templates.xml",
         "data/hotel_metric_cron.xml",
-        "data/ir_sequence_data.xml"
+        "data/ir_sequence_data.xml",
+        "views/hotel_housekeeping_views.xml",
+       
+       
       
     ],
     "demo": [

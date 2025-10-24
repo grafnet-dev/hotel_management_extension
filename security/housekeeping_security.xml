@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Groupe Housekeeping Manager -->
+        <record id="group_housekeeping_manager" model="res.groups">
+            <field name="name">Housekeeping Manager</field>
+            <field name="category_id" ref="base.module_category_services"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Groupe Housekeeping Agent -->
+        <record id="group_housekeeping_agent" model="res.groups">
+            <field name="name">Housekeeping Agent</field>
+            <field name="category_id" ref="base.module_category_services"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <!-- Règle d'accès : Les agents ne voient que leurs tâches assignées -->
+        <record id="housekeeping_task_agent_rule" model="ir.rule">
+            <field name="name">Housekeeping Agent: voir seulement ses tâches</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">[
+                ('project_id.name', '=', 'Nettoyage Hôtel'),
+                '|',
+                ('user_ids', 'in', [user.id]),
+                ('user_ids', '=', False)
+            ]</field>
+            <field name="groups" eval="[(4, ref('group_housekeeping_agent'))]"/>
+        </record>
+
+        <!-- Règle d'accès : Les managers voient toutes les tâches housekeeping -->
+        <record id="housekeeping_task_manager_rule" model="ir.rule">
+            <field name="name">Housekeeping Manager: voir toutes les tâches</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">[('project_id.name', '=', 'Nettoyage Hôtel')]</field>
+            <field name="groups" eval="[(4, ref('group_housekeeping_manager'))]"/>
+        </record>
+
+        <!-- Masquer le menu Project pour les agents housekeeping -->
+        <record id="project.menu_main_pm" model="ir.ui.menu">
+            <field name="groups_id" eval="[(3, ref('group_housekeeping_agent'))]"/>
+        </record>
+    </data>
+</odoo>

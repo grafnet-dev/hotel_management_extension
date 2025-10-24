@@ -476,13 +476,91 @@ class HotelBookingStayS(models.Model):
             self.id,
             self.financial_summary_details,
         )
+        self._trigger_housekeeping_workflow()
 
         # Étape 2 : Générer la facture PDF
         return self.env.ref(
             "hotel_management_extension.action_report_hotel_stay_invoice"
         ).report_action(self)
+    
+    def _trigger_housekeeping_workflow(self):
+        """
+        Déclenche le workflow housekeeping après checkout :
+        1. Marque la chambre comme 'to_clean'
+        2. Crée un enregistrement hotel.housekeeping
+        3. Crée automatiquement la tâche project.task
+        """
+        self.ensure_one()
+        _logger.info(
+            "🧹 [HOUSEKEEPING] Déclenchement workflow pour stay=%s, room=%s",
+            self.id,
+            self.room_id.name if self.room_id else "N/A",
+        )
 
-    def action_cancel(self):
+        # 1️⃣ Marquer la chambre comme "à nettoyer"
+        if not self.room_id:
+            _logger.warning("⚠️ [HOUSEKEEPING] Aucune chambre associée au séjour %s", self.id)
+            return
+
+        try:
+            self.room_id.state = "to_clean"
+            _logger.info("🔴 [HOUSEKEEPING] Chambre %s marquée TO_CLEAN", self.room_id.name)
+        except Exception as e:
+            _logger.exception("❌ Erreur lors du marquage de la chambre TO_CLEAN pour stay=%s: %s", self.id, e)
+            return
+
+        # 2️⃣ Créer l'enregistrement hotel.housekeeping
+        try:
+            housekeeping_vals = {
+                'stay_id': self.id,
+                'room_id': self.room_id.id,
+                'planned_hours': 0.5,  # 30 minutes par défaut
+                'state': 'waiting',
+            }
+
+            housekeeping = self.env['hotel.housekeeping'].create(housekeeping_vals)
+            _logger.info("📋 [HOUSEKEEPING] Enregistrement créé : ID=%s", housekeeping.id)
+
+            # 3️⃣ Créer automatiquement la tâche
+            task = housekeeping.create_housekeeping_task()
+
+            # 4️⃣ Notification (optionnel)
+            self._notify_housekeeping_followers(task)
+
+            return housekeeping
+
+        except Exception as e:
+            _logger.exception("❌ Erreur lors de la création housekeeping pour stay=%s: %s", self.id, e)
+
+
+    def _notify_housekeeping_followers(self, task):  
+        """Abonne les responsables housekeeping à la tâche"""
+        if not task:
+            return
+        
+        try:
+            # Abonner le responsable du projet si défini
+            if task.project_id and task.project_id.user_id:
+                task.message_subscribe(partner_ids=[task.project_id.user_id.partner_id.id])
+            
+            # Message de notification
+            guest_name = self.occupant_names if hasattr(self, 'occupant_names') and self.occupant_names else "Client"
+            task.message_post(
+                body=f"🧹 Nouvelle tâche de nettoyage suite au checkout de <b>{guest_name}</b>",
+                message_type="notification",
+            )
+            _logger.info("📧 [HOUSEKEEPING] Notification envoyée pour tâche=%s", task.id)
+        except Exception as e:
+            _logger.exception("⚠️ Erreur lors de l'envoi de notification: %s", e)
+
+
+       
+
+
+
+    def action_cancel(self):  
+        """Annule le séjour"""
+        self.ensure_one()
         self.state = STAY_STATES["CANCELLED"]
 
     def _set_default_uom_id(self):
@@ -505,6 +583,20 @@ class HotelBookingStayS(models.Model):
                     ),
                 }
             }
+        
+
+    @api.depends('early_checkin_requested', 'late_checkout_requested')
+    def _compute_request_type(self):
+        """Calcule le type de demande horaire"""
+        for record in self:
+            if record.early_checkin_requested and record.late_checkout_requested:
+                record.request_type = "early"  # Prioriser early si les 2
+            elif record.early_checkin_requested:
+                record.request_type = "early"
+            elif record.late_checkout_requested:
+                record.request_type = "late"
+            else:
+                record.request_type = False    
 
     # calcul automatique de la durée (methode à adapter plus tard)
     @api.depends("planned_checkin_date", "planned_checkout_date")

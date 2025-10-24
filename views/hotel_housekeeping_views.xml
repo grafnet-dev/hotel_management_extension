@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vue liste des tâches housekeeping -->
+    <record id="view_housekeeping_task_list" model="ir.ui.view">
+        <field name="name">housekeeping.task.list</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <list string="Tâches de nettoyage">
+                <field name="name"/>
+                <field name="x_room_id"/>
+                <field name="x_stay_id"/>
+                <field name="user_ids" widget="many2many_avatar_user"/>
+                <field name="stage_id"/>
+                
+            </list>
+        </field>
+    </record>
+
+    <!-- Vue kanban des tâches housekeeping -->
+    <record id="view_housekeeping_task_kanban" model="ir.ui.view">
+        <field name="name">housekeeping.task.kanban</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="x_room_id"/>
+                <field name="stage_id"/>
+                <field name="color"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="x_room_id"/>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <field name="user_ids" widget="many2many_avatar_user"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Vue formulaire des tâches housekeeping -->
+    <record id="view_housekeeping_task_form" model="ir.ui.view">
+        <field name="name">housekeeping.task.form</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <form string="Tâche de nettoyage">
+                <header>
+                    <button name="action_start_cleaning" 
+                            string="Démarrer le nettoyage" 
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="stage_id.name != 'À faire'"/>
+                    <button name="action_inspection_ok" 
+                            string="✓ Inspection OK" 
+                            type="object" 
+                            class="oe_highlight"
+                            invisible="stage_id.name != 'Inspection'"/>
+                    <field name="stage_id" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="x_room_id"/>
+                            <field name="x_stay_id"/>
+                            <field name="user_ids" widget="many2many_avatar_user"/>
+                        </group>
+                        <group>
+                            
+                            <field name="x_start_datetime"/>
+                            <field name="x_end_datetime"/>
+                            <field name="x_inspected"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description"/>
+                        </page>
+                        <page string="Notes">
+                            <field name="x_notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action pour afficher les tâches housekeeping -->
+    <record id="action_housekeeping_tasks" model="ir.actions.act_window">
+        <field name="name">Tâches de nettoyage</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('project_id.name', '=', 'Nettoyage Hôtel')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune tâche de nettoyage
+            </p>
+            <p>
+                Les tâches sont créées automatiquement au checkout.
+            </p>
+        </field>
+    </record>
+
+    <!-- Vue liste hotel.housekeeping -->
+    <record id="view_hotel_housekeeping_list" model="ir.ui.view">
+        <field name="name">hotel.housekeeping.list</field>
+        <field name="model">hotel.housekeeping</field>
+        <field name="arch" type="xml">
+            <list string="Suivi Housekeeping" 
+                  decoration-danger="state=='waiting'" 
+                  decoration-warning="state=='in_progress'" 
+                  decoration-info="state=='inspection'" 
+                  decoration-success="state=='done'">
+                <field name="stay_id"/>
+                <field name="room_id"/>
+                <field name="state"/>
+                <field name="planned_hours" widget="float_time"/>
+                <field name="start_datetime"/>
+                <field name="end_datetime"/>
+                <field name="task_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_hotel_housekeeping_form" model="ir.ui.view">
+        <field name="name">hotel.housekeeping.form</field>
+        <field name="model">hotel.housekeeping</field>
+        <field name="arch" type="xml">
+            <form string="Housekeeping">
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="stay_id"/>
+                            <field name="room_id"/>
+                            <field name="task_id"/>
+                        </group>
+                        <group>
+                            <field name="planned_hours" widget="float_time"/>
+                            <field name="start_datetime"/>
+                            <field name="end_datetime"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_hotel_housekeeping" model="ir.actions.act_window">
+        <field name="name">Suivi Housekeeping</field>
+        <field name="res_model">hotel.housekeeping</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu principal Housekeeping -->
+    <menuitem id="menu_housekeeping_root"
+          name="Housekeeping"
+        
+          sequence="30"/>
+
+
+    <menuitem id="menu_housekeeping_tasks"
+              name="Tâches"
+              parent="menu_housekeeping_root"
+              action="action_housekeeping_tasks"
+              sequence="10"/>
+
+    <menuitem id="menu_hotel_housekeeping"
+              name="Suivi"
+              parent="menu_housekeeping_root"
+              action="action_hotel_housekeeping"
+              sequence="20"/>
+</odoo>

@@ -86,6 +86,12 @@ class HotelRoom(models.Model):
         string="Statut",
         default="available",
     )
+    state = fields.Selection([
+    ('available', 'Disponible'),
+    ('occupied', 'Occupée'),
+    ('to_clean', 'À nettoyer'),
+    ('cleaning', 'En nettoyage'),
+], string='État de nettoyage', default='available', required=True)
 
     # Champ dynamique pour compter les chambres disponibles par type
     available_count = fields.Integer(

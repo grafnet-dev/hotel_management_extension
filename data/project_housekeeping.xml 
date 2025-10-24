@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+   
+    
+    <!-- Projet Nettoyage Hôtel -->
+    <record id="project_housekeeping" model="project.project">
+        <field name="name">Nettoyage hôtel</field>
+        <field name="is_internal">True</field>
+        <field name="description">Tâches de nettoyage et housekeeping</field>
+    </record>
+
+    <!-- Stages du projet Nettoyage -->
+    <record id="project_stage_waiting" model="project.task.type">
+        <field name="name">À faire</field>
+        <field name="project_ids" eval="[(4, ref('project_housekeeping'))]"/>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="project_stage_in_progress" model="project.task.type">
+        <field name="name">En cours</field>
+        <field name="project_ids" eval="[(4, ref('project_housekeeping'))]"/>
+        <field name="sequence">2</field>
+    </record>
+
+    <record id="project_stage_inspection" model="project.task.type">
+        <field name="name">Inspection</field>
+        <field name="project_ids" eval="[(4, ref('project_housekeeping'))]"/>
+        <field name="sequence">3</field>
+    </record>
+
+    <record id="project_stage_done" model="project.task.type">
+        <field name="name">Terminé</field>
+        <field name="project_ids" eval="[(4, ref('project_housekeeping'))]"/>
+        <field name="sequence">4</field>
+        <field name="fold">True</field>
+    </record>
+
+    <!-- Projet Maintenance Hôtel -->
+    <record id="project_maintenance" model="project.project">
+        <field name="name">Maintenance hôtel</field>
+        <field name="is_internal">True</field>
+        <field name="description">Tâches de maintenance des chambres</field>
+    </record>
+
+    <!-- Stages du projet Maintenance -->
+    <record id="maintenance_stage_todo" model="project.task.type">
+        <field name="name">À faire</field>
+        <field name="project_ids" eval="[(4, ref('project_maintenance'))]"/>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="maintenance_stage_in_progress" model="project.task.type">
+        <field name="name">En cours</field>
+        <field name="project_ids" eval="[(4, ref('project_maintenance'))]"/>
+        <field name="sequence">2</field>
+    </record>
+
+    <record id="maintenance_stage_done" model="project.task.type">
+        <field name="name">Terminé</field>
+        <field name="project_ids" eval="[(4, ref('project_maintenance'))]"/>
+        <field name="sequence">3</field>
+        <field name="fold">True</field>
+    </record>
+
+</odoo>
