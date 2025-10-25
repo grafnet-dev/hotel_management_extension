@@ -251,6 +251,12 @@ class HotelRoomAvailabilityEngine(models.AbstractModel):
         for stay in existing_stays:
             stay_start = stay.actual_checkin_date
             stay_end = stay.actual_checkout_date
+            
+            # ⚠️ Ignore les séjours sans dates définies
+            if not stay_start or not stay_end:
+                _logger.debug("[CHECK] ⚠️ Stay %s ignoré : dates incomplètes (start=%s, end=%s)", stay.id, stay_start, stay_end)
+                continue
+
 
             stay_start_buffered = stay_start - buffer_duration
             stay_end_buffered = stay_end + buffer_duration
@@ -719,6 +725,7 @@ class HotelRoomAvailabilityEngine(models.AbstractModel):
                 duration_diff / 3600
             )
             return None
+        
         
         # RÈGLE 2: Vérifier les horaires valides SI définis
         if valid_time_slots:
