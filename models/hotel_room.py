@@ -8,7 +8,7 @@ class HotelRoom(models.Model):
     _inherit = "hotel.room"
     stay_ids = fields.One2many(
         "hotel.booking.stay",
-        "room_id",
+        "room_id", 
         string="Séjours associés",
         help="Liste des séjours ayant utilisé cette chambre",
     )
@@ -75,9 +75,10 @@ class HotelRoom(models.Model):
 
     # Champ statut ajouté
     status = fields.Selection(
-        selection_add=[
+        selection=[
             ("available", "Disponible"),
-            ("occupied", "Occupée"),
+            ("occupied", "Occupée"), 
+            ("to_clean", "À nettoyer"),
             ("cleaning", "En nettoyage"),
             ("maintenance", "En maintenance"),
             ("out_of_order", "Hors service"),
@@ -85,13 +86,9 @@ class HotelRoom(models.Model):
         ],
         string="Statut",
         default="available",
+        required=True
     )
-    state = fields.Selection([
-    ('available', 'Disponible'),
-    ('occupied', 'Occupée'),
-    ('to_clean', 'À nettoyer'),
-    ('cleaning', 'En nettoyage'),
-], string='État de nettoyage', default='available', required=True)
+    
 
     # Champ dynamique pour compter les chambres disponibles par type
     available_count = fields.Integer(

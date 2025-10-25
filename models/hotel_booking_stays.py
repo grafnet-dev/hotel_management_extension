@@ -465,102 +465,94 @@ class HotelBookingStayS(models.Model):
         self.state = STAY_STATES["ONGOING"]
 
     def action_checkout(self):
+        """Checkout avec gestion housekeeping - VERSION CORRIGÉE"""
         self.ensure_one()
-        _logger.info("➡️ [CHECKOUT] Début du process checkout pour stay=%s", self.id)
-
-        # Étape 1 : Passage en COMPLETED
+        
+        _logger.info("="*80)
+        _logger.info("🔥 [CHECKOUT] Début pour stay ID=%s", self.id)
+        _logger.info("   - Room: %s", self.room_id.name if self.room_id else 'AUCUNE')
+        _logger.info("   - State avant: %s", self.state)
+        
+        # Étape 1 : Marquer le séjour comme terminé
         self.state = STAY_STATES["COMPLETED"]
-        _logger.info("✅ [CHECKOUT] Stay=%s marqué COMPLETED", self.id)
-        _logger.info(
-            "[CHECKOUT] stay=%s | summary_before_report=%s",
-            self.id,
-            self.financial_summary_details,
-        )
-        self._trigger_housekeeping_workflow()
-
-        # Étape 2 : Générer la facture PDF
-        return self.env.ref(
-            "hotel_management_extension.action_report_hotel_stay_invoice"
-        ).report_action(self)
-    
-    def _trigger_housekeeping_workflow(self):
-        """
-        Déclenche le workflow housekeeping après checkout :
-        1. Marque la chambre comme 'to_clean'
-        2. Crée un enregistrement hotel.housekeeping
-        3. Crée automatiquement la tâche project.task
-        """
-        self.ensure_one()
-        _logger.info(
-            "🧹 [HOUSEKEEPING] Déclenchement workflow pour stay=%s, room=%s",
-            self.id,
-            self.room_id.name if self.room_id else "N/A",
-        )
-
-        # 1️⃣ Marquer la chambre comme "à nettoyer"
+        _logger.info("✅ [CHECKOUT] State changé en COMPLETED")
+        
+        # Étape 2 : Vérifier le modèle housekeeping
+        try:
+            HousekeepingModel = self.env['hotel.housekeeping']
+            _logger.info("✅ [CHECKOUT] Modèle hotel.housekeeping disponible")
+        except Exception as e:
+            _logger.error("❌ [CHECKOUT] Modèle hotel.housekeeping introuvable: %s", e)
+            raise UserError("Le module housekeeping n'est pas installé correctement")
+        
+        # Étape 3 : Vérifier la chambre
         if not self.room_id:
-            _logger.warning("⚠️ [HOUSEKEEPING] Aucune chambre associée au séjour %s", self.id)
-            return
-
-        try:
-            self.room_id.state = "to_clean"
-            _logger.info("🔴 [HOUSEKEEPING] Chambre %s marquée TO_CLEAN", self.room_id.name)
-        except Exception as e:
-            _logger.exception("❌ Erreur lors du marquage de la chambre TO_CLEAN pour stay=%s: %s", self.id, e)
-            return
-
-        # 2️⃣ Créer l'enregistrement hotel.housekeeping
-        try:
-            housekeeping_vals = {
-                'stay_id': self.id,
-                'room_id': self.room_id.id,
-                'planned_hours': 0.5,  # 30 minutes par défaut
-                'state': 'waiting',
-            }
-
-            housekeeping = self.env['hotel.housekeeping'].create(housekeeping_vals)
-            _logger.info("📋 [HOUSEKEEPING] Enregistrement créé : ID=%s", housekeeping.id)
-
-            # 3️⃣ Créer automatiquement la tâche
-            task = housekeeping.create_housekeeping_task()
-
-            # 4️⃣ Notification (optionnel)
-            self._notify_housekeeping_followers(task)
-
-            return housekeeping
-
-        except Exception as e:
-            _logger.exception("❌ Erreur lors de la création housekeeping pour stay=%s: %s", self.id, e)
-
-
-    def _notify_housekeeping_followers(self, task):  
-        """Abonne les responsables housekeeping à la tâche"""
-        if not task:
-            return
+            _logger.error("❌ [CHECKOUT] Aucune chambre associée au séjour %s", self.id)
+            raise UserError("Aucune chambre associée à ce séjour")
+        
+        _logger.info("✅ [CHECKOUT] Chambre: %s (ID: %s)", self.room_id.name, self.room_id.id)
+        
+        # Étape 4 : Créer le housekeeping
+        housekeeping_vals = {
+            'stay_id': self.id,
+            'room_id': self.room_id.id,
+            'planned_hours': 0.5,
+            'state': 'waiting',
+        }
+        
+        _logger.info("📝 [CHECKOUT] Création housekeeping avec vals: %s", housekeeping_vals)
         
         try:
-            # Abonner le responsable du projet si défini
-            if task.project_id and task.project_id.user_id:
-                task.message_subscribe(partner_ids=[task.project_id.user_id.partner_id.id])
+            housekeeping = HousekeepingModel.create(housekeeping_vals)
+            _logger.info("✅ [CHECKOUT] Housekeeping créé: ID=%s", housekeeping.id)
+            _logger.info("   - stay_id: %s", housekeeping.stay_id.id)
+            _logger.info("   - room_id: %s", housekeeping.room_id.id)
+            _logger.info("   - state: %s", housekeeping.state)
+            _logger.info("   - task_id: %s", housekeeping.task_id.id if housekeeping.task_id else 'AUCUNE TÂCHE')
             
-            # Message de notification
-            guest_name = self.occupant_names if hasattr(self, 'occupant_names') and self.occupant_names else "Client"
-            task.message_post(
-                body=f"🧹 Nouvelle tâche de nettoyage suite au checkout de <b>{guest_name}</b>",
-                message_type="notification",
-            )
-            _logger.info("📧 [HOUSEKEEPING] Notification envoyée pour tâche=%s", task.id)
+            # CORRECTION : Utiliser invalidate_recordset au lieu de refresh
+            housekeeping.invalidate_recordset()
+            
+            # Re-vérifier après invalidation
+            _logger.info("📊 [CHECKOUT] Après invalidation:")
+            _logger.info("   - task_id: %s", housekeeping.task_id.id if housekeeping.task_id else 'TOUJOURS AUCUNE TÂCHE')
+            
+            # Si pas de tâche, forcer la création
+            if not housekeeping.task_id:
+                _logger.warning("⚠️ [CHECKOUT] Pas de tâche auto-créée, appel manuel...")
+                if hasattr(housekeeping, 'create_housekeeping_task'):
+                    task = housekeeping.create_housekeeping_task()
+                    if task:
+                        _logger.info("✅ [CHECKOUT] Tâche créée manuellement: ID=%s", task.id)
+                    else:
+                        _logger.error("❌ [CHECKOUT] create_housekeeping_task a retourné None")
+                else:
+                    _logger.error("❌ [CHECKOUT] Méthode create_housekeeping_task inexistante!")
+            
         except Exception as e:
-            _logger.exception("⚠️ Erreur lors de l'envoi de notification: %s", e)
+            _logger.error("❌ [CHECKOUT] Erreur création housekeeping: %s", e, exc_info=True)
+            raise UserError("Erreur lors de la création de la tâche de nettoyage: %s" % str(e))
+        
+        # Étape 5 : Mettre à jour la chambre
+        try:
+            self.room_id.write({'status': 'to_clean'})
+            _logger.info("✅ [CHECKOUT] Chambre %s marquée 'to_clean'", self.room_id.name)
+        except Exception as e:
+            _logger.warning("⚠️ [CHECKOUT] Erreur mise à jour chambre: %s", e)
+        
+        _logger.info("="*80)
+        _logger.info("✅ [CHECKOUT] Terminé avec succès")
+        _logger.info("="*80)
+        
+        # Retourner la facture PDF
+        try:
+            return self.env.ref('hotel_management_extension.action_report_hotel_stay_invoice').report_action(self)
+        except Exception as e:
+            _logger.error("⚠️ [CHECKOUT] Erreur génération PDF: %s", e)
+            # Retourner True au lieu de bloquer si le PDF échoue
+            return True
 
-
-       
-
-
-
-    def action_cancel(self):  
-        """Annule le séjour"""
-        self.ensure_one()
+    def action_cancel(self):
         self.state = STAY_STATES["CANCELLED"]
 
     def _set_default_uom_id(self):
@@ -583,20 +575,6 @@ class HotelBookingStayS(models.Model):
                     ),
                 }
             }
-        
-
-    @api.depends('early_checkin_requested', 'late_checkout_requested')
-    def _compute_request_type(self):
-        """Calcule le type de demande horaire"""
-        for record in self:
-            if record.early_checkin_requested and record.late_checkout_requested:
-                record.request_type = "early"  # Prioriser early si les 2
-            elif record.early_checkin_requested:
-                record.request_type = "early"
-            elif record.late_checkout_requested:
-                record.request_type = "late"
-            else:
-                record.request_type = False    
 
     # calcul automatique de la durée (methode à adapter plus tard)
     @api.depends("planned_checkin_date", "planned_checkout_date")
@@ -656,156 +634,157 @@ class HotelBookingStayS(models.Model):
     ###############################################
 
     @api.constrains(
-        "room_type_id",
-        "booking_start_date",
-        "booking_end_date",
-        "reservation_type_id",
-        "planned_checkin_date",
-        "planned_checkout_date",
-    )
+    "room_type_id",
+    "booking_start_date", 
+    "booking_end_date",
+    "reservation_type_id",
+    "planned_checkin_date",
+    "planned_checkout_date",
+)
     def _check_room_availability(self):
-        """
-        Contrainte bloquante : empêche l'enregistrement si aucune chambre n'est disponible.
-        NOUVELLE VERSION : Gère correctement l'ordre des calculs.
-        """
-        for rec in self:
-            # Skip pour les réservations flexibles (pas de dates fixes)
-            if rec.is_flexible_reservation:
-                _logger.debug(
-                    "[CONSTRAINT] Skip : réservation flexible | stay=%s",
+     """
+    Contrainte bloquante : empêche l'enregistrement si aucune chambre n'est disponible.
+    VERSION CORRIGÉE : Sans appel récursif à _compute_dates_logic
+    """
+     for rec in self:
+        # Skip pour les réservations flexibles (pas de dates fixes)
+        if rec.is_flexible_reservation:
+            _logger.debug(
+                "[CONSTRAINT] Skip : réservation flexible | stay=%s",
+                rec.id or "new",
+            )
+            continue
+
+        # ÉTAPE 1 : S'assurer que les dates planned sont calculées SANS créer de récursion
+        # Utiliser un flag dans le contexte pour éviter la récursion
+        if not rec.planned_checkin_date or not rec.planned_checkout_date:
+            if (rec.booking_start_date and rec.booking_end_date and rec.reservation_type_id):
+                _logger.info(
+                    "[CONSTRAINT] Force le calcul des dates planned | stay=%s",
+                    rec.id or "new",
+                )
+                # Appeler avec contexte pour éviter la récursion
+                rec.with_context(skip_availability_check=True)._compute_dates_logic(rec)
+
+            # Si toujours vides après calcul, skip
+            if not rec.planned_checkin_date or not rec.planned_checkout_date:
+                _logger.warning(
+                    "[CONSTRAINT] Impossible de calculer les dates planned, skip | stay=%s",
                     rec.id or "new",
                 )
                 continue
 
-            # ÉTAPE 1 : S'assurer que les dates planned sont calculées
-            # Si elles sont vides, les forcer à se calculer
-            if not rec.planned_checkin_date or not rec.planned_checkout_date:
-                if (
-                    rec.booking_start_date
-                    and rec.booking_end_date
-                    and rec.reservation_type_id
-                ):
-                    _logger.info(
-                        "[CONSTRAINT] Force le calcul des dates planned | stay=%s",
-                        rec.id or "new",
-                    )
-                    rec._compute_dates_logic(rec)
+        # ÉTAPE 2 : Vérifier qu'on a bien un room_type_id
+        if not rec.room_type_id:
+            _logger.debug(
+                "[CONSTRAINT] Pas de room_type_id, skip | stay=%s", rec.id or "new"
+            )
+            continue
 
-                # Si toujours vides après calcul, skip
-                if not rec.planned_checkin_date or not rec.planned_checkout_date:
-                    _logger.warning(
-                        "[CONSTRAINT] Impossible de calculer les dates planned, skip | stay=%s",
-                        rec.id or "new",
-                    )
-                    continue
+        _logger.info(
+            "🔒 [CONSTRAINT] Vérification disponibilité OBLIGATOIRE | stay=%s | type=%s | in=%s | out=%s",
+            rec.id or "new",
+            rec.room_type_id.name,
+            rec.planned_checkin_date,
+            rec.planned_checkout_date,
+        )
 
-            # ÉTAPE 2 : Vérifier qu'on a bien un room_type_id
-            if not rec.room_type_id:
-                _logger.debug(
-                    "[CONSTRAINT] Pas de room_type_id, skip | stay=%s", rec.id or "new"
-                )
-                continue
+        buffer_hours = 0.5
 
-            _logger.info(
-                "🔒 [CONSTRAINT] Vérification disponibilité OBLIGATOIRE | stay=%s | type=%s | in=%s | out=%s",
-                rec.id or "new",
-                rec.room_type_id.name,
-                rec.planned_checkin_date,
-                rec.planned_checkout_date,
+        try:
+            availability_engine = self.env["hotel.room.availability.engine"]
+            availability_result = availability_engine.check_availability(
+                room_type_id=rec.room_type_id.id,
+                checkin_date=rec.planned_checkin_date,
+                checkout_date=rec.planned_checkout_date,
+                exclude_stay_id=rec.id if rec.id else None,
+                buffer_hours=buffer_hours,
+                reservation_type_id=(
+                    rec.reservation_type_id.id if rec.reservation_type_id else None
+                ),
             )
 
-            buffer_hours = 0.5
+            _logger.info(
+                "[CONSTRAINT] Résultat moteur | status=%s | room=%s",
+                availability_result.get("status"),
+                availability_result.get("room_name", "N/A"),
+            )
 
-            try:
-                availability_engine = self.env["hotel.room.availability.engine"]
-                availability_result = availability_engine.check_availability(
-                    room_type_id=rec.room_type_id.id,
-                    checkin_date=rec.planned_checkin_date,
-                    checkout_date=rec.planned_checkout_date,
-                    exclude_stay_id=rec.id if rec.id else None,
-                    buffer_hours=buffer_hours,
-                    reservation_type_id=(
-                        rec.reservation_type_id.id if rec.reservation_type_id else None
-                    ),
+            # ÉTAPE 3 : Traiter les différents cas
+            if availability_result["status"] == "unavailable":
+                alternatives = availability_result.get("alternatives", [])
+                error_msg = availability_result.get(
+                    "message", "Aucune chambre disponible pour ces dates."
                 )
 
-                _logger.info(
-                    "[CONSTRAINT] Résultat moteur | status=%s | room=%s",
-                    availability_result.get("status"),
-                    availability_result.get("room_name", "N/A"),
+                # Ajouter les alternatives au message d'erreur
+                if alternatives:
+                    error_msg += "\n\n📋 Créneaux alternatifs disponibles :"
+                    for idx, alt in enumerate(alternatives[:3], 1):
+                        alt_in = alt["checkin"].strftime("%d/%m/%Y %H:%M")
+                        alt_out = alt["checkout"].strftime("%d/%m/%Y %H:%M")
+                        error_msg += f"\n  {idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
+                    error_msg += "\n\n⚠️ Veuillez ajuster vos dates ou choisir un autre type de chambre."
+
+                _logger.error("[CONSTRAINT] BLOCAGE | %s", error_msg)
+                raise ValidationError(error_msg)
+
+            elif availability_result["status"] == "error":
+                error_msg = availability_result.get(
+                    "message", "Erreur technique lors de la vérification"
                 )
-
-                # ÉTAPE 3 : Traiter les différents cas
-                if availability_result["status"] == "unavailable":
-                    alternatives = availability_result.get("alternatives", [])
-                    error_msg = availability_result.get(
-                        "message", "Aucune chambre disponible pour ces dates."
-                    )
-
-                    # Ajouter les alternatives au message d'erreur
-                    if alternatives:
-                        error_msg += "\n\n📋 Créneaux alternatifs disponibles :"
-                        for idx, alt in enumerate(alternatives[:3], 1):
-                            alt_in = alt["checkin"].strftime("%d/%m/%Y %H:%M")
-                            alt_out = alt["checkout"].strftime("%d/%m/%Y %H:%M")
-                            error_msg += f"\n  {idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
-                        error_msg += "\n\n⚠️ Veuillez ajuster vos dates ou choisir un autre type de chambre."
-
-                    _logger.error("[CONSTRAINT] BLOCAGE | %s", error_msg)
-                    raise ValidationError(error_msg)
-
-                elif availability_result["status"] == "error":
-                    error_msg = availability_result.get(
-                        "message", "Erreur technique lors de la vérification"
-                    )
-                    _logger.error("[CONSTRAINT] ERREUR TECHNIQUE | %s", error_msg)
-                    raise ValidationError(
-                        _("❌ Erreur lors de la vérification de disponibilité :\n%s")
-                        % error_msg
-                    )
-
-                elif availability_result["status"] == "available":
-                    # Attribution automatique de la chambre si pas déjà assignée
-                    if availability_result.get("room_id") and not rec.room_id:
-                        rec.room_id = availability_result["room_id"]
-                        _logger.info(
-                            "✅ [CONSTRAINT] Chambre assignée automatiquement | room=%s (%s)",
-                            availability_result.get("room_name"),
-                            availability_result.get("room_id"),
-                        )
-
-            except ValidationError:
-                raise  # Propager les ValidationError (important !)
-
-            except Exception as e:
-                _logger.exception(
-                    "🔥 [CONSTRAINT] Exception critique | stay=%s | err=%s",
-                    rec.id or "new",
-                    str(e),
-                )
+                _logger.error("[CONSTRAINT] ERREUR TECHNIQUE | %s", error_msg)
                 raise ValidationError(
-                    _(
-                        "❌ Erreur critique lors de la vérification de disponibilité.\n"
-                        "Détails techniques : %s\n\n"
-                        "Veuillez contacter l'administrateur si le problème persiste."
-                    )
-                    % str(e)
+                    _("❌ Erreur lors de la vérification de disponibilité :\n%s")
+                    % error_msg
                 )
 
+            elif availability_result["status"] == "available":
+                # Attribution automatique de la chambre si pas déjà assignée
+                if availability_result.get("room_id") and not rec.room_id:
+                    rec.room_id = availability_result["room_id"]
+                    _logger.info(
+                        "✅ [CONSTRAINT] Chambre assignée automatiquement | room=%s (%s)",
+                        availability_result.get("room_name"),
+                        availability_result.get("room_id"),
+                    )
+
+        except ValidationError:
+            raise  # Propager les ValidationError (important !)
+
+        except Exception as e:
+            _logger.exception(
+                "🔥 [CONSTRAINT] Exception critique | stay=%s | err=%s",
+                rec.id or "new",
+                str(e),
+            )
+            raise ValidationError(
+                _(
+                    "❌ Erreur critique lors de la vérification de disponibilité.\n"
+                    "Détails techniques : %s\n\n"
+                    "Veuillez contacter l'administrateur si le problème persiste."
+                )
+                % str(e)
+            )
     # ----------- Calcul des dates en fonction du type de resa -------------
 
     def _compute_dates_logic(self, rec):
         """
         Logique partagée entre compute et onchange
-        Recalcule automatiquement planned_checkin_date et planned_checkout_date
-        en fonction du type de réservation.
+        VERSION CORRIGÉE : Avec protection anti-récursion
         """
-        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
-        _logger_booking.debug("➡️ _compute_dates_logic appelé pour stay %s", rec.id)
-
+        # Vérifier le contexte pour éviter la récursion
+        if self.env.context.get("skip_availability_check"):
+            _logger_booking.debug("⏩ Skip _compute_dates_logic (déjà en cours)")
+            return
+    
+        _logger_booking.debug("is_flexible_reservation=%s", getattr(rec, "is_flexible_reservation", False))
+        _logger_booking.debug("➡️ _compute_dates_logic appelé pour stay %s", getattr(rec, "id", "new"))
+    
+        # Initialiser les champs planned à False pour éviter des valeurs résiduelles
         rec.planned_checkin_date = False
         rec.planned_checkout_date = False
-
+    
         # Validation des données de base
         if (
             not rec.booking_start_date
@@ -819,12 +798,12 @@ class HotelBookingStayS(models.Model):
                 rec.reservation_type_id,
             )
             return
-
+    
         # Réservations flexibles : pas de calcul automatique
         if rec.reservation_type_id.is_flexible:
             _logger_booking.debug("ℹ️ Réservation flexible, pas de calcul auto.")
             return
-
+    
         # Recherche du slot horaire
         slot = self.env["hotel.room.reservation.slot"].search(
             [
@@ -833,15 +812,15 @@ class HotelBookingStayS(models.Model):
             ],
             limit=1,
         )
-
+    
         if not slot:
             _logger_booking.warning(
                 "⚠️ Aucun slot trouvé pour room_type=%s, resa_type=%s",
-                rec.room_type_id.id,
-                rec.reservation_type_id.id,
+                rec.room_type_id.id if rec.room_type_id else "N/A",
+                rec.reservation_type_id.id if rec.reservation_type_id else "N/A",
             )
             return
-
+    
         # Calcul des dates planned
         rec.planned_checkin_date = datetime.combine(
             rec.booking_start_date, float_to_time(slot.checkin_time)
@@ -849,16 +828,16 @@ class HotelBookingStayS(models.Model):
         rec.planned_checkout_date = datetime.combine(
             rec.booking_end_date, float_to_time(slot.checkout_time)
         )
-
+    
         _logger_booking.debug(
             "✅ Dates calculées: checkin=%s checkout=%s",
             rec.planned_checkin_date,
             rec.planned_checkout_date,
         )
-
+    
         # Correction pour réservations classiques (checkout <= checkin)
         if (
-            rec.reservation_type_id.code == "classic"
+            getattr(rec.reservation_type_id, "code", None) == "classic"
             and rec.planned_checkout_date <= rec.planned_checkin_date
         ):
             rec.planned_checkout_date += timedelta(days=1)
@@ -866,9 +845,10 @@ class HotelBookingStayS(models.Model):
                 "↪️ Correction appliquée (+1 jour) -> checkout=%s",
                 rec.planned_checkout_date,
             )
-
-        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
-
+    
+        _logger_booking.debug("is_flexible_reservation=%s", getattr(rec, "is_flexible_reservation", False))
+    
+    
     ### ----------- PERSISTANCE -------------
     @api.depends(
         "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
@@ -879,7 +859,7 @@ class HotelBookingStayS(models.Model):
                 "🟢 _compute_checkin_checkout déclenché pour stay %s", rec.id
             )
             self._compute_dates_logic(rec)
-
+    
         # ##----------- UX : CALCUL INSTANTANÉ DANS LE FORMULAIRE -------------
         for rec in self:
             _logger_booking.debug(

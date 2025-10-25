@@ -71,9 +71,10 @@
                 </xpath>
 
                 <!-- State -->
-                <xpath expr="//field[@name='state']" position="attributes">
-                    <attribute name="string">Statut</attribute>
-                </xpath>
+                <!-- <xpath expr="//field[@name='state']" position="attributes">
+    <attribute name="string">Statut</attribute>
+</xpath> -->
+
 
 
                 <xpath expr="//form" position="replace">
@@ -127,9 +128,10 @@
                 </xpath>
 
                 <!-- State -->
-                <xpath expr="//field[@name='state']" position="attributes">
+                
+                <!-- <xpath expr="//field[@name='state']" position="attributes">
                     <attribute name="string">Statut</attribute>
-                </xpath>
+                </xpath> -->
 
             </field>
         </record>
@@ -221,7 +223,7 @@
 
                 <!-- Modifier le label du champ icon -->
                 <xpath expr="//field[@name='icon']" position="attributes">
-                    <attribute name="string">Icône</attribute>
+                    <attribute name="string">Icône</attribute>  
                 </xpath>
 
             </field>
