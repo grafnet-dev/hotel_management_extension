@@ -81,7 +81,7 @@ export class RoomPlanning extends Component {
         method: "search_read",
         args: [],
         kwargs: {
-          fields: ["id", "name", "status"],
+          fields: ["id", "name", "status","room_type_id"],
         },
       });
 
@@ -108,6 +108,7 @@ export class RoomPlanning extends Component {
               ...a,
               room_id: room.id,
               room_name: room.name,
+              room_type_id: room.room_type_id[0],
             }))
           : [];
       });
@@ -152,6 +153,7 @@ export class RoomPlanning extends Component {
       id: act.id,
       group: act.room_id,
       room_id: act.room_id,
+      room_type_id: act.room_type_id,
       content: `${this.getTypeIcon(act.type)} ${act.label}`,
       start: act.start,
       end: act.end,
@@ -254,17 +256,28 @@ export class RoomPlanning extends Component {
       return;
     }
 
-    console.log("🚀 Ouverture du formulaire Odoo pour créer un séjour...");
+     // Prépare les valeurs par défaut à passer au formulaire
+    const context = {
+        default_room_id: item.room_id,
+        default_room_type_id: item.room_type_id || item.room?.room_type_id?.[0],
+        default_reservation_type_id: item.reservation_type_id || item.reservation_type?.id,
+    };
+
+     // Préparation de l’action avec le contexte
+    const action = {
+        type: "ir.actions.act_window",
+        name: "Nouvelle réservation",
+        res_model: "hotel.booking.stay",
+        target: "new",
+        views: [[false, "form"]],
+        view_mode: "form",
+        context,
+    };
+
+
+     console.log("🚀 [onFreeSlotClick] Action envoyée à Odoo :", action);
     try {
-        await this.action.doAction({
-            type: "ir.actions.act_window",
-            name: "Nouvelle réservation",
-            res_model: "hotel.booking.stay",
-            target: "new",
-            views: [[false, "form"]],
-            view_mode: "form",
-            context: { default_room_id: item.room_id },
-        });
+        await this.action.doAction(action);
 
         console.log("🟢 Fenêtre de réservation fermée, mise à jour du planning...");
         await this.refreshTimeline();
