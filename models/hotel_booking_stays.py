@@ -366,7 +366,7 @@ class HotelBookingStayS(models.Model):
         readonly=False,
     )
 
-    @api.onchange('room_type_id')
+    @api.onchange("room_type_id")
     def _onchange_room_type_id(self):
         if self.room_id and self.room_id.room_type_id != self.room_type_id:
             self.room_id = False
@@ -392,7 +392,7 @@ class HotelBookingStayS(models.Model):
                 "default_booking_id": self.booking_id.id,
                 "default_first_name": first_name,
                 "default_last_name": last_name,
-                "default_room_id": self.room_id.id
+                "default_room_id": self.room_id.id,
             },
         }
 
@@ -488,24 +488,6 @@ class HotelBookingStayS(models.Model):
     def _set_default_uom_id(self):
         return self.env.ref("uom.product_uom_day")
 
-    # Onchange = confort utilisateur ajutstement de date
-    @api.onchange("planned_checkin_date", "planned_checkout_date")
-    def _onchange_checkin_date(self):
-        if (
-            self.planned_checkin_date
-            and self.planned_checkout_date
-            and self.planned_checkout_date < self.planned_checkin_date
-        ):
-            self.planned_checkout_date = self.planned_checkin_date + timedelta(days=1)
-            return {
-                "warning": {
-                    "title": _("Correction automatique"),
-                    "message": _(
-                        "La date de départ a été ajustée car elle était avant la date d'arrivée."
-                    ),
-                }
-            }
-
     # calcul automatique de la durée (methode à adapter plus tard)
     @api.depends("planned_checkin_date", "planned_checkout_date")
     def _compute_duration(self):
@@ -516,268 +498,9 @@ class HotelBookingStayS(models.Model):
             else:
                 rec.uom_qty = 0
 
-    # Constraint = validation cohérence dates
-    # Vérification bloquante (empêche enregistrement incohérent)
-    @api.constrains("planned_checkin_date", "planned_checkout_date")
-    def _check_dates_required(self):
-        for rec in self:
-            if (
-                rec.planned_checkin_date
-                and rec.planned_checkout_date
-                and rec.planned_checkout_date < rec.planned_checkin_date
-            ):
-                raise ValidationError(
-                    _("La date de départ ne peut pas être avant la date d'arrivée.")
-                )
-
-    # Alerte non bloquante (prévenir utilisateur)
-    @api.onchange("planned_checkin_date", "planned_checkout_date")
-    def _onchange_extra_night(self):
-        for rec in self:
-            if rec.extra_night_required:
-                return {
-                    "warning": {
-                        "title": _("Attention : Nuit Supplémentaire"),
-                        "message": _(
-                            "L'horaire demandé sort des limites standards. "
-                            "Une nuit supplémentaire sera peut-être requise."
-                        ),
-                    }
-                }
-
-    @api.constrains("booking_start_date", "booking_end_date", "reservation_type_id")
-    def _check_booking_dates_order(self):
-        for rec in self:
-            if (
-                rec.reservation_type_id
-                and rec.reservation_type_id.code == "classic"
-                and rec.booking_start_date
-                and rec.booking_end_date
-                and rec.booking_end_date < rec.booking_start_date
-            ):
-                raise ValidationError(
-                    _(
-                        "La date de fin de réservation ne peut pas être antérieure à la date de début."
-                    )
-                )
-
     ###############################################
-
-    @api.constrains(
-        "room_type_id",
-        "booking_start_date",
-        "booking_end_date",
-        "reservation_type_id",
-        "planned_checkin_date",
-        "planned_checkout_date",
-    )
-    def _check_room_availability(self):
-        """
-        Contrainte bloquante : empêche l'enregistrement si aucune chambre n'est disponible.
-        NOUVELLE VERSION : Gère correctement l'ordre des calculs.
-        """
-        for rec in self:
-            # Skip pour les réservations flexibles (pas de dates fixes)
-            if rec.is_flexible_reservation:
-                _logger.debug(
-                    "[CONSTRAINT] Skip : réservation flexible | stay=%s",
-                    rec.id or "new",
-                )
-                continue
-
-            # ÉTAPE 1 : S'assurer que les dates planned sont calculées
-            # Si elles sont vides, les forcer à se calculer
-            if not rec.planned_checkin_date or not rec.planned_checkout_date:
-                if (
-                    rec.booking_start_date
-                    and rec.booking_end_date
-                    and rec.reservation_type_id
-                ):
-                    _logger.info(
-                        "[CONSTRAINT] Force le calcul des dates planned | stay=%s",
-                        rec.id or "new",
-                    )
-                    rec._compute_dates_logic(rec)
-
-                # Si toujours vides après calcul, skip
-                if not rec.planned_checkin_date or not rec.planned_checkout_date:
-                    _logger.warning(
-                        "[CONSTRAINT] Impossible de calculer les dates planned, skip | stay=%s",
-                        rec.id or "new",
-                    )
-                    continue
-
-            # ÉTAPE 2 : Vérifier qu'on a bien un room_type_id
-            if not rec.room_type_id:
-                _logger.debug(
-                    "[CONSTRAINT] Pas de room_type_id, skip | stay=%s", rec.id or "new"
-                )
-                continue
-
-            _logger.info(
-                "🔒 [CONSTRAINT] Vérification disponibilité OBLIGATOIRE | stay=%s | type=%s | in=%s | out=%s",
-                rec.id or "new",
-                rec.room_type_id.name,
-                rec.planned_checkin_date,
-                rec.planned_checkout_date,
-            )
-
-            buffer_hours = 0.5
-
-            try:
-                availability_engine = self.env["hotel.room.availability.engine"]
-                availability_result = availability_engine.check_availability(
-                    room_type_id=rec.room_type_id.id,
-                    checkin_date=rec.planned_checkin_date,
-                    checkout_date=rec.planned_checkout_date,
-                    exclude_stay_id=rec.id if rec.id else None,
-                    buffer_hours=buffer_hours,
-                    reservation_type_id=(
-                        rec.reservation_type_id.id if rec.reservation_type_id else None
-                    ),
-                )
-
-                _logger.info(
-                    "[CONSTRAINT] Résultat moteur | status=%s | room=%s",
-                    availability_result.get("status"),
-                    availability_result.get("room_name", "N/A"),
-                )
-
-                # ÉTAPE 3 : Traiter les différents cas
-                if availability_result["status"] == "unavailable":
-                    alternatives = availability_result.get("alternatives", [])
-                    error_msg = availability_result.get(
-                        "message", "Aucune chambre disponible pour ces dates."
-                    )
-
-                    # Ajouter les alternatives au message d'erreur
-                    if alternatives:
-                        error_msg += "\n\n📋 Créneaux alternatifs disponibles :"
-                        for idx, alt in enumerate(alternatives[:3], 1):
-                            alt_in = alt["checkin"].strftime("%d/%m/%Y %H:%M")
-                            alt_out = alt["checkout"].strftime("%d/%m/%Y %H:%M")
-                            error_msg += f"\n  {idx}. Chambre {alt['room_name']}: {alt_in} → {alt_out}"
-                        error_msg += "\n\n⚠️ Veuillez ajuster vos dates ou choisir un autre type de chambre."
-
-                    _logger.error("[CONSTRAINT] BLOCAGE | %s", error_msg)
-                    raise ValidationError(error_msg)
-
-                elif availability_result["status"] == "error":
-                    error_msg = availability_result.get(
-                        "message", "Erreur technique lors de la vérification"
-                    )
-                    _logger.error("[CONSTRAINT] ERREUR TECHNIQUE | %s", error_msg)
-                    raise ValidationError(
-                        _("❌ Erreur lors de la vérification de disponibilité :\n%s")
-                        % error_msg
-                    )
-
-                elif availability_result["status"] == "available":
-                    # Attribution automatique de la chambre si pas déjà assignée
-                    if availability_result.get("room_id") and not rec.room_id:
-                        rec.room_id = availability_result["room_id"]
-                        _logger.info(
-                            "✅ [CONSTRAINT] Chambre assignée automatiquement | room=%s (%s)",
-                            availability_result.get("room_name"),
-                            availability_result.get("room_id"),
-                        )
-
-            except ValidationError:
-                raise  # Propager les ValidationError (important !)
-
-            except Exception as e:
-                _logger.exception(
-                    "🔥 [CONSTRAINT] Exception critique | stay=%s | err=%s",
-                    rec.id or "new",
-                    str(e),
-                )
-                raise ValidationError(
-                    _(
-                        "❌ Erreur critique lors de la vérification de disponibilité.\n"
-                        "Détails techniques : %s\n\n"
-                        "Veuillez contacter l'administrateur si le problème persiste."
-                    )
-                    % str(e)
-                )
-
-    # ----------- Calcul des dates en fonction du type de resa -------------
-
-    def _compute_dates_logic(self, rec):
-        """
-        Logique partagée entre compute et onchange
-        Recalcule automatiquement planned_checkin_date et planned_checkout_date
-        en fonction du type de réservation.
-        """
-        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
-        _logger_booking.debug("➡️ _compute_dates_logic appelé pour stay %s", rec.id)
-
-        rec.planned_checkin_date = False
-        rec.planned_checkout_date = False
-
-        # Validation des données de base
-        if (
-            not rec.booking_start_date
-            or not rec.booking_end_date
-            or not rec.reservation_type_id
-        ):
-            _logger_booking.debug(
-                "❌ Données insuffisantes : start=%s end=%s type=%s",
-                rec.booking_start_date,
-                rec.booking_end_date,
-                rec.reservation_type_id,
-            )
-            return
-
-        # Réservations flexibles : pas de calcul automatique
-        if rec.reservation_type_id.is_flexible:
-            _logger_booking.debug("ℹ️ Réservation flexible, pas de calcul auto.")
-            return
-
-        # Recherche du slot horaire
-        slot = self.env["hotel.room.reservation.slot"].search(
-            [
-                ("room_type_id", "=", rec.room_type_id.id),
-                ("reservation_type_id", "=", rec.reservation_type_id.id),
-            ],
-            limit=1,
-        )
-
-        if not slot:
-            _logger_booking.warning(
-                "⚠️ Aucun slot trouvé pour room_type=%s, resa_type=%s",
-                rec.room_type_id.id,
-                rec.reservation_type_id.id,
-            )
-            return
-
-        # Calcul des dates planned
-        rec.planned_checkin_date = datetime.combine(
-            rec.booking_start_date, float_to_time(slot.checkin_time)
-        )
-        rec.planned_checkout_date = datetime.combine(
-            rec.booking_end_date, float_to_time(slot.checkout_time)
-        )
-
-        _logger_booking.debug(
-            "✅ Dates calculées: checkin=%s checkout=%s",
-            rec.planned_checkin_date,
-            rec.planned_checkout_date,
-        )
-
-        # Correction pour réservations classiques (checkout <= checkin)
-        if (
-            rec.reservation_type_id.code == "classic"
-            and rec.planned_checkout_date <= rec.planned_checkin_date
-        ):
-            rec.planned_checkout_date += timedelta(days=1)
-            _logger_booking.debug(
-                "↪️ Correction appliquée (+1 jour) -> checkout=%s",
-                rec.planned_checkout_date,
-            )
-
-        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
-
-    ### ----------- PERSISTANCE -------------
+    # Gestion de dates
+    ###############################################
     @api.depends(
         "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
     )
@@ -787,15 +510,9 @@ class HotelBookingStayS(models.Model):
                 "🟢 _compute_checkin_checkout déclenché pour stay %s", rec.id
             )
             self._compute_dates_logic(rec)
-
-        # ##----------- UX : CALCUL INSTANTANÉ DANS LE FORMULAIRE -------------
-        for rec in self:
             _logger_booking.debug(
-                "🟠 _onchange_dates_and_type déclenché pour stay %s", rec.id
+                "🟢 _compute_checkin_checkout terminé pour stay %s", rec.id
             )
-            result = self._compute_dates_logic(rec)
-            if result:
-                return result
 
     @api.onchange(
         "booking_start_date", "booking_end_date", "reservation_type_id", "room_type_id"
@@ -819,14 +536,14 @@ class HotelBookingStayS(models.Model):
                 rec.room_type_id
                 and rec.planned_checkin_date
                 and rec.planned_checkout_date
-                and not rec.is_flexible_reservation
             ):
 
                 _logger_booking.info(
-                    "[ONCHANGE] Vérification disponibilité | type=%s | in=%s | out=%s",
+                    "[ONCHANGE] Vérification disponibilité | type=%s | in=%s | out=%s | flexible=%s",
                     rec.room_type_id.name,
                     rec.planned_checkin_date,
                     rec.planned_checkout_date,
+                    rec.is_flexible_reservation,
                 )
 
                 return self._check_and_warn_availability(rec)
@@ -838,6 +555,90 @@ class HotelBookingStayS(models.Model):
                     rec.is_flexible_reservation,
                 )
 
+    # ========================-Methodes utilitaires==================#
+    def _compute_dates_logic(self, rec):
+        """
+        Recalcule automatiquement planned_checkin_date et planned_checkout_date
+        en fonction du type de réservation.
+        """
+
+        _logger_booking.debug("is_flexible_reservation=%s", rec.is_flexible_reservation)
+        _logger_booking.debug("➡️ _compute_dates_logic appelé pour stay %s", rec.id)
+
+        _logger_booking.debug("➡️ _compute_dates_logic appelé pour stay %s", rec.id)
+        _logger_booking.debug(
+            "📅 Paramètres de départ : start=%s | end=%s | type=%s | flexible=%s",
+            rec.booking_start_date,
+            rec.booking_end_date,
+            rec.reservation_type_id and rec.reservation_type_id.name,
+            rec.is_flexible_reservation,
+        )
+        # Si flexible → ne rien modifier
+        if rec.reservation_type_id and rec.reservation_type_id.is_flexible:
+            _logger_booking.debug(
+                "ℹ️ Réservation flexible, pas de calcul auto. On garde les dates existantes."
+            )
+            return
+
+        # Validation des données de base
+        if (
+            not rec.booking_start_date
+            or not rec.booking_end_date
+            or not rec.reservation_type_id
+        ):
+            _logger_booking.debug(
+                "❌ Données insuffisantes : start=%s end=%s type=%s",
+                rec.booking_start_date,
+                rec.booking_end_date,
+                rec.reservation_type_id,
+            )
+            return
+
+        # Réinitialiser avant de recalculer
+        rec.planned_checkin_date = False
+        rec.planned_checkout_date = False
+
+        # Recherche du slot
+        slot = self.env["hotel.room.reservation.slot"].search(
+            [
+                ("room_type_id", "=", rec.room_type_id.id),
+                ("reservation_type_id", "=", rec.reservation_type_id.id),
+            ],
+            limit=1,
+        )
+
+        if not slot:
+            _logger_booking.warning(
+                "⚠️ Aucun slot trouvé pour room_type=%s, resa_type=%s",
+                rec.room_type_id.id,
+                rec.reservation_type_id.id,
+            )
+            return
+
+        # Calcul normal
+        rec.planned_checkin_date = datetime.combine(
+            rec.booking_start_date, float_to_time(slot.checkin_time)
+        )
+        rec.planned_checkout_date = datetime.combine(
+            rec.booking_end_date, float_to_time(slot.checkout_time)
+        )
+
+        if (
+            rec.reservation_type_id.code == "classic"
+            and rec.planned_checkout_date <= rec.planned_checkin_date
+        ):
+            rec.planned_checkout_date += timedelta(days=1)
+            _logger_booking.debug(
+                "↪️ Correction appliquée (+1 jour) -> checkout=%s",
+                rec.planned_checkout_date,
+            )
+
+        _logger_booking.debug(
+            "✅ Dates calculées: checkin=%s checkout=%s",
+            rec.planned_checkin_date,
+            rec.planned_checkout_date,
+        )
+
     def _check_and_warn_availability(self, rec):
         """
         Méthode utilitaire pour vérifier la disponibilité et retourner un warning.
@@ -846,6 +647,38 @@ class HotelBookingStayS(models.Model):
         buffer_hours = 0.5
 
         try:
+            # --- Validation des prérequis ---
+            if not rec.room_type_id:
+                _logger_booking.debug("⚠️ Vérification annulée : room_type_id manquant.")
+                return {
+                    "warning": {
+                        "title": _("⚠️ Type de chambre manquant"),
+                        "message": _(
+                            "Veuillez sélectionner un type de chambre avant de vérifier la disponibilité."
+                        ),
+                    }
+                }
+
+            if not rec.planned_checkin_date or not rec.planned_checkout_date:
+                _logger_booking.debug(
+                    "⚠️ Vérification annulée : dates planned manquantes."
+                )
+                return {
+                    "warning": {
+                        "title": _("⚠️ Dates manquantes"),
+                        "message": _(
+                            "Veuillez d'abord définir les dates d'arrivée et de départ avant de vérifier la disponibilité."
+                        ),
+                    }
+                }
+
+            _logger_booking.info(
+                "🔍 Appel moteur disponibilité | type=%s | in=%s | out=%s | stay=%s",
+                rec.room_type_id.name,
+                rec.planned_checkin_date,
+                rec.planned_checkout_date,
+                rec.id,
+            )
             availability_engine = self.env["hotel.room.availability.engine"]
             availability_result = availability_engine.check_availability(
                 room_type_id=rec.room_type_id.id,
@@ -963,6 +796,174 @@ class HotelBookingStayS(models.Model):
                 }
             }
 
+    @api.constrains(
+        "room_type_id",
+        "booking_start_date",
+        "booking_end_date",
+        "reservation_type_id",
+        "planned_checkin_date",
+        "planned_checkout_date",
+    )
+    def _check_room_availability(self):
+        """
+        Contrainte bloquante : empêche l'enregistrement si aucune chambre n'est disponible.
+        """
+        for rec in self:
+            _logger_booking.debug(
+                "🔒 _check_room_availability déclenché pour stay %s", rec.id
+            )
+
+            if not rec.planned_checkin_date or not rec.planned_checkout_date:
+                _logger_booking.info(
+                    "📆 Forçage du calcul planned dates pour stay %s", rec.id
+                )
+                rec._compute_dates_logic(rec)
+                if not rec.planned_checkin_date:
+                    _logger_booking.warning(
+                        "⚠️ Impossible de calculer les dates planned pour stay %s",
+                        rec.id,
+                    )
+                    continue
+
+            if not rec.room_type_id:
+                _logger_booking.debug(
+                    "⚠️ Pas de room_type_id, contrainte ignorée pour stay %s", rec.id
+                )
+                continue
+
+            _logger_booking.info(
+                "🔒 Vérification contrainte disponibilité | type=%s | in=%s | out=%s",
+                rec.room_type_id.name,
+                rec.planned_checkin_date,
+                rec.planned_checkout_date,
+            )
+
+            try:
+                availability_engine = self.env["hotel.room.availability.engine"]
+                availability_result = availability_engine.check_availability(
+                    room_type_id=rec.room_type_id.id,
+                    checkin_date=rec.planned_checkin_date,
+                    checkout_date=rec.planned_checkout_date,
+                    exclude_stay_id=rec.id if rec.id else None,
+                    buffer_hours=0.5,
+                    reservation_type_id=(
+                        rec.reservation_type_id.id if rec.reservation_type_id else None
+                    ),
+                )
+
+                status = availability_result.get("status")
+                _logger_booking.info(
+                    "[CONSTRAINT] Résultat moteur | status=%s | room=%s",
+                    status,
+                    availability_result.get("room_name", "N/A"),
+                )
+
+                if status == "unavailable":
+                    _logger_booking.error(
+                        "[CONSTRAINT] BLOCAGE | aucune chambre disponible."
+                    )
+                    raise ValidationError(
+                        availability_result.get(
+                            "message", "Aucune chambre disponible pour ces dates."
+                        )
+                    )
+
+                elif status == "error":
+                    _logger_booking.error(
+                        "[CONSTRAINT] Erreur moteur : %s",
+                        availability_result.get("message"),
+                    )
+                    raise ValidationError(
+                        _("Erreur technique : %s") % availability_result.get("message")
+                    )
+
+                elif (
+                    status == "available"
+                    and availability_result.get("room_id")
+                    and not rec.room_id
+                ):
+                    rec.room_id = availability_result["room_id"]
+                    _logger_booking.info(
+                        "✅ [CONSTRAINT] Chambre assignée automatiquement | room=%s",
+                        availability_result.get("room_name"),
+                    )
+
+            except ValidationError:
+                raise
+            except Exception as e:
+                _logger_booking.exception(
+                    "🔥 Exception contrainte stay=%s | err=%s", rec.id, str(e)
+                )
+                raise ValidationError(
+                    _("Erreur critique de disponibilité : %s") % str(e)
+                )
+
+    # Alerte non bloquante (prévenir utilisateur)
+    @api.onchange("planned_checkin_date", "planned_checkout_date")
+    def _onchange_extra_night(self):
+        for rec in self:
+            if rec.extra_night_required:
+                _logger_booking.warning(
+                    "⚠️ Alerte extra night déclenchée pour stay %s", rec.id
+                )
+                return {
+                    "warning": {
+                        "title": _("Attention : Nuit Supplémentaire"),
+                        "message": _(
+                            "L'horaire demandé sort des limites standards. "
+                            "Une nuit supplémentaire sera peut-être requise."
+                        ),
+                    }
+                }
+
+    @api.constrains("booking_start_date", "booking_end_date", "reservation_type_id")
+    def _check_booking_dates_order(self):
+        for rec in self:
+            if (
+                rec.reservation_type_id
+                and rec.reservation_type_id.code == "classic"
+                and rec.booking_start_date
+                and rec.booking_end_date
+                and rec.booking_end_date < rec.booking_start_date
+            ):
+                raise ValidationError(
+                    _(
+                        "La date de fin de réservation ne peut pas être antérieure à la date de début."
+                    )
+                )
+
+    # Vérification bloquante (empêche enregistrement incohérent)
+    @api.constrains("planned_checkin_date", "planned_checkout_date")
+    def _check_dates_required(self):
+        for rec in self:
+            if (
+                rec.planned_checkin_date
+                and rec.planned_checkout_date
+                and rec.planned_checkout_date < rec.planned_checkin_date
+            ):
+                raise ValidationError(
+                    _("La date de départ ne peut pas être avant la date d'arrivée.")
+                )
+
+    # Onchange = confort utilisateur ajutstement de date
+    @api.onchange("planned_checkin_date", "planned_checkout_date")
+    def _onchange_checkin_date(self):
+        if (
+            self.planned_checkin_date
+            and self.planned_checkout_date
+            and self.planned_checkout_date < self.planned_checkin_date
+        ):
+            self.planned_checkout_date = self.planned_checkin_date + timedelta(days=1)
+            return {
+                "warning": {
+                    "title": _("Correction automatique"),
+                    "message": _(
+                        "La date de départ a été ajustée car elle était avant la date d'arrivée."
+                    ),
+                }
+            }
+
+    # =========================Gestion EC/LC=========================#
     @api.onchange("early_checkin_requested", "late_checkout_requested")
     def _onchange_eclc_requested(self):
         """
@@ -1031,7 +1032,9 @@ class HotelBookingStayS(models.Model):
                 # Remise à zéro du request_type pour éviter d'écraser les horaires
                 rec.request_type = False
 
-    # ----------- Calcul des prix en utilisant le moteur de pricing prix chambre + ec/lc -------------
+    ###############################################
+    # Gestion des tarifications
+    ###############################################
     @api.depends(
         "room_type_id",
         "reservation_type_id",
@@ -1356,15 +1359,20 @@ class HotelBookingStayS(models.Model):
                     product_late.display_name,
                     stay.late_checkout_fee,
                 )
-                
-                
+
             # Récupérer les factures POS liées
-            pos_invoices = self.env["account.move"].search([
-                ("stay_id", "=", stay.id),
-                ("to_invoice_with_stay", "=", True),
-                ("state", "in", ["draft", "posted"]),
-            ])
-            _logger.info("[INVOICE][POS] %d factures POS liées trouvées pour stay=%s", len(pos_invoices), stay.id)
+            pos_invoices = self.env["account.move"].search(
+                [
+                    ("stay_id", "=", stay.id),
+                    ("to_invoice_with_stay", "=", True),
+                    ("state", "in", ["draft", "posted"]),
+                ]
+            )
+            _logger.info(
+                "[INVOICE][POS] %d factures POS liées trouvées pour stay=%s",
+                len(pos_invoices),
+                stay.id,
+            )
 
             for pos_move in pos_invoices:
                 for line in pos_move.invoice_line_ids:
@@ -1379,23 +1387,39 @@ class HotelBookingStayS(models.Model):
                         "currency_id": move.currency_id.id,
                     }
                     self.env["account.move.line"].create(vals)
-                    _logger.info("[INVOICE][POS-LINE] Reprise %s (qte=%s, prix=%s) depuis facture POS %s → facture séjour %s",
-                        line.product_id.display_name, line.quantity, line.price_unit, pos_move.name, move.name
+                    _logger.info(
+                        "[INVOICE][POS-LINE] Reprise %s (qte=%s, prix=%s) depuis facture POS %s → facture séjour %s",
+                        line.product_id.display_name,
+                        line.quantity,
+                        line.price_unit,
+                        pos_move.name,
+                        move.name,
                     )
 
                 # Marquer la facture POS comme reportée
-                pos_move.message_post(body=f"Facture POS reportée sur la facture séjour {move.name}")
-                pos_move.write({"to_invoice_with_stay": False,
-                                 "pos_invoice_reported": True,
-                                })
-                _logger.info("[INVOICE][POS-LINKED] Facture POS %s marquée comme reportée", pos_move.name)
+                pos_move.message_post(
+                    body=f"Facture POS reportée sur la facture séjour {move.name}"
+                )
+                pos_move.write(
+                    {
+                        "to_invoice_with_stay": False,
+                        "pos_invoice_reported": True,
+                    }
+                )
+                _logger.info(
+                    "[INVOICE][POS-LINKED] Facture POS %s marquée comme reportée",
+                    pos_move.name,
+                )
 
             # Log final
-            _logger.info("[INVOICE][DONE] Facture séjour %s générée avec %d lignes POS intégrées", move.name, len(pos_invoices))
+            _logger.info(
+                "[INVOICE][DONE] Facture séjour %s générée avec %d lignes POS intégrées",
+                move.name,
+                len(pos_invoices),
+            )
 
         return True
-    
-    
+
     def action_create_and_open_invoice(self):
         """Crée la facture et ouvre la vue de la facture"""
         self.ensure_one()
@@ -1426,7 +1450,6 @@ class HotelBookingStayS(models.Model):
             "target": "current",
         }
 
-
     def action_view_invoice(self):
         self.ensure_one()
         invoice = self.env["account.move"].search(
@@ -1444,69 +1467,7 @@ class HotelBookingStayS(models.Model):
             "target": "current",
         }
 
-
-    """@api.depends(
-        "pricing_price_base", "pricing_adjustments", "pricing_supplements"
-    )
-    def _compute_stay_financial_summary(self):
-        for rec in self:
-            # init
-            subtotal = 0.0
-            tax = 0.0  # pour l'instant
-            details = {}
-
-            # --- Base ---
-            base_amount = rec.pricing_price_base or 0.0
-            subtotal += base_amount
-            details["base"] = {
-                "label": "Prix de base",
-                "amount": base_amount,
-            }
-
-            # --- Ajustements ---
-            adjustments_list = []
-            try:
-                adjustments = json.loads(rec.pricing_adjustments or "[]")
-                for adj in adjustments:
-                    amt = adj.get("amount", 0.0)
-                    subtotal += amt
-                    adjustments_list.append({
-                        "label": adj.get("label", "Ajustement"),
-                        "amount": amt,
-                    })
-            except Exception:
-                adjustments_list = []
-            details["adjustments"] = adjustments_list
-
-            # --- Suppléments ---
-            supplements_list = []
-            try:
-                supplements = json.loads(rec.pricing_supplements or "[]")
-                for sup in supplements:
-                    amt = sup.get("amount", 0.0)
-                    subtotal += amt
-                    supplements_list.append({
-                        "label": sup.get("label", "Supplément"),
-                        "amount": amt,
-                    })
-            except Exception:
-                supplements_list = []
-            details["supplements"] = supplements_list
-
-            # --- Remises (vide pour l'instant) ---
-            details["discounts"] = []
-
-            # --- Totaux ---
-            total = subtotal + tax
-            details["subtotal"] = subtotal
-            details["tax"] = tax
-            details["total"] = total
-
-            # --- Assignation ---
-            rec.price_subtotal = subtotal
-            rec.price_tax = tax
-            rec.price_total = total
-            rec.financial_summary_details = json.dumps(details, ensure_ascii=False, indent=2)"""
+    # -----------  -------------
 
     def get_financial_summary(self):
         """

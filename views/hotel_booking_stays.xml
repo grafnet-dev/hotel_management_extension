@@ -37,7 +37,6 @@
                     decoration-muted="state in ('completed','cancelled')" />
 
                 <field name="extra_night_required" string="Nuit Extra" widget="boolean_toggle" />
-              
 
 
             </list>
@@ -89,7 +88,7 @@
                         string="Voir la facture"
                         type="object"
                         class="btn-outline-secondary"
-                         />
+                    />
 
 
                     <button name="action_cancel" type="object"
@@ -172,13 +171,14 @@
 
                             </group>
 
-                            <separator string="⏰ Options Horaires Spéciales" />
+
                             <!-- EC/LC-->
 
                             <group string="⏰ Demandes Spéciales Early / Late" name="ec_lc_group"
                                 colspan="2">
                                 <group>
-                                    <field name="early_checkin_requested" string="Arrivée Anticipée ?" />
+                                    <field name="early_checkin_requested"
+                                        string="Arrivée Anticipée ?" />
                                     <field name="requested_checkin_datetime"
                                         string="Heure Arrivée Demandée"
                                         invisible="not early_checkin_requested" />
@@ -197,10 +197,6 @@
                                         widget="boolean_toggle" readonly="1" />
                                 </group>
 
-                                <group string="📝 Décision &amp; Tarification EC/LC">
-                                    <field name="eclc_status" widget="badge" />
-
-                                </group>
                             </group>
 
 
@@ -213,7 +209,7 @@
                         </page>
 
 
-                        <page string="🛎️ Services &amp; Consommations" name="services">
+                        <!--   <page string="🛎️ Services &amp; Consommations" name="services">
 
                             <group name="service_activation" string="Services Requis"
                                 invisible="state not in ('pending', 'ongoing')">
@@ -297,10 +293,9 @@
                                     </form>
                                 </field>
                             </group>
-                        </page>
+                        </page>-->
 
 
-                        
                     </notebook>
 
 
