@@ -76,7 +76,6 @@
         "views/templates.xml",
         "data/hotel_metric_cron.xml",
         "data/ir_sequence_data.xml",
-        "data/ir_cron_cleanup_temporary_bookings.xml",
     ],
     "demo": [
         "demo/demo.xml",

@@ -393,6 +393,9 @@ class HotelBookingStayS(models.Model):
 
         return stay
     
+  
+
+    
     @api.depends("occupant_ids")
     def _compute_partner_id(self):
         """Déduit le client principal à partir du premier occupant."""

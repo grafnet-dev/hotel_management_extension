@@ -108,17 +108,7 @@ class RoomBooking(models.Model):
         })
         return booking.id
 
-    @api.model
-    def _cron_cleanup_temporary_bookings(self):
-        """Supprime les réservations temporaires non utilisées après 30 min"""
-        limit_time = fields.Datetime.now() - timedelta(minutes=30)
-        old_temps = self.search([
-            ("is_temporary", "=", True),
-            ("create_date", "<", limit_time),
-        ])
-        if old_temps:
-            old_temps.unlink()
-            _logger.info(f"🧹 {len(old_temps)} réservations temporaires supprimées.")
+    
 
     @api.model
     def create_booking(self, vals):
