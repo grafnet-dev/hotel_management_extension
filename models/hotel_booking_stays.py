@@ -472,23 +472,7 @@ class HotelBookingStayS(models.Model):
                 "Le rapport de fiche de police n'est pas disponible. Veuillez contacter l'administrateur."
             )
 
-    # OU si vous avez une relation avec hotel.police.form
-    def action_preview_police_form(self):
-        """Aperçu de la fiche de police pour ce séjour"""
-        self.ensure_one()  # S'assurer qu'on travaille sur un seul séjour
-        # Chercher s'il existe déjà une fiche de police pour ce séjour
-        police_form = self.env["hotel.police.form"].search(
-            [("stay_id", "=", self.id)], limit=1
-        )
-
-        if not police_form:
-            # Lever un message d'erreur si aucune fiche n'existe
-            raise UserError("Aucune fiche de police trouvée pour ce séjour.")
-
-        # Ouvrir le rapport HTML pour l'aperçu
-        return self.env.ref(
-            "hotel_management_extension.action_report_hotel_police_form_html"
-        ).report_action(police_form)
+  
 
     # Méthode pour calculer les noms des occupants
     @api.depends("occupant_ids")
