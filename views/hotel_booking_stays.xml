@@ -118,7 +118,7 @@
                         <group name="booking_info" string="📋 Informations de Base">
                             <field name="booking_id"
                                 string="Réservation"
-                                required="1"
+                               
                                 options="{'no_create': False, 'no_create_edit': False}" />
                             <field name="reservation_type_id" required="1"
                                 options="{'no_create': True, 'no_create_edit': True}" />
@@ -202,8 +202,6 @@
 
                             <!-- Champs techniques cachés -->
                             <group invisible="1">
-
-
                                 <field name="is_flexible_reservation" />
                             </group>
                         </page>

@@ -5,12 +5,11 @@ import { registry } from "@web/core/registry";
 import { rpc } from "@web/core/network/rpc";
 import { useService } from "@web/core/utils/hooks";
 import { useState } from "@odoo/owl";
-import { RoomDetailsPanel } from"./room_details_panel"
+import { RoomDetailsPanel } from "./room_details_panel";
 
 export class RoomPlanning extends Component {
   static template = "rooms_planning.template";
   static components = { RoomDetailsPanel };
-
 
   setup() {
     this.action = useService("action");
@@ -81,7 +80,7 @@ export class RoomPlanning extends Component {
         method: "search_read",
         args: [],
         kwargs: {
-          fields: ["id", "name", "status","room_type_id"],
+          fields: ["id", "name", "status", "room_type_id"],
         },
       });
 
@@ -230,7 +229,6 @@ export class RoomPlanning extends Component {
     const clickedItem = this.activities.find((a) => a.id === props.item);
     console.log("📦 Activité complète trouvée :", clickedItem);
 
-
     if (!clickedItem) {
       console.warn("⚠️ Aucun item correspondant trouvé !");
       return;
@@ -240,52 +238,58 @@ export class RoomPlanning extends Component {
       console.log("✅ Créneau libre → ouverture du formulaire...");
       this.onFreeSlotClick(clickedItem);
     } else {
-       // 👉 Ouvrir le panneau latéral
+      // 👉 Ouvrir le panneau latéral
       this.state.selectedActivity = clickedItem;
-      console.log("🟢 Autre de freeslot cliqué  (type :", activityType, clickedItem.className, ")");
+      console.log(
+        "🟢 Autre de freeslot cliqué  (type :",
+        activityType,
+        clickedItem.className,
+        ")"
+      );
     }
   }
   closePanel() {
-      this.state.selectedActivity = null;
+    this.state.selectedActivity = null;
   }
+
   async onFreeSlotClick(item) {
-    console.log("🟢 [onFreeSlotClick] Créneau libre cliqué :", item);
+  console.log("🟢 [onFreeSlotClick] Créneau libre cliqué :", item);
 
-    if (!item.room_id) {
-      console.warn("⚠️ Aucun room_id trouvé sur l’item :", item);
-      return;
-    }
+  try {
+    // 1️⃣ Créer le booking temporaire
+    const booking_id = await rpc("/web/dataset/call_kw", {
+      model: "room.booking",
+      method: "create_temporary_booking",
+      args: [],
+      kwargs: {},
+    });
 
-     // Prépare les valeurs par défaut à passer au formulaire
+    // 2️⃣ Contexte pour préremplir le séjour
     const context = {
-        default_room_id: item.room_id,
-        default_room_type_id: item.room_type_id || item.room?.room_type_id?.[0],
-        default_reservation_type_id: item.reservation_type_id || item.reservation_type?.id,
+      default_booking_id: booking_id,
+      default_room_id: item.room_id,
+      default_room_type_id: item.room_type_id || item.room?.room_type_id?.[0],
     };
 
-     // Préparation de l’action avec le contexte
-    const action = {
-        type: "ir.actions.act_window",
-        name: "Nouvelle réservation",
-        res_model: "hotel.booking.stay",
-        target: "new",
-        views: [[false, "form"]],
-        view_mode: "form",
-        context,
-    };
+    // 3️⃣ Ouvrir le formulaire
+    await this.action.doAction({
+      type: "ir.actions.act_window",
+      name: "Nouveau séjour",
+      res_model: "hotel.booking.stay",
+      target: "new",
+      views: [[false, "form"]],
+      context,
+    });
 
+    // 4️⃣ Timeline refresh
+    setTimeout(async () => {
+      await this.refreshTimeline();
+    }, 1500);
 
-     console.log("🚀 [onFreeSlotClick] Action envoyée à Odoo :", action);
-    try {
-        await this.action.doAction(action);
-
-        console.log("🟢 Fenêtre de réservation fermée, mise à jour du planning...");
-        await this.refreshTimeline();
-    } catch (err) {
-        console.warn("⚠️ doAction interrompu ou erreur :", err);
-    }
-    console.log("✅ Action envoyée à Odoo !");
+  } catch (err) {
+    console.error("💥 Erreur lors de la création de séjour :", err);
   }
+}
 
   async refreshTimeline() {
     console.log("🔄 Rafraîchissement de la timeline...");
@@ -313,19 +317,17 @@ export class RoomPlanning extends Component {
   }
 
   getTypeIcon(type) {
-  const icons = {
-    stay_ongoing : "🛏️",
-    cleaning: "🧹",
-    maintenance: "🔧",
-    day_use: "⏱️",
-    free_slot: "➖",
-    upcoming_stay: "📅",
-  };
-  return icons[type] || "📋";
+    const icons = {
+      stay_ongoing: "🛏️",
+      cleaning: "🧹",
+      maintenance: "🔧",
+      day_use: "⏱️",
+      free_slot: "➖",
+      upcoming_stay: "📅",
+    };
+    return icons[type] || "📋";
+  }
 }
-
-}
-
 registry.category("actions").add("room_planning.app", RoomPlanning);
 
 console.log("✅ RoomPlanning avec précision horaire enregistré !");

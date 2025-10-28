@@ -13,7 +13,12 @@ from ..logging_booking import booking_logger as _logger_booking
 from ..utils.logger_utils import setup_logger
 
 early_late_logger = setup_logger("hotel.early_late", "early_late.log")
-
+# === LOGGER PERSONNALISÉ POUR LES SÉJOURS ===
+hotel_stay_logger = setup_logger(
+    name="hotel.booking.stay",
+    log_file="stay.log",
+    log_dir="."  # 👈 adapte ce chemin selon ton serveur (ou juste "." si local)
+)
 
 def float_to_time(float_hour):
     hours = int(float_hour)
@@ -365,6 +370,36 @@ class HotelBookingStayS(models.Model):
         string="Availability Message",
         readonly=False,
     )
+    
+    @api.model
+    def create(self, vals):
+        """Quand un séjour est créé :
+        - Si le booking est temporaire → le rendre permanent
+        - Si des occupants sont renseignés → définir le partner du booking
+        """
+        stay = super().create(vals)
+        booking = stay.booking_id
+
+        if booking:
+            # 🔹 Convertir le booking temporaire en permanent
+            if booking.is_temporary:
+                booking.is_temporary = False
+                _logger.info(f"✅ Booking {booking.name} converti en permanent (lié au séjour {stay.id})")
+
+            # 🔹 Si occupants → prendre le premier comme client
+            if stay.occupant_ids:
+                booking.partner_id = stay.occupant_ids[0].id
+                _logger.info(f"👤 Booking {booking.name} lié au client {booking.partner_id.name}")
+
+        return stay
+    
+    @api.depends("occupant_ids")
+    def _compute_partner_id(self):
+        """Déduit le client principal à partir du premier occupant."""
+        for stay in self:
+            stay.partner_id = stay.occupant_ids[:1].id if stay.occupant_ids else False
+
+    
 
     @api.onchange("room_type_id")
     def _onchange_room_type_id(self):

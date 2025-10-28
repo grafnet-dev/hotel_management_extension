@@ -1,22 +1,48 @@
+from datetime import datetime, timedelta
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 from ..constants.booking_stays_state import BOOKING_STATES
+import logging
+
+_logger = logging.getLogger(__name__)
+
 
 class RoomBooking(models.Model):
-    _inherit = 'room.booking'
+    _inherit = "room.booking"
     
+    is_temporary = fields.Boolean(default=False)
+
     stay_ids = fields.One2many(
-        'hotel.booking.stay',  
-        'booking_id',
+        "hotel.booking.stay",
+        "booking_id",
         string="Séjours",
-        help="Séjours individuels liés à cette réservation"
+        help="Séjours individuels liés à cette réservation",
     )
-    
+
     pricelist_id = fields.Many2one(
-        comodel_name='product.pricelist',
+        comodel_name="product.pricelist",
         string="Pricelist",
         required=False,
+    )
 
+    company_id = fields.Many2one(
+        "res.company",
+        string="Company",
+        help="Choose the Company",
+        required=False,
+        index=True,
+        default=lambda self: self.env.company,
+    )
+    partner_id = fields.Many2one(
+        "res.partner",
+        string="Customer",
+        help="Customers of hotel",
+        required=False,
+        index=True,
+        tracking=1,
+        domain="[('type', '!=', 'private'),"
+        " ('company_id', 'in', "
+        "(False, company_id))]",
     )
     state_new = fields.Selection(
         selection=[
@@ -29,46 +55,70 @@ class RoomBooking(models.Model):
         compute="_compute_state_new",
         store=True,
     )
-    
-    
+
     @api.depends("state")
     def _compute_state_new(self):
         mapping = {
             "draft": BOOKING_STATES["DRAFT"],
             "reserved": BOOKING_STATES["CONFIRMED"],
             "check_in": BOOKING_STATES["ONGOING"],
-            "check_out": BOOKING_STATES["COMPLETED"], # ou peut-être "ongoing" selon la logique métier
+            "check_out": BOOKING_STATES[
+                "COMPLETED"
+            ],  # ou peut-être "ongoing" selon la logique métier
             "done": BOOKING_STATES["COMPLETED"],
             "cancel": BOOKING_STATES["CANCELLED"],
         }
         for rec in self:
             rec.state_new = mapping.get(rec.state, BOOKING_STATES["DRAFT"])
-    
-
 
     def action_start_checkin_wizard(self):
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'Fiche de Police',
-            'res_model': 'hotel.police.form',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_booking_id': self.id,
-                'default_stay_id': self.id,
-            }
+            "type": "ir.actions.act_window",
+            "name": "Fiche de Police",
+            "res_model": "hotel.police.form",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_booking_id": self.id,
+                "default_stay_id": self.id,
+            },
         }
 
     def action_view_booking_stays(self):
         self.ensure_one()
         return {
-            'type': 'ir.actions.act_window',
-            'name': 'Séjours liés',
-            'res_model': 'hotel.booking.stay',
-            'view_mode': 'list,form',
-            'domain': [('booking_id', '=', self.id)],
-            'context': {'default_booking_id': self.id},
+            "type": "ir.actions.act_window",
+            "name": "Séjours liés",
+            "res_model": "hotel.booking.stay",
+            "view_mode": "list,form",
+            "domain": [("booking_id", "=", self.id)],
+            "context": {"default_booking_id": self.id},
         }
+        
+        
+    @api.model
+    def create_temporary_booking(self):
+        """Crée un booking temporaire lié à une chambre"""
+        booking = self.create({
+            "partner_id": False,  # Aucun client pour le moment
+            "company_id": self.env.company.id,
+            "state": "draft",
+            "is_temporary": True,
+            "name": self.env["ir.sequence"].next_by_code("room.booking") or "TMP",
+        })
+        return booking.id
+
+    @api.model
+    def _cron_cleanup_temporary_bookings(self):
+        """Supprime les réservations temporaires non utilisées après 30 min"""
+        limit_time = fields.Datetime.now() - timedelta(minutes=30)
+        old_temps = self.search([
+            ("is_temporary", "=", True),
+            ("create_date", "<", limit_time),
+        ])
+        if old_temps:
+            old_temps.unlink()
+            _logger.info(f"🧹 {len(old_temps)} réservations temporaires supprimées.")
 
     @api.model
     def create_booking(self, vals):
@@ -79,7 +129,7 @@ class RoomBooking(models.Model):
         """
         try:
             # --- Vérifications des champs obligatoires ---
-            required_fields = ['partner_id']
+            required_fields = ["partner_id"]
             for field in required_fields:
                 if field not in vals or not vals[field]:
                     raise ValidationError(_("Le champ '%s' est obligatoire.") % field)
@@ -114,5 +164,3 @@ class RoomBooking(models.Model):
                 "success": False,
                 "message": _("Erreur interne : %s") % str(e),
             }
-    
-    
