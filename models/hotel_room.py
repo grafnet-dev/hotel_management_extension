@@ -374,21 +374,27 @@ class HotelRoom(models.Model):
                 )
                 
                 """Crée une activité de nettoyage simulée de 30 min après un séjour."""
-                cleaning_duration = timedelta(minutes=30)
+                # === Création d'une activité de nettoyage simulée ===
+                # Durée variable selon le type de réservation
+                if s.reservation_type_id and s.reservation_type_id.code == "flexible":
+                    cleaning_duration = timedelta(minutes=5)
+                else:
+                    cleaning_duration = timedelta(minutes=30)
+
                 cleaning_start = s.planned_checkout_date
                 cleaning_end = s.planned_checkout_date + cleaning_duration
-                                
+
                 activities.append({
                     "id": f"sim_clean_{s.id}",
                     "room_id": s.room_id.id,
                     "room_name": s.room_id.name,
                     "room_type_id": s.room_id.room_type_id.id if s.room_id.room_type_id else False,
+                    "reservation_type_id": s.reservation_type_id.id if s.reservation_type_id else False,
                     "type": "cleaning",
-                    "label": "Nettoyage prévu ",
+                    "label": "Nettoyage prévu (rapide)" if s.reservation_type_id and s.reservation_type_id.code == "flexible" else "Nettoyage prévu",
                     "start": fields.Datetime.to_string(cleaning_start),
                     "end": fields.Datetime.to_string(cleaning_end),
                 })
-
             # ===  Tri chronologique ===
             activities.sort(key=lambda x: x["start"] or "")
             
