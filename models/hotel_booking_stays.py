@@ -485,21 +485,27 @@ class HotelBookingStayS(models.Model):
             _logger.error("❌ [CHECKOUT] Modèle hotel.housekeeping introuvable: %s", e)
             raise UserError("Le module housekeeping n'est pas installé correctement")
         
-        # Étape 3 : Vérifier la chambre
-        if not self.room_id:
-            _logger.error("❌ [CHECKOUT] Aucune chambre associée au séjour %s", self.id)
-            raise UserError("Aucune chambre associée à ce séjour")
-        
-        _logger.info("✅ [CHECKOUT] Chambre: %s (ID: %s)", self.room_id.name, self.room_id.id)
-        
-        # Étape 4 : Créer le housekeeping
+        # Étape 3 : Déterminer la durée selon le type de réservation
+        duration = 0.5  # par défaut = 30 min
+        res_type = self.reservation_type_id.code or self.reservation_type_id.name if self.reservation_type_id else None
+        _logger.info("🧩 [CHECKOUT] Type de réservation: %s", res_type)
+
+        if res_type:
+            if res_type.lower() in ['flexible', 'flexible']:  # selon tes valeurs réelles
+                duration = 0.0833  # 5 minutes
+            elif res_type.lower() in ['classic', 'classic', 'classic']:
+                duration = 0.5  # 30 minutes
+
+        _logger.info("🕒 [CHECKOUT] Durée prévue du nettoyage: %s h", duration)
+
+        # Étape 4 : Créer l’enregistrement housekeeping
         housekeeping_vals = {
             'stay_id': self.id,
             'room_id': self.room_id.id,
-            'planned_hours': 0.5,
+            'planned_hours': duration,
             'state': 'waiting',
         }
-        
+                
         _logger.info("📝 [CHECKOUT] Création housekeeping avec vals: %s", housekeeping_vals)
         
         try:

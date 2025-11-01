@@ -126,9 +126,9 @@ class HotelHousekeeping(models.Model):
             'stage_id': stage_todo.id if stage_todo else False,
             'description': f"<p>Nettoyage après checkout</p><p>Séjour: {self.stay_id.id}</p>",
             # Champs personnalisés
-            'x_room_id': self.room_id.id,
-            'x_stay_id': self.stay_id.id,
-            'x_housekeeping_id': self.id,
+            'room_id': self.room_id.id,
+            'stay_id': self.stay_id.id,
+            'housekeeping_id': self.id,
             # SUPPRIMÉ : 'planned_hours': self.planned_hours or 0.5,  # Ce champ n'existe pas dans toutes les versions
         }
         
