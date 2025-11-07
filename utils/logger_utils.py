@@ -1,7 +1,7 @@
 import logging
 import os
 
-def setup_logger(name: str, log_file: str, level=logging.DEBUG, log_dir="."):
+def setup_logger(name: str, log_file: str, level=logging.DEBUG, log_dir="/opt/odoo-sandbox/log/"):
     """Crée un logger avec un FileHandler."""
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, log_file)

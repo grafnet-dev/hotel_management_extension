@@ -1,7 +1,7 @@
 import logging
 import os
 
-LOG_DIR = "."   # à adapter
+LOG_DIR = "/opt/odoo-sandbox/log/"   # à adapter
 LOG_FILE = os.path.join(LOG_DIR, "eclc_pricing.log")
 
 # Création du répertoire si inexistant (optionnel)

@@ -2,7 +2,7 @@
 import logging
 import os
 
-LOG_DIR = "."   # à adapter, par exemple "/var/log/odoo"
+LOG_DIR = "/opt/odoo-sandbox/log/"   # à adapter, par exemple "/var/log/odoo" /opt/odoo-sandbox/odoo-sandbox.log
 LOG_FILE = os.path.join(LOG_DIR, "booking.log")
 
 # Création du répertoire si inexistant

@@ -17,7 +17,7 @@ early_late_logger = setup_logger("hotel.early_late", "early_late.log")
 hotel_stay_logger = setup_logger(
     name="hotel.booking.stay",
     log_file="stay.log",
-    log_dir="."  # 👈 adapte ce chemin selon ton serveur (ou juste "." si local)
+    log_dir="/opt/odoo-sandbox/log/"  
 )
 
 def float_to_time(float_hour):

@@ -1,0 +1,32 @@
+<odoo>
+    <data noupdate="1">
+        <!-- Réservations -->
+        <record id="hotel_management_odoo.room_booking_menu" model="ir.ui.menu">
+            <field name="name">Réservations des Chambres</field>
+        </record>
+
+        <!-- Chambre -->
+        <record id="hotel_management_odoo.hotel_room_menu" model="ir.ui.menu">
+            <field name="name">Chambres</field>
+        </record>
+
+        <!-- Restaurant -->
+        <record id="hotel_management_odoo.food_menu" model="ir.ui.menu">
+            <field name="name">Restauration</field>
+        </record>
+
+        <!-- Fleet -->
+        <record id="hotel_management_odoo.fleet_vehicle_menu" model="ir.ui.menu">
+            <field name="name">Véhicules</field>
+        </record>
+
+        <record id="hotel_management_odoo.fleet_vehicle_model_brand_menu" model="ir.ui.menu">
+            <field name="name">Fabricants</field>
+        </record>
+
+        <!-- Amenities -->
+        <record id="hotel_management_odoo.hotel_amenity_menu" model="ir.ui.menu">
+            <field name="name">Équipements</field>
+        </record>
+    </data>
+</odoo>

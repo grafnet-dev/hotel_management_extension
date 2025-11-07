@@ -1,448 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data>
-
-        <record id="room_booking_view_tree_inherit" model="ir.ui.view">
-        <field name="name">room.booking.view.tree.inherit</field>
-        <field name="model">room.booking</field>
-        <field name="inherit_id" ref="hotel_management_odoo.room_booking_view_tree"/>
-        <field name="arch" type="xml">
-
-            <!-- Rendre invisible le champ "state" 
-            <xpath expr="//field[@name='state']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>-->
-                  <!-- Supprimer complètement le champ state -->
-        <xpath expr="//field[@name='state']" position="replace"/>
-
-        </field>
-    </record>
-
-        <record id="hotel_management_odoo.room_booking_menu" model="ir.ui.menu">
-            <field name="name">Réservations des Chambres</field>
-        </record>
-        <record id="hotel_management_odoo.hotel_reporting_menu" model="ir.ui.menu">
-            <field name="name">Rapports</field>
-        </record>
-
-        <!-- Changer Room Booking -> Réservations de chambres -->
-        <record id="hotel_management_odoo.room_booking_detail_menu" model="ir.ui.menu">
-            <field name="name">Réservations de chambres</field>
-        </record>
-
-        <!-- Changer Sale Order -> Commandes de vente -->
-        <record id="hotel_management_odoo.sale_order_detail_menu" model="ir.ui.menu">
-            <field name="name">Commandes de vente</field>
-        </record>
-
-        <record id="hotel_management_odoo.food_menu" model="ir.ui.menu">
-            <field name="name">Restauration</field>
-        </record>
-
-        <!-- Modifier le nom du menu Vehicle -->
-        <record id="hotel_management_odoo.fleet_vehicle_menu" model="ir.ui.menu">
-            <field name="name">Véhicules</field>
-        </record>
-
-
-        <record id="view_room_booking_form_inherit_minimal" model="ir.ui.view">
-            <field name="name">room.booking.form.inherit.minimal</field>
-            <field name="model">room.booking</field>
-            <field name="inherit_id" ref="hotel_management_odoo.room_booking_view_form" />
-            <field name="mode">extension</field>
-            <field name="arch" type="xml">
-
-                <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="string">Numéro de réservation</attribute>
-                </xpath>
-
-                <!-- Customer -->
-                <xpath expr="//field[@name='partner_id']" position="attributes">
-                    <attribute name="string">Client</attribute>
-                </xpath>
-
-                <!-- Company -->
-                <xpath expr="//field[@name='company_id']" position="attributes">
-                    <attribute name="string">Société</attribute>
-                </xpath>
-
-                <!-- Order Date -->
-                <xpath expr="//field[@name='date_order']" position="attributes">
-                    <attribute name="string">Date de commande</attribute>
-                </xpath>
-
-                <!-- State -->
-                <xpath expr="//field[@name='state']" position="attributes">
-                    <attribute name="string">Statut</attribute>
-                </xpath>
-
-
-                <xpath expr="//form" position="replace">
-                    <form>
-                        <header>
-                            <button name="action_view_booking_stays"
-                                type="object"
-                                string="Séjours"
-                                class="btn-secondary"
-                                icon="fa-hotel" />
-                        </header>
-                        <sheet>
-                            <group>
-                                <field name="name" string="nom" />
-                                <field name="date_order" string="Date de commande" />
-                                <field name="company_id" string="Société" />
-                                <field name="partner_id"
-                                    widget="res_partner_many2one"
-                                    context="{'res_partner_search_mode': 'customer', 'show_address': 1, 'show_vat': True}"
-                                    options="{'always_reload': True}" string="Client" />
-                            </group>
-                        </sheet>
-                    </form>
-                </xpath>
-
-
-            </field>
-
-
-        </record>
-        <record id="view_room_booking_tree_inherit_labels" model="ir.ui.view">
-            <field name="name">room.booking.tree.inherit.labels</field>
-            <field name="model">room.booking</field>
-            <field name="inherit_id" ref="hotel_management_odoo.room_booking_view_tree" />
-            <field name="mode">extension</field>
-            <field name="arch" type="xml">
-
-                <!-- Folio Number -->
-                <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="string">Numéro de réservation</attribute>
-                </xpath>
-
-                <!-- Customer -->
-                <xpath expr="//field[@name='partner_id']" position="attributes">
-                    <attribute name="string">Client</attribute>
-                </xpath>
-
-                <!-- Order Date -->
-                <xpath expr="//field[@name='date_order']" position="attributes">
-                    <attribute name="string">Date de commande</attribute>
-                </xpath>
-
-                <!-- State -->
-                <xpath expr="//field[@name='state']" position="attributes">
-                    <attribute name="string">Statut</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-
-        <record id="hotel_management_odoo.fleet_vehicle_model_action" model="ir.actions.act_window">
-            <field name="name">Véhicules</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun véhicule trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom de l'action Manufacturers -->
-        <record id="hotel_management_odoo.fleet_vehicle_model_brand_action"
-            model="ir.actions.act_window">
-            <field name="name">Fabricants</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun fabricant trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom du menu Vehicles -->
-        <record id="hotel_management_odoo.fleet_vehicle_model_menu" model="ir.ui.menu">
-            <field name="name">Véhicules</field>
-        </record>
-
-        <!-- Modifier le nom du menu Manufacturers -->
-        <record id="hotel_management_odoo.fleet_vehicle_model_brand_menu" model="ir.ui.menu">
-            <field name="name">Fabricants</field>
-        </record>
-
-        <!-- Modifier les labels des champs ajoutés -->
-        <record id="fleet_vehicle_model_view_form_inherit_labels" model="ir.ui.view">
-            <field name="name">fleet.vehicle.model.view.form.inherit.labels</field>
-            <field name="model">fleet.vehicle.model</field>
-            <field name="inherit_id" ref="hotel_management_odoo.fleet_vehicle_model_view_form" />
-            <field name="arch" type="xml">
-
-                <xpath expr="//field[@name='price_per_km']" position="attributes">
-                    <attribute name="string">Prix par KM</attribute>
-                </xpath>
-
-                <xpath expr="//field[@name='uom_id']" position="attributes">
-                    <attribute name="string">Unité de Mesure</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-        <record id="hotel_management_odoo.hotel_amenity_action" model="ir.actions.act_window">
-            <field name="name">Équipements</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun équipement trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom du menu Amenity -->
-        <record id="hotel_management_odoo.hotel_amenity_menu" model="ir.ui.menu">
-            <field name="name">Équipements</field>
-        </record>
-
-        <!-- Modifier les labels dans la vue formulaire -->
-        <record id="hotel_amenity_view_form_inherit_labels" model="ir.ui.view">
-            <field name="name">hotel.amenity.view.form.inherit.labels</field>
-            <field name="model">hotel.amenity</field>
-            <field name="inherit_id" ref="hotel_management_odoo.hotel_amenity_view_form" />
-            <field name="arch" type="xml">
-
-                <!-- Modifier le titre du formulaire -->
-                <xpath expr="//form" position="attributes">
-                    <attribute name="string">Équipement</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ name -->
-                <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="string">Nom</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ description -->
-                <xpath expr="//field[@name='description']" position="attributes">
-                    <attribute name="string">Description</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ icon -->
-                <xpath expr="//field[@name='icon']" position="attributes">
-                    <attribute name="string">Icône</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-        <!-- Modifier les labels dans la vue liste -->
-        <record id="hotel_amenity_view_tree_inherit_labels" model="ir.ui.view">
-            <field name="name">hotel.amenity.view.tree.inherit.labels</field>
-            <field name="model">hotel.amenity</field>
-            <field name="inherit_id" ref="hotel_management_odoo.hotel_amenity_view_tree" />
-            <field name="arch" type="xml">
-
-                <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="string">Nom</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-        <record id="hotel_management_odoo.hotel_floor_action" model="ir.actions.act_window">
-            <field name="name">Étages</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun étage trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom du menu Floors -->
-        <record id="hotel_management_odoo.hotel_floor_menu" model="ir.ui.menu">
-            <field name="name">Étages</field>
-        </record>
-
-        <!-- Modifier les labels dans la vue liste -->
-        <record id="hotel_floor_view_tree_inherit_labels" model="ir.ui.view">
-            <field name="name">hotel.floor.view.tree.inherit.labels</field>
-            <field name="model">hotel.floor</field>
-            <field name="inherit_id" ref="hotel_management_odoo.hotel_floor_view_tree" />
-            <field name="arch" type="xml">
-
-                <!-- Modifier le label du champ name -->
-                <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="string">Nom</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ user_id -->
-                <xpath expr="//field[@name='user_id']" position="attributes">
-                    <attribute name="string">Responsable</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-
-        <record id="hotel_management_odoo.lunch_product_action" model="ir.actions.act_window">
-            <field name="name">Produits</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun produit trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom de l'action Vendors -->
-        <record id="hotel_management_odoo.lunch_supplier_action" model="ir.actions.act_window">
-            <field name="name">Fournisseurs</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun fournisseur trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom du menu Products -->
-        <record id="hotel_management_odoo.lunch_product_menu" model="ir.ui.menu">
-            <field name="name">Produits</field>
-        </record>
-
-        <!-- Modifier le nom du menu Vendors -->
-        <record id="hotel_management_odoo.lunch_supplier_menu" model="ir.ui.menu">
-            <field name="name">Fournisseurs</field>
-        </record>
-
-        <record id="hotel_management_odoo.hotel_room_action" model="ir.actions.act_window">
-            <field name="name">Chambres</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucune chambre trouvée ! Créons-en une
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom du menu Room -->
-        <record id="hotel_management_odoo.hotel_room_menu" model="ir.ui.menu">
-            <field name="name">Chambres</field>
-        </record>
-
-        <record id="hotel_management_odoo.room_booking_detail_action" model="ir.actions.act_window">
-            <field name="name">Rapport de Réservation de Chambres</field>
-        </record>
-
-        <!-- Modifier les labels dans la vue formulaire -->
-        <record id="room_booking_detail_view_form_inherit_labels" model="ir.ui.view">
-            <field name="name">room.booking.detail.view.form.inherit.labels</field>
-            <field name="model">room.booking.detail</field>
-            <field name="inherit_id" ref="hotel_management_odoo.room_booking_detail_view_form" />
-            <field name="arch" type="xml">
-
-                <!-- Modifier le label du champ checkin -->
-                <xpath expr="//field[@name='checkin']" position="attributes">
-                    <attribute name="string">Date d'arrivée</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ checkout -->
-                <xpath expr="//field[@name='checkout']" position="attributes">
-                    <attribute name="string">Date de départ</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ room_id -->
-                <xpath expr="//field[@name='room_id']" position="attributes">
-                    <attribute name="string">Chambre</attribute>
-                </xpath>
-
-                <!-- Modifier le bouton Download PDF -->
-                <xpath expr="//button[@name='action_room_booking_pdf']" position="attributes">
-                    <attribute name="string">Télécharger PDF</attribute>
-                </xpath>
-
-                <!-- Modifier le texte du bouton Download XLS -->
-                <xpath expr="//button[@name='action_room_booking_excel']" position="replace">
-                    <button name="action_room_booking_excel" type="object" class="btn-primary">
-                        <i class="fa fa-download mr-2" /> Télécharger XLS </button>
-                </xpath>
-
-                <!-- Modifier le bouton Cancel -->
-                <xpath expr="//button[@special='cancel']" position="attributes">
-                    <attribute name="string">Annuler</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-        <record id="hotel_management_odoo.sale_order_detail_action" model="ir.actions.act_window">
-            <field name="name">Rapport de Commandes de Vente</field>
-        </record>
-
-        <!-- Modifier les labels dans la vue formulaire -->
-        <record id="sale_order_detail_view_form_inherit_labels" model="ir.ui.view">
-            <field name="name">sale.order.detail.view.form.inherit.labels</field>
-            <field name="model">sale.order.detail</field>
-            <field name="inherit_id" ref="hotel_management_odoo.sale_order_detail_view_form" />
-            <field name="arch" type="xml">
-
-                <!-- Modifier le label du champ checkin -->
-                <xpath expr="//field[@name='checkin']" position="attributes">
-                    <attribute name="string">Date d'arrivée</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ checkout -->
-                <xpath expr="//field[@name='checkout']" position="attributes">
-                    <attribute name="string">Date de départ</attribute>
-                </xpath>
-
-                <!-- Modifier le bouton Download PDF -->
-                <xpath expr="//button[@name='action_sale_order_pdf']" position="attributes">
-                    <attribute name="string">Télécharger PDF</attribute>
-                </xpath>
-
-                <!-- Modifier le texte du bouton Download XLS -->
-                <xpath expr="//button[@name='action_sale_order_excel']" position="replace">
-                    <button name="action_sale_order_excel" type="object" class="btn-primary">
-                        <i class="fa fa-download mr-2" /> Télécharger XLS </button>
-                </xpath>
-
-                <!-- Modifier le bouton Cancel -->
-                <xpath expr="//button[@special='cancel']" position="attributes">
-                    <attribute name="string">Annuler</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-        <record id="hotel_management_odoo.hotel_service_action" model="ir.actions.act_window">
-            <field name="name">Services</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">
-                    Aucun service trouvé ! Créons-en un
-                </p>
-            </field>
-        </record>
-
-        <!-- Modifier le nom du menu Services -->
-        <record id="hotel_management_odoo.hotel_service_menu" model="ir.ui.menu">
-            <field name="name">Services</field>
-        </record>
-
-        <!-- Modifier les labels dans la vue liste -->
-        <record id="hotel_service_view_tree_inherit_labels" model="ir.ui.view">
-            <field name="name">hotel.service.view.tree.inherit.labels</field>
-            <field name="model">hotel.service</field>
-            <field name="inherit_id" ref="hotel_management_odoo.hotel_service_view_tree" />
-            <field name="arch" type="xml">
-
-                <!-- Modifier le label du champ name -->
-                <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="string">Nom</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ unit_price -->
-                <xpath expr="//field[@name='unit_price']" position="attributes">
-                    <attribute name="string">Prix Unitaire</attribute>
-                </xpath>
-
-                <!-- Modifier le label du champ taxes_ids -->
-                <xpath expr="//field[@name='taxes_ids']" position="attributes">
-                    <attribute name="string">Taxes</attribute>
-                </xpath>
-
-            </field>
-        </record>
-
-
-    </data>
+	<data noupdate="1">
+
+		<!-- Tree View: Labels -->
+		<record id="room_booking_tree_inherit_labels" model="ir.ui.view">
+			<field name="name">room.booking.tree.inherit.labels</field>
+			<field name="model">room.booking</field>
+			<field name="inherit_id" ref="hotel_management_odoo.room_booking_view_tree"/>
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='name']" position="attributes">
+					<attribute name="string">Numéro de réservation</attribute>
+				</xpath>
+				<xpath expr="//field[@name='partner_id']" position="attributes">
+					<attribute name="string">Client</attribute>
+				</xpath>
+				<xpath expr="//field[@name='date_order']" position="attributes">
+					<attribute name="string">Date de commande</attribute>
+				</xpath>
+				<xpath expr="//field[@name='state']" position="attributes">
+					<attribute name="string">Statut</attribute>
+				</xpath>
+			</field>
+		</record>
+
+		<!-- Form View: Labels + Minimal fields -->
+		<record id="room_booking_form_inherit_minimal" model="ir.ui.view">
+			<field name="name">room.booking.form.inherit.minimal</field>
+			<field name="model">room.booking</field>
+			<field name="inherit_id" ref="hotel_management_odoo.room_booking_view_form"/>
+			<field name="arch" type="xml">
+
+				<xpath expr="//field[@name='name']" position="attributes">
+					<attribute name="string">Numéro de réservation</attribute>
+				</xpath>
+
+				<xpath expr="//field[@name='partner_id']" position="attributes">
+					<attribute name="string">Client</attribute>
+				</xpath>
+
+				<xpath expr="//field[@name='company_id']" position="attributes">
+					<attribute name="string">Société</attribute>
+				</xpath>
+
+				<xpath expr="//field[@name='date_order']" position="attributes">
+					<attribute name="string">Date de commande</attribute>
+				</xpath>
+
+				<!-- Bouton Séjours -->
+				<xpath expr="//header" position="inside">
+					<button name="action_view_booking_stays"
+						type="object"
+						string="Séjours"
+						class="btn-secondary"
+						icon="fa-hotel"/>
+				</xpath>
+
+			</field>
+		</record>
+
+	</data>
 </odoo>

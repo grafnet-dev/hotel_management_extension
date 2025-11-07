@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<data noupdate="1">
+
+		<!-- Form -->
+		<record id="hotel_amenity_form_inherit_labels" model="ir.ui.view">
+			<field name="name">hotel.amenity.form.labels.inherit</field>
+			<field name="model">hotel.amenity</field>
+			<field name="inherit_id" ref="hotel_management_odoo.hotel_amenity_view_form"/>
+			<field name="arch" type="xml">
+
+				<xpath expr="//form" position="attributes">
+					<attribute name="string">Équipement</attribute>
+				</xpath>
+
+				<xpath expr="//field[@name='name']" position="attributes">
+					<attribute name="string">Nom</attribute>
+				</xpath>
+
+				<xpath expr="//field[@name='description']" position="attributes">
+					<attribute name="string">Description</attribute>
+				</xpath>
+
+				<xpath expr="//field[@name='icon']" position="attributes">
+					<attribute name="string">Icône</attribute>
+				</xpath>
+
+			</field>
+		</record>
+
+		<!-- Tree -->
+		<record id="hotel_amenity_tree_inherit_labels" model="ir.ui.view">
+			<field name="name">hotel.amenity.tree.labels.inherit</field>
+			<field name="model">hotel.amenity</field>
+			<field name="inherit_id" ref="hotel_management_odoo.hotel_amenity_view_tree"/>
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='name']" position="attributes">
+					<attribute name="string">Nom</attribute>
+				</xpath>
+			</field>
+		</record>
+
+	</data>
+</odoo>
