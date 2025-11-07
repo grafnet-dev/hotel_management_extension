@@ -17,7 +17,9 @@ early_late_logger = setup_logger("hotel.early_late", "early_late.log")
 hotel_stay_logger = setup_logger(
     name="hotel.booking.stay",
     log_file="stay.log",
-    log_dir="/opt/odoo-sandbox/log/"  
+    #log_dir="/opt/odoo-sandbox/log/" 
+    log_dir="." 
+     
 )
 
 def float_to_time(float_hour):
@@ -266,10 +268,12 @@ class HotelBookingStayS(models.Model):
         readonly=True,
     )
 
+   
     currency_id = fields.Many2one(
+        "res.currency",
         string="Currency",
-        related="booking_id.pricelist_id.currency_id",
-        help="The currency used",
+        default=lambda self: self.env.company.currency_id.id,
+        help="The currency used (defaults to the company currency).",
     )
     pricing_rule_id = fields.Many2one(
         "hotel.pricing.rule",

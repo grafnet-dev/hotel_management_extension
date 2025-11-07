@@ -1,62 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-	<data noupdate="1">
+    <data noupdate="1">
 
-		<!-- Tree View: Labels -->
-		<record id="room_booking_tree_inherit_labels" model="ir.ui.view">
-			<field name="name">room.booking.tree.inherit.labels</field>
-			<field name="model">room.booking</field>
-			<field name="inherit_id" ref="hotel_management_odoo.room_booking_view_tree"/>
-			<field name="arch" type="xml">
-				<xpath expr="//field[@name='name']" position="attributes">
-					<attribute name="string">Numéro de réservation</attribute>
-				</xpath>
-				<xpath expr="//field[@name='partner_id']" position="attributes">
-					<attribute name="string">Client</attribute>
-				</xpath>
-				<xpath expr="//field[@name='date_order']" position="attributes">
-					<attribute name="string">Date de commande</attribute>
-				</xpath>
-				<xpath expr="//field[@name='state']" position="attributes">
-					<attribute name="string">Statut</attribute>
-				</xpath>
-			</field>
-		</record>
+        <!-- On hérite du menu parent et on le déplace sous le menu caché -->
+        <record id="hotel_management_odoo.room_booking_menu" model="ir.ui.menu">
+            <field name="name">TEST MENU</field>
+        </record>
 
-		<!-- Form View: Labels + Minimal fields -->
-		<record id="room_booking_form_inherit_minimal" model="ir.ui.view">
-			<field name="name">room.booking.form.inherit.minimal</field>
-			<field name="model">room.booking</field>
-			<field name="inherit_id" ref="hotel_management_odoo.room_booking_view_form"/>
-			<field name="arch" type="xml">
-
-				<xpath expr="//field[@name='name']" position="attributes">
-					<attribute name="string">Numéro de réservation</attribute>
-				</xpath>
-
-				<xpath expr="//field[@name='partner_id']" position="attributes">
-					<attribute name="string">Client</attribute>
-				</xpath>
-
-				<xpath expr="//field[@name='company_id']" position="attributes">
-					<attribute name="string">Société</attribute>
-				</xpath>
-
-				<xpath expr="//field[@name='date_order']" position="attributes">
-					<attribute name="string">Date de commande</attribute>
-				</xpath>
-
-				<!-- Bouton Séjours -->
-				<xpath expr="//header" position="inside">
-					<button name="action_view_booking_stays"
-						type="object"
-						string="Séjours"
-						class="btn-secondary"
-						icon="fa-hotel"/>
-				</xpath>
-
-			</field>
-		</record>
-
-	</data>
+    </data>
 </odoo>

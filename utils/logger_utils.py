@@ -1,7 +1,7 @@
 import logging
 import os
 
-def setup_logger(name: str, log_file: str, level=logging.DEBUG, log_dir="/opt/odoo-sandbox/log/"):
+def setup_logger(name: str, log_file: str, level=logging.DEBUG, log_dir="."):
     """Crée un logger avec un FileHandler."""
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, log_file)
@@ -17,7 +17,7 @@ def setup_logger(name: str, log_file: str, level=logging.DEBUG, log_dir="/opt/od
         logger.addHandler(fh)
     
     return logger
-
+#log_dir="/opt/odoo-sandbox/log/"
 #from logger_utils import setup_logger
 
 #eclc_logger = setup_logger("hotel.eclc", "eclc_pricing.log")

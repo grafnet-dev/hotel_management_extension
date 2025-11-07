@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <!-- =====================================================
+         1️⃣ VUE LISTE : ROOM BOOKING
+         ===================================================== -->
+    <record id="view_room_booking_custom_list" model="ir.ui.view">
+        <field name="name">room.booking.custom.list</field>
+        <field name="model">room.booking</field>
+        <field name="arch" type="xml">
+            <list string="Réservations" decoration-info="is_temporary == True">
+                <field name="name" string="N° Réservation" />
+                <field name="partner_id" string="Client" />
+                <field name="date_order" string="Date de commande" />
+                <field name="is_temporary" string="Temporaire" widget="boolean_toggle" />
+                <field name="stay_ids" string="Nombre de Séjours" widget="many2many_tags"
+                    readonly="1" />
+            </list>
+        </field>
+    </record>
+
+
+    <!-- =====================================================
+         FORM VIEW : ROOM BOOKING CUSTOM
+         ===================================================== -->
+    <record id="view_room_booking_custom_form" model="ir.ui.view">
+        <field name="name">room.booking.custom.form</field>
+        <field name="model">room.booking</field>
+        <field name="arch" type="xml">
+            <form string="Réservation (Custom)">
+                <sheet>
+                    <!-- ======================
+                         TITRE PRINCIPAL
+                         ====================== -->
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" />
+                        <h1>
+                            <field name="name" readonly="1" placeholder="New" />
+                        </h1>
+                        <h2 class="text-muted">
+                            <field name="partner_id" string = "Client"  />
+                        </h2>
+                    </div>
+
+                    <!-- ======================
+                         INFOS GÉNÉRALES
+                         ====================== -->
+                    <group name="main_info" string="📋 Informations Générales">
+                        <group>
+                            <field name="date_order" string = "Date de Commande" />
+                        </group>
+                        <group>
+                            <field name="partner_id" string = "Client" />
+                        </group>
+                    </group>
+
+                    <!-- ======================
+                         ONGLET : SÉJOURS LIÉS
+                         ====================== -->
+                    <notebook>
+                        <page string="📅 Séjours liés">
+
+
+                            <field name="stay_ids"
+                                context="{'default_booking_id': id}"
+                                mode="list,form"
+                                readonly="0"
+                                form_view_ref="hotel_management_odoo.hotel_booking_stay_form_view">
+
+                                <list
+                                    string="Séjours liés"
+                                    decoration-info="state=='pending'"
+                                    decoration-success="state=='ongoing'"
+                                    decoration-muted="state in ('completed','cancelled')"
+                                    create="true"
+                                    delete="true"
+                                    edit="false">
+                                    <field name="room_type_id" />
+                                    <field name="occupant_names" string = "Occupants" />
+                                    <field name="planned_checkin_date" string = "date de arrivée  prévue"  />
+                                    <field name="planned_checkout_date" string = "date de départ  prévue" />
+                                    <field name="state" widget="badge" />
+                                </list>
+                            </field>
+
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- =====================================================
+         3️⃣ ACTION D'OUVERTURE
+         ===================================================== -->
+    <record id="action_room_booking_custom" model="ir.actions.act_window">
+        <field name="name">Réservations (Custom)</field>
+        <field name="res_model">room.booking</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_room_booking_custom_list" />
+        <field name="help" type="html">
+            <p>
+                Gérez vos réservations d'hôtel et leurs séjours associés.
+            </p>
+        </field>
+    </record>
+
+
+    <!-- =====================================================
+         4️⃣ MENU (OPTIONNEL)
+         ===================================================== -->
+    <menuitem id="menu_room_booking_custom_root"
+        name="List des Réservations"
+        sequence="10"
+        action="action_room_booking_custom"
+        parent="hotel_management_odoo.hotel_management_menu_root" />
+
+
+</odoo>
