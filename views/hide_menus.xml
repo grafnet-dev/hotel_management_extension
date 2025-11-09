@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <!-- Méthode 1: Rendre les menus invisibles avec active="False" -->
+        
+        <!-- Masquer le menu Reporting et ses sous-menus -->
+        <record id="hotel_management_odoo.hotel_reporting_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+        <!-- Note: Quand vous masquez le parent, les enfants sont automatiquement masqués
+             Mais vous pouvez aussi les masquer explicitement si nécessaire -->
+        
+        <record id="hotel_management_odoo.room_booking_detail_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+        <record id="hotel_management_odoo.sale_order_detail_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+        <!-- Masquer le menu Food -->
+        <record id="hotel_management_odoo.food_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+        <!-- Masquer le menu Fleet/Vehicle et ses sous-menus -->
+        <record id="hotel_management_odoo.fleet_vehicle_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+        <record id="hotel_management_odoo.fleet_vehicle_model_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+        <record id="hotel_management_odoo.fleet_vehicle_model_brand_menu" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        
+    </data>
+</odoo>
